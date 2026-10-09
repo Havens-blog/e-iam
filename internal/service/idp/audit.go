@@ -39,7 +39,3 @@ func RecordAudit(ctx context.Context, p auditevt.IAuditProducer, tenantID int64,
 		})
 	}()
 }
-
-func recordAudit(ctx context.Context, p auditevt.IAuditProducer, tenantID int64, action, resourceID, resourceName, status, failReason string) {
-	RecordAudit(ctx, p, tenantID, action, resourceID, resourceName, status, failReason)
-}

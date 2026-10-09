@@ -18,7 +18,6 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/mock/gomock"
 	"gorm.io/gorm"
 )
 
@@ -27,7 +26,6 @@ type PolicyTestSuite struct {
 
 	db       *gorm.DB
 	enforcer *casbin.SyncedEnforcer
-	ctrl     *gomock.Controller
 
 	permSvc     permission.IPermissionService
 	tenantSvc   tenant.ITenantService

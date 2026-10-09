@@ -30,19 +30,6 @@ import (
 	"github.com/samber/lo"
 )
 
-var (
-	// actionPriorityRules 预编译动作优先级正则，提升排序性能
-	actionPriorityRules = []struct {
-		pattern *regexp.Regexp
-		weight  int
-	}{
-		{pattern: regexp.MustCompile(`^(view|list|get|manifest|show).*`), weight: 100},
-		{pattern: regexp.MustCompile(`^(add|create|save|new).*`), weight: 90},
-		{pattern: regexp.MustCompile(`^(edit|update|modify|toggle|change).*`), weight: 80},
-		{pattern: regexp.MustCompile(`^(delete|revoke|remove|drop).*`), weight: 70},
-	}
-)
-
 type permissionService struct {
 	enforcer    *casbin.SyncedEnforcer
 	resourceSvc resource.IResourceService

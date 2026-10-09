@@ -31,12 +31,12 @@ func TestConsumer_Flush(t *testing.T) {
 				repo := repomocks.NewMockIAuditRepository(ctrl)
 				repo.EXPECT().BatchSaveAuthLogs(gomock.Any(), gomock.Len(1)).
 					DoAndReturn(func(ctx context.Context, logs []domain.AuthLog) error {
-						assert.Equal(t, true, ctx.Value(gormx.IGNORE_TENANT_KEY))
+						assert.Equal(t, true, ctx.Value(gormx.IGNORE_TENANT_CONTEXT_KEY))
 						return nil
 					})
 				repo.EXPECT().BatchSaveOperationLogs(gomock.Any(), gomock.Len(1)).
 					DoAndReturn(func(ctx context.Context, logs []domain.OperationLog) error {
-						assert.Equal(t, true, ctx.Value(gormx.IGNORE_TENANT_KEY))
+						assert.Equal(t, true, ctx.Value(gormx.IGNORE_TENANT_CONTEXT_KEY))
 						return nil
 					})
 				return repo

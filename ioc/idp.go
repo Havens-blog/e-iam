@@ -42,24 +42,6 @@ type CASConfig struct {
 	TicketTTLMinutes int `mapstructure:"ticket_ttl_minutes"` // Service Ticket 有效时长 (分钟)，默认 5 分钟
 }
 
-// defaultIdPConfig 提供安全的默认值工厂
-func defaultIdPConfig() IdPConfig {
-	return IdPConfig{
-		LoginURL: "/login",
-		OIDC: OIDCConfig{
-			KeyID:      "eiam-default-key",
-			ConsentURL: "/consent",
-			EnableSLO:  false,
-		},
-		SAML: SAMLConfig{
-			ValidityDays: 1095, // 默认 3 年
-		},
-		CAS: CASConfig{
-			TicketTTLMinutes: 5, // 默认 5 分钟
-		},
-	}
-}
-
 // InitIdPConfig 统一加载并反序列化 IdP 强类型配置 (消除弱类型 GetString，并优雅兼容历史配置)
 func InitIdPConfig() IdPConfig {
 	var cfg IdPConfig

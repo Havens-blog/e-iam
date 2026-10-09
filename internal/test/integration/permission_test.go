@@ -39,8 +39,6 @@ type PermissionSuite struct {
 	tenantSvc   tenant.ITenantService
 	roleSvc     role.IRoleService
 	resourceSvc resource.IResourceService
-
-	testUid int64
 }
 
 func (s *PermissionSuite) SetupSuite() {

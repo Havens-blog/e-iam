@@ -5,19 +5,22 @@ import (
 	"strconv"
 )
 
+// ContextKey 上下文键类型：自定义类型避免字符串键冲突（staticcheck SA1029）
+type ContextKey string
+
 // 定义核心 Context Key 常量
 const (
 	// TenantIDKey 当前操作的目标租户 ID (数据平面)
-	TenantIDKey = "tenant_id"
+	TenantIDKey ContextKey = "tenant_id"
 
 	// OriginTenantIDKey 用户的原始身份租户 ID (身份平面)
-	OriginTenantIDKey = "origin_tenant_id"
+	OriginTenantIDKey ContextKey = "origin_tenant_id"
 
 	// UserIDKey 当前登录用户的唯一标识 ID
-	UserIDKey = "user_id"
+	UserIDKey ContextKey = "user_id"
 
 	// UsernameKey 当前登录用户的账号名
-	UsernameKey = "username"
+	UsernameKey ContextKey = "username"
 
 	// SystemTenantID 系统根租户 ID (母体租户)
 	SystemTenantID int64 = 1
@@ -26,10 +29,10 @@ const (
 	SystemTenantIDStr = "1"
 
 	// ClientIPKey 客户端访问 IP 地址
-	ClientIPKey = "client_ip"
+	ClientIPKey ContextKey = "client_ip"
 
 	// UserAgentKey 客户端浏览器 UserAgent
-	UserAgentKey = "user_agent"
+	UserAgentKey ContextKey = "user_agent"
 )
 
 // ContextID 对 int64 的包装，提供便捷的转换方法
@@ -44,7 +47,7 @@ func (id ContextID) Int64() int64 {
 }
 
 // Get [通用泛型提取]
-func Get[T any](ctx context.Context, key string) T {
+func Get[T any](ctx context.Context, key ContextKey) T {
 	if ctx == nil {
 		var zero T
 		return zero
@@ -58,7 +61,7 @@ func Get[T any](ctx context.Context, key string) T {
 }
 
 // With [通用泛型注入]
-func With[T any](ctx context.Context, key string, val T) context.Context {
+func With[T any](ctx context.Context, key ContextKey, val T) context.Context {
 	return context.WithValue(ctx, key, val)
 }
 

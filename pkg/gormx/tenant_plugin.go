@@ -13,11 +13,17 @@ import (
 	"gorm.io/gorm/schema"
 )
 
+// GormxKey 注入 Context 的自定义键类型，避免内建 string 键跨包冲突 (SA1029)
+type GormxKey string
+
 const (
-	// IGNORE_TENANT_KEY 用于标识是否跳过租户隔离校验的 Context Key / GORM Option Key
+	// IGNORE_TENANT_KEY gorm 会话键（db.Set/db.Get 的 string API），标识跳过租户隔离
 	IGNORE_TENANT_KEY = "gormx:ignore_tenant"
-	// INJECTED_KEY 用于标识当前 GORM Statement 是否已注入过隔离条件，防重复嵌套
+	// INJECTED_KEY gorm 实例键，标识当前 Statement 已注入租户条件，防重复嵌套
 	INJECTED_KEY = "eiam:tenant_injected"
+	// IGNORE_TENANT_CONTEXT_KEY 注入 Context 的跳过隔离开关；
+	// 与 gorm 会话键同值但类型隔离，供跨层读取（如审计消费者校验）
+	IGNORE_TENANT_CONTEXT_KEY GormxKey = "gormx:ignore_tenant"
 )
 
 // SharedConfig 共享规则配置
@@ -287,7 +293,7 @@ func (p *TenantPlugin) shouldSkip(db *gorm.DB) bool {
 
 	// 2. 检查 Context 上下文 (解耦底层操作，支持在上层 Service 跨层传递提权标记)
 	if db.Statement.Context != nil {
-		if val, ok := db.Statement.Context.Value(IGNORE_TENANT_KEY).(bool); ok && val {
+		if val, ok := db.Statement.Context.Value(IGNORE_TENANT_CONTEXT_KEY).(bool); ok && val {
 			return true
 		}
 	}
@@ -310,5 +316,5 @@ func IgnoreTenant() func(db *gorm.DB) *gorm.DB {
 
 // IgnoreTenantContext 将跳过租户隔离标记注入 Context，允许业务服务层跨越 Repository 控制隔离级别
 func IgnoreTenantContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, IGNORE_TENANT_KEY, true)
+	return context.WithValue(ctx, IGNORE_TENANT_CONTEXT_KEY, true)
 }

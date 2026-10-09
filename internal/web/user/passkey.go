@@ -75,7 +75,7 @@ func (h *Handler) PasskeyLoginStart(ctx *ginx.Context) (ginx.Result, error) {
 		return src.Type == domain.PASSKEY && src.Enabled
 	})
 	if !found {
-		return ErrInternalServer, fmt.Errorf("Passkey 身份源未启用")
+		return ErrInternalServer, fmt.Errorf("passkey 身份源未启用")
 	}
 
 	options, sessionData, err := h.passkeySvc.BeginLogin(ctx.Request.Context(), config)
