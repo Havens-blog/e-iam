@@ -1055,32 +1055,32 @@ func (c *MockIPermissionServiceSearchSubjectsCall) DoAndReturn(f func(context.Co
 	return c
 }
 
-// MockAuthorizationProvider is a mock of AuthorizationProvider interface.
-type MockAuthorizationProvider struct {
+// MockIAuthorizationProvider is a mock of IAuthorizationProvider interface.
+type MockIAuthorizationProvider struct {
 	ctrl     *gomock.Controller
-	recorder *MockAuthorizationProviderMockRecorder
+	recorder *MockIAuthorizationProviderMockRecorder
 	isgomock struct{}
 }
 
-// MockAuthorizationProviderMockRecorder is the mock recorder for MockAuthorizationProvider.
-type MockAuthorizationProviderMockRecorder struct {
-	mock *MockAuthorizationProvider
+// MockIAuthorizationProviderMockRecorder is the mock recorder for MockIAuthorizationProvider.
+type MockIAuthorizationProviderMockRecorder struct {
+	mock *MockIAuthorizationProvider
 }
 
-// NewMockAuthorizationProvider creates a new mock instance.
-func NewMockAuthorizationProvider(ctrl *gomock.Controller) *MockAuthorizationProvider {
-	mock := &MockAuthorizationProvider{ctrl: ctrl}
-	mock.recorder = &MockAuthorizationProviderMockRecorder{mock}
+// NewMockIAuthorizationProvider creates a new mock instance.
+func NewMockIAuthorizationProvider(ctrl *gomock.Controller) *MockIAuthorizationProvider {
+	mock := &MockIAuthorizationProvider{ctrl: ctrl}
+	mock.recorder = &MockIAuthorizationProviderMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAuthorizationProvider) EXPECT() *MockAuthorizationProviderMockRecorder {
+func (m *MockIAuthorizationProvider) EXPECT() *MockIAuthorizationProviderMockRecorder {
 	return m.recorder
 }
 
 // ListAuthorizations mocks base method.
-func (m *MockAuthorizationProvider) ListAuthorizations(ctx context.Context, query domain.AuthorizationQuery) ([]domain.Authorization, int64, error) {
+func (m *MockIAuthorizationProvider) ListAuthorizations(ctx context.Context, query domain.AuthorizationQuery) ([]domain.Authorization, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAuthorizations", ctx, query)
 	ret0, _ := ret[0].([]domain.Authorization)
@@ -1090,37 +1090,37 @@ func (m *MockAuthorizationProvider) ListAuthorizations(ctx context.Context, quer
 }
 
 // ListAuthorizations indicates an expected call of ListAuthorizations.
-func (mr *MockAuthorizationProviderMockRecorder) ListAuthorizations(ctx, query any) *MockAuthorizationProviderListAuthorizationsCall {
+func (mr *MockIAuthorizationProviderMockRecorder) ListAuthorizations(ctx, query any) *MockIAuthorizationProviderListAuthorizationsCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAuthorizations", reflect.TypeOf((*MockAuthorizationProvider)(nil).ListAuthorizations), ctx, query)
-	return &MockAuthorizationProviderListAuthorizationsCall{Call: call}
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAuthorizations", reflect.TypeOf((*MockIAuthorizationProvider)(nil).ListAuthorizations), ctx, query)
+	return &MockIAuthorizationProviderListAuthorizationsCall{Call: call}
 }
 
-// MockAuthorizationProviderListAuthorizationsCall wrap *gomock.Call
-type MockAuthorizationProviderListAuthorizationsCall struct {
+// MockIAuthorizationProviderListAuthorizationsCall wrap *gomock.Call
+type MockIAuthorizationProviderListAuthorizationsCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockAuthorizationProviderListAuthorizationsCall) Return(arg0 []domain.Authorization, arg1 int64, arg2 error) *MockAuthorizationProviderListAuthorizationsCall {
+func (c *MockIAuthorizationProviderListAuthorizationsCall) Return(arg0 []domain.Authorization, arg1 int64, arg2 error) *MockIAuthorizationProviderListAuthorizationsCall {
 	c.Call = c.Call.Return(arg0, arg1, arg2)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockAuthorizationProviderListAuthorizationsCall) Do(f func(context.Context, domain.AuthorizationQuery) ([]domain.Authorization, int64, error)) *MockAuthorizationProviderListAuthorizationsCall {
+func (c *MockIAuthorizationProviderListAuthorizationsCall) Do(f func(context.Context, domain.AuthorizationQuery) ([]domain.Authorization, int64, error)) *MockIAuthorizationProviderListAuthorizationsCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockAuthorizationProviderListAuthorizationsCall) DoAndReturn(f func(context.Context, domain.AuthorizationQuery) ([]domain.Authorization, int64, error)) *MockAuthorizationProviderListAuthorizationsCall {
+func (c *MockIAuthorizationProviderListAuthorizationsCall) DoAndReturn(f func(context.Context, domain.AuthorizationQuery) ([]domain.Authorization, int64, error)) *MockIAuthorizationProviderListAuthorizationsCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
 
 // ObjType mocks base method.
-func (m *MockAuthorizationProvider) ObjType() domain.AuthorizationObjType {
+func (m *MockIAuthorizationProvider) ObjType() domain.AuthorizationObjType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ObjType")
 	ret0, _ := ret[0].(domain.AuthorizationObjType)
@@ -1128,31 +1128,31 @@ func (m *MockAuthorizationProvider) ObjType() domain.AuthorizationObjType {
 }
 
 // ObjType indicates an expected call of ObjType.
-func (mr *MockAuthorizationProviderMockRecorder) ObjType() *MockAuthorizationProviderObjTypeCall {
+func (mr *MockIAuthorizationProviderMockRecorder) ObjType() *MockIAuthorizationProviderObjTypeCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ObjType", reflect.TypeOf((*MockAuthorizationProvider)(nil).ObjType))
-	return &MockAuthorizationProviderObjTypeCall{Call: call}
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ObjType", reflect.TypeOf((*MockIAuthorizationProvider)(nil).ObjType))
+	return &MockIAuthorizationProviderObjTypeCall{Call: call}
 }
 
-// MockAuthorizationProviderObjTypeCall wrap *gomock.Call
-type MockAuthorizationProviderObjTypeCall struct {
+// MockIAuthorizationProviderObjTypeCall wrap *gomock.Call
+type MockIAuthorizationProviderObjTypeCall struct {
 	*gomock.Call
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockAuthorizationProviderObjTypeCall) Return(arg0 domain.AuthorizationObjType) *MockAuthorizationProviderObjTypeCall {
+func (c *MockIAuthorizationProviderObjTypeCall) Return(arg0 domain.AuthorizationObjType) *MockIAuthorizationProviderObjTypeCall {
 	c.Call = c.Call.Return(arg0)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockAuthorizationProviderObjTypeCall) Do(f func() domain.AuthorizationObjType) *MockAuthorizationProviderObjTypeCall {
+func (c *MockIAuthorizationProviderObjTypeCall) Do(f func() domain.AuthorizationObjType) *MockIAuthorizationProviderObjTypeCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockAuthorizationProviderObjTypeCall) DoAndReturn(f func() domain.AuthorizationObjType) *MockAuthorizationProviderObjTypeCall {
+func (c *MockIAuthorizationProviderObjTypeCall) DoAndReturn(f func() domain.AuthorizationObjType) *MockIAuthorizationProviderObjTypeCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

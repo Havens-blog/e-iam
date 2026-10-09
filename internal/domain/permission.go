@@ -159,9 +159,9 @@ type ResourceBinding struct {
 	ResourceURN string `json:"resource_urn"` // 统一资产标识，如 eiam:iam:menu:user
 }
 
-// PermissionProvider 定义了逻辑权限能力项的供应接口
+// IPermissionProvider 定义了逻辑权限能力项的供应接口
 // 用于实现模块化资产自声明 (Solution B: Handler-Based Self-Registration)
-type PermissionProvider interface {
+type IPermissionProvider interface {
 	ProvidePermissions() []Permission
 }
 

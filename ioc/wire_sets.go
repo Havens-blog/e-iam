@@ -44,7 +44,7 @@ import (
 )
 
 // InitLdapUserCache 构造 LDAP 用户检索专用缓存适配器
-func InitLdapUserCache(conn *redisearch.Client) cache.RedisearchLdapUserCache {
+func InitLdapUserCache(conn *redisearch.Client) cache.IRedisearchLdapUserCache {
 	return cache.NewRedisearchLdapUserCache(conn)
 }
 

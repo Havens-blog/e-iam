@@ -15,9 +15,9 @@ type Subject struct {
 	Desc string
 }
 
-// SubjectProvider 全域主体搜索提供者契约
+// ISubjectProvider 全域主体搜索提供者契约
 // 用于规范各领域（用户、角色等）在治理中心统一搜索行为的标准化接口
-type SubjectProvider interface {
+type ISubjectProvider interface {
 	// SearchSubjects 执行特定领域的关键词搜索，仅返回主体数据结果集
 	SearchSubjects(ctx context.Context, keyword string, offset, limit int64) ([]Subject, error)
 
@@ -70,29 +70,29 @@ func (a *SubjectAdapter[T]) SupportType() string { return a.supportType }
 
 // ISubjectRegistry 治理能力注册中心接口
 type ISubjectRegistry interface {
-	SubjectProvider
+	ISubjectProvider
 	// Register 注册提供者
-	Register(ps ...SubjectProvider)
+	Register(ps ...ISubjectProvider)
 	// Route 根据类型获取提供者 (支持单类型或全聚合)
-	Route(subType string) SubjectProvider
+	Route(subType string) ISubjectProvider
 }
 
 // subjectRegistry 注册中心实现 (组合模式)
 type subjectRegistry struct {
 	mu        sync.RWMutex
-	providers []SubjectProvider
-	typeMap   map[string]SubjectProvider
+	providers []ISubjectProvider
+	typeMap   map[string]ISubjectProvider
 }
 
-func NewSubjectRegistry(ps ...SubjectProvider) ISubjectRegistry {
+func NewSubjectRegistry(ps ...ISubjectProvider) ISubjectRegistry {
 	reg := &subjectRegistry{
-		typeMap: make(map[string]SubjectProvider),
+		typeMap: make(map[string]ISubjectProvider),
 	}
 	reg.Register(ps...)
 	return reg
 }
 
-func (r *subjectRegistry) Register(ps ...SubjectProvider) {
+func (r *subjectRegistry) Register(ps ...ISubjectProvider) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	for _, p := range ps {
@@ -101,7 +101,7 @@ func (r *subjectRegistry) Register(ps ...SubjectProvider) {
 	}
 }
 
-func (r *subjectRegistry) Route(subType string) SubjectProvider {
+func (r *subjectRegistry) Route(subType string) ISubjectProvider {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	if p, ok := r.typeMap[subType]; ok {

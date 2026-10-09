@@ -9,22 +9,22 @@ type MigrationHandler func(oldEnc, newEnc string)
 
 // CryptoManager 统一管理多种加密算法（支持多版本）
 type CryptoManager struct {
-	algorithms  map[string]Crypto // 支持多版本
-	defaultVer  string            // 默认加密版本
-	legacyVer   string            // 历史算法版本（兼容旧 CryptoAES）
+	algorithms  map[string]ICrypto // 支持多版本
+	defaultVer  string             // 默认加密版本
+	legacyVer   string             // 历史算法版本（兼容旧 CryptoAES）
 	onMigration MigrationHandler
 }
 
 // NewCryptoManager 创建新的 CryptoManager
 func NewCryptoManager(defaultVer string) *CryptoManager {
 	return &CryptoManager{
-		algorithms: make(map[string]Crypto),
+		algorithms: make(map[string]ICrypto),
 		defaultVer: defaultVer,
 	}
 }
 
-// Register 注册符合 Crypto 接口的加密算法策略，绑定到一个版本号
-func (m *CryptoManager) Register(version string, algo Crypto) *CryptoManager {
+// Register 注册符合 ICrypto 接口的加密算法策略，绑定到一个版本号
+func (m *CryptoManager) Register(version string, algo ICrypto) *CryptoManager {
 	m.algorithms[version] = algo
 	return m
 }

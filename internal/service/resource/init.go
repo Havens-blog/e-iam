@@ -36,12 +36,12 @@ type IInitializer interface {
 
 // Initializer 资产同步引擎实现。
 type Initializer struct {
-	engine   ingestion.Engine
+	engine   ingestion.IEngine
 	registry capability.Registry
 	logger   *elog.Component
 }
 
-func NewResourceInitializer(engine ingestion.Engine, registry capability.Registry) IInitializer {
+func NewResourceInitializer(engine ingestion.IEngine, registry capability.Registry) IInitializer {
 	return &Initializer{
 		engine:   engine,
 		registry: registry,

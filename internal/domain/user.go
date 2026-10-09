@@ -178,8 +178,8 @@ type LoginResult struct {
 	BindToken string `json:"bind_token"`
 }
 
-// CredentialProvider 外部凭证提供者策略接口。
-type CredentialProvider interface {
+// ICredentialProvider 外部凭证提供者策略接口。
+type ICredentialProvider interface {
 	// Name 返回身份源唯一标识 (ldap 等)
 	Name() string
 	// Authenticate 执行外部身份核验，返回构造完毕的领域用户模型

@@ -28,12 +28,12 @@ type ldapService struct {
 	repo      repository.IUserRepository
 	tenantSvc tenant.ITenantService
 	idsSvc    idsource.IService
-	cache     cache.RedisearchLdapUserCache
+	cache     cache.IRedisearchLdapUserCache
 }
 
 // NewLdapService 创建 LDAP 业务服务实例
 func NewLdapService(repo repository.IUserRepository, tenantSvc tenant.ITenantService,
-	idsSvc idsource.IService, cache cache.RedisearchLdapUserCache) ILdapService {
+	idsSvc idsource.IService, cache cache.IRedisearchLdapUserCache) ILdapService {
 	return &ldapService{
 		repo:      repo,
 		tenantSvc: tenantSvc,

@@ -50,9 +50,9 @@ func NewAuthCoordinator(
 	idsSvc idsource.IService,
 	cm *cryptox.CryptoManager,
 	auditProducer auditevt.IAuditProducer,
-	ps []domain.CredentialProvider,
+	ps []domain.ICredentialProvider,
 ) IAuthCoordinator {
-	registry := lo.SliceToMap(ps, func(p domain.CredentialProvider) (string, domain.CredentialProvider) {
+	registry := lo.SliceToMap(ps, func(p domain.ICredentialProvider) (string, domain.ICredentialProvider) {
 		return p.Name(), p
 	})
 

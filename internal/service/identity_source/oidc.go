@@ -14,7 +14,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type OidcService interface {
+type IOidcService interface {
 	// AuthURL 生成授权跳转地址 (带 nonce)
 	AuthURL(ctx context.Context, config domain.OIDCConfig, state string, nonce string) (string, error)
 	// Verify 校验回调 Code 并返回身份信息 (含 nonce 校验)
@@ -29,7 +29,7 @@ type oidcService struct {
 }
 
 // NewOidcService 构造 OIDC 业务服务，初始化高可用 HTTP 连接池
-func NewOidcService() OidcService {
+func NewOidcService() IOidcService {
 	return &oidcService{
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second, // 强制设置超时防外部接口假死
@@ -97,7 +97,7 @@ func (s *oidcService) getOrCreateProvider(ctx context.Context, issuer string) (*
 	return provider, nil
 }
 
-type AuthStrategy interface {
+type IAuthStrategy interface {
 	AuthCodeURL(state string, nonce string) string
 	Exchange(ctx context.Context, code string) (*oauth2.Token, error)
 	ResolveClaims(ctx context.Context, token *oauth2.Token, nonce string) (map[string]interface{}, error)
@@ -108,7 +108,7 @@ type oidcClient struct {
 	conf     domain.OIDCConfig
 	provider *oidc.Provider
 	oauth2   oauth2.Config
-	strategy AuthStrategy
+	strategy IAuthStrategy
 }
 
 func (s *oidcService) newOIDCClient(ctx context.Context, conf domain.OIDCConfig) (*oidcClient, error) {

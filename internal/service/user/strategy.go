@@ -105,10 +105,10 @@ func (s *passwordAuthStrategy) Verify(ctx context.Context, payload any) (domain.
 
 // ldapAuthStrategy 动态外部目录身份源验真策略
 type ldapAuthStrategy struct {
-	providers map[string]domain.CredentialProvider
+	providers map[string]domain.ICredentialProvider
 }
 
-func newLdapAuthStrategy(providers map[string]domain.CredentialProvider) IAuthStrategy {
+func newLdapAuthStrategy(providers map[string]domain.ICredentialProvider) IAuthStrategy {
 	return &ldapAuthStrategy{providers: providers}
 }
 

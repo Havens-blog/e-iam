@@ -17,7 +17,7 @@ type DynamicLdapProvider struct {
 }
 
 // NewDynamicLdapProvider 创建动态 LDAP 凭据认证提供者
-func NewDynamicLdapProvider(idsSvc idsource.IService) domain.CredentialProvider {
+func NewDynamicLdapProvider(idsSvc idsource.IService) domain.ICredentialProvider {
 	return &DynamicLdapProvider{
 		idsSvc: idsSvc,
 	}

@@ -1033,7 +1033,7 @@ func (s *permissionService) GetImplicitSubjectsForUser(ctx context.Context, user
 
 func (s *permissionService) ListAuthorizations(ctx context.Context, query domain.AuthorizationQuery) ([]domain.Authorization, int64, error) {
 	// 定义所有授权提供者
-	providers := []AuthorizationProvider{
+	providers := []IAuthorizationProvider{
 		&roleAuthorizationProvider{service: s},
 		&policyAuthorizationProvider{service: s},
 	}
@@ -1061,7 +1061,7 @@ func (s *permissionService) ListAuthorizations(ctx context.Context, query domain
 }
 
 // aggregateAuthorizations 聚合多个提供者的查询结果
-func (s *permissionService) aggregateAuthorizations(ctx context.Context, providers []AuthorizationProvider, query domain.AuthorizationQuery) ([]domain.Authorization, int64, error) {
+func (s *permissionService) aggregateAuthorizations(ctx context.Context, providers []IAuthorizationProvider, query domain.AuthorizationQuery) ([]domain.Authorization, int64, error) {
 	if len(providers) == 0 {
 		return []domain.Authorization{}, 0, nil
 	}

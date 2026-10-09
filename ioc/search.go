@@ -26,7 +26,7 @@ func InitSearchSubjectProviders(
 	return registry
 }
 
-func NewRoleAdapter(roleSvc role.IRoleService) searcher.SubjectProvider {
+func NewRoleAdapter(roleSvc role.IRoleService) searcher.ISubjectProvider {
 	return searcher.NewSubjectAdapter(
 		domain.SubjectTypeRole,
 		func(ctx context.Context, keyword string, offset, limit int64) ([]domain.Role, error) {
@@ -43,7 +43,7 @@ func NewRoleAdapter(roleSvc role.IRoleService) searcher.SubjectProvider {
 	)
 }
 
-func NewUserAdapter(userSvc user.IUserService) searcher.SubjectProvider {
+func NewUserAdapter(userSvc user.IUserService) searcher.ISubjectProvider {
 	return searcher.NewSubjectAdapter(
 		domain.SubjectTypeUser,
 		func(ctx context.Context, keyword string, offset, limit int64) ([]domain.User, error) {
@@ -58,7 +58,7 @@ func NewUserAdapter(userSvc user.IUserService) searcher.SubjectProvider {
 	)
 }
 
-func NewGroupAdapter(groupSvc group.IGroupService) searcher.SubjectProvider {
+func NewGroupAdapter(groupSvc group.IGroupService) searcher.ISubjectProvider {
 	return searcher.NewSubjectAdapter(
 		domain.SubjectTypeGroup,
 		func(ctx context.Context, keyword string, offset, limit int64) ([]domain.Group, error) {
