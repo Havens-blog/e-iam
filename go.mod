@@ -3,7 +3,6 @@ module github.com/Duke1616/eiam
 go 1.25.0
 
 require (
-	github.com/Duke1616/ecmdb v1.11.0
 	github.com/Duke1616/etask v0.0.7
 	github.com/RediSearch/redisearch-go/v2 v2.1.1
 	github.com/casbin/casbin/v2 v2.103.0

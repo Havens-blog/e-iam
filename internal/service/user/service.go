@@ -5,7 +5,7 @@ import (
 	"errors"
 	"unicode"
 
-	"github.com/Duke1616/ecmdb/pkg/cryptox"
+	"github.com/Duke1616/eiam/internal/cryptox"
 	"github.com/Duke1616/eiam/internal/domain"
 	"github.com/Duke1616/eiam/internal/errs"
 	"github.com/Duke1616/eiam/internal/repository"

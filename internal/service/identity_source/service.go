@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Duke1616/ecmdb/pkg/cryptox"
+	"github.com/Duke1616/eiam/internal/cryptox"
 	"github.com/Duke1616/eiam/internal/domain"
 	"github.com/Duke1616/eiam/internal/repository"
 	"github.com/Duke1616/eiam/internal/service/user/ldapx"

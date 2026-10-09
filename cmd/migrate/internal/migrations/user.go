@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Duke1616/ecmdb/pkg/cryptox"
+	"github.com/Duke1616/eiam/internal/cryptox"
 	"github.com/Duke1616/eiam/pkg/migration"
 	"github.com/Duke1616/eiam/internal/repository/dao"
 	"github.com/Duke1616/eiam/pkg/sqlx"
