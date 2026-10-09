@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"unicode"
 
 	"github.com/Havens-blog/e-iam/internal/cryptox"
@@ -132,7 +133,7 @@ func (s *userService) Invite(ctx context.Context, username string) error {
 	// 1. 全局查找用户（UserRepository 的 FindByUsername 已经是全局的了，因为它不依赖租户插件）
 	u, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
-		return err
+		return fmt.Errorf("查找用户失败: %w", err)
 	}
 
 	// 2. 建立该用户与当前操作租户的 Membership 关系
@@ -174,7 +175,7 @@ func (s *userService) Signup(ctx context.Context, u domain.User) (int64, error) 
 func (s *userService) UpdatePassword(ctx context.Context, uid int64, oldPassword, newPassword string) error {
 	u, err := s.repo.FindById(ctx, uid)
 	if err != nil {
-		return err
+		return fmt.Errorf("查找用户失败: %w", err)
 	}
 
 	// 校验旧密码
@@ -195,7 +196,10 @@ func (s *userService) UpdatePassword(ctx context.Context, uid int64, oldPassword
 
 	u.Password = string(hash)
 	_, err = s.repo.Update(ctx, u)
-	return err
+	if err != nil {
+		return fmt.Errorf("更新用户密码失败: %w", err)
+	}
+	return nil
 }
 
 func (s *userService) GetById(ctx context.Context, id int64) (domain.User, error) {
@@ -217,14 +221,20 @@ func (s *userService) List(ctx context.Context, offset, limit int64, keyword str
 	eg.Go(func() error {
 		var err error
 		users, err = s.repo.List(gctx, offset, limit, keyword)
-		return err
+		if err != nil {
+			return fmt.Errorf("查询用户列表失败: %w", err)
+		}
+		return nil
 	})
 
 	// 2. 并发查询总数
 	eg.Go(func() error {
 		var err error
 		total, err = s.repo.Count(gctx, keyword)
-		return err
+		if err != nil {
+			return fmt.Errorf("查询用户总数失败: %w", err)
+		}
+		return nil
 	})
 
 	if err := eg.Wait(); err != nil {
@@ -317,11 +327,11 @@ func (s *userService) ManageIdentities(ctx context.Context, uid int64, identitie
 		// 策略：如果标识为空，则解绑；否则绑定/更新
 		if id.IdentityKey() == "" {
 			if err := s.repo.DeleteIdentity(ctx, uid, id.Provider, id.IdentityKey()); err != nil {
-				return err
+				return fmt.Errorf("解绑身份失败: %w", err)
 			}
 		} else {
 			if err := s.repo.SaveIdentity(ctx, id); err != nil {
-				return err
+				return fmt.Errorf("绑定身份失败: %w", err)
 			}
 		}
 	}
@@ -386,7 +396,7 @@ func (s *userService) getLocalConfig(ctx context.Context) (domain.LocalConfig, b
 func (s *userService) GenerateBindToken(ctx context.Context, ident domain.OidcIdentity) (string, error) {
 	token := uuid.New().String()
 	if err := s.repo.SetBindState(ctx, token, ident); err != nil {
-		return "", err
+		return "", fmt.Errorf("保存绑定令牌失败: %w", err)
 	}
 	return token, nil
 }
@@ -394,7 +404,7 @@ func (s *userService) GenerateBindToken(ctx context.Context, ident domain.OidcId
 func (s *userService) ConsumeBindToken(ctx context.Context, uid int64, token string) error {
 	ident, err := s.repo.GetBindState(ctx, token)
 	if err != nil {
-		return err
+		return fmt.Errorf("读取绑定令牌失败: %w", err)
 	}
 
 	// 登录期绑定是“已通过本地口令认证”的显式确认路径：此时会话尚未颁发、

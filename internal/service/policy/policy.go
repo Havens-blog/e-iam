@@ -121,13 +121,13 @@ func ValidatePolicyExpressions(policy domain.Policy) error {
 func (s *policyService) GetPolicy(ctx context.Context, code string) (domain.Policy, error) {
 	p, err := s.repo.GetPolicyByCode(ctx, code)
 	if err != nil {
-		return domain.Policy{}, err
+		return domain.Policy{}, fmt.Errorf("获取策略详情失败: %w", err)
 	}
 
 	// 填充授权数量统计
 	ps := []domain.Policy{p}
 	if err = s.repo.FillAssignmentCounts(ctx, ps); err != nil {
-		return domain.Policy{}, err
+		return domain.Policy{}, fmt.Errorf("填充策略授权数量失败: %w", err)
 	}
 
 	return ps[0], nil
@@ -136,12 +136,12 @@ func (s *policyService) GetPolicy(ctx context.Context, code string) (domain.Poli
 func (s *policyService) ListPolicies(ctx context.Context, offset, limit int64) ([]domain.Policy, int64, error) {
 	ps, total, err := s.repo.ListPolicies(ctx, offset, limit)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("获取策略列表失败: %w", err)
 	}
 
 	// 填充授权数量统计
 	if err = s.repo.FillAssignmentCounts(ctx, ps); err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("填充策略授权数量失败: %w", err)
 	}
 
 	return ps, total, nil
@@ -150,12 +150,12 @@ func (s *policyService) ListPolicies(ctx context.Context, offset, limit int64) (
 func (s *policyService) SearchPolicies(ctx context.Context, offset, limit int64, keyword string, policyType domain.PolicyType) ([]domain.Policy, int64, error) {
 	ps, total, err := s.repo.SearchPolicies(ctx, offset, limit, keyword, policyType)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("搜索策略列表失败: %w", err)
 	}
 
 	// 填充授权数量统计
 	if err = s.repo.FillAssignmentCounts(ctx, ps); err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("填充策略授权数量失败: %w", err)
 	}
 
 	return ps, total, nil
@@ -212,12 +212,12 @@ func (s *policyService) GetAttachedWithPagination(ctx context.Context, subType, 
 func (s *policyService) ListAttachedPolicies(ctx context.Context, subType, subCode string, offset, limit int64, keyword string, policyType domain.PolicyType) ([]domain.Policy, int64, error) {
 	ps, total, err := s.repo.GetAttachedWithPagination(ctx, subType, subCode, offset, limit, keyword, policyType)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("分页获取主体挂载策略失败: %w", err)
 	}
 
 	// 填充授权数量统计
 	if err = s.repo.FillAssignmentCounts(ctx, ps); err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("填充策略授权数量失败: %w", err)
 	}
 
 	return ps, total, nil
@@ -261,7 +261,7 @@ func (s *policyService) DeletePolicy(ctx context.Context, code string) error {
 	// 1. 获取策略元数据，判定类型
 	p, err := s.repo.GetPolicyByCode(ctx, code)
 	if err != nil {
-		return err
+		return fmt.Errorf("获取策略详情失败: %w", err)
 	}
 
 	// 1.1 禁止删除系统预置策略
@@ -272,7 +272,7 @@ func (s *policyService) DeletePolicy(ctx context.Context, code string) error {
 	// 2. 引用计数校验：获取该策略当前的绑定数量
 	ps := []domain.Policy{p}
 	if err = s.repo.FillAssignmentCounts(ctx, ps); err != nil {
-		return err
+		return fmt.Errorf("填充策略授权数量失败: %w", err)
 	}
 
 	if ps[0].AssignmentCount > 0 {
@@ -290,7 +290,7 @@ func (s *policyService) BatchDeletePolicies(ctx context.Context, codes []string)
 	// 1. 批量拉取策略详情
 	ps, err := s.repo.ListByCodes(ctx, codes)
 	if err != nil {
-		return err
+		return fmt.Errorf("批量获取策略详情失败: %w", err)
 	}
 
 	// 2. 批量校验
@@ -303,7 +303,7 @@ func (s *policyService) BatchDeletePolicies(ctx context.Context, codes []string)
 
 	// 2.2 检查引用计数
 	if err = s.repo.FillAssignmentCounts(ctx, ps); err != nil {
-		return err
+		return fmt.Errorf("填充策略授权数量失败: %w", err)
 	}
 	for _, p := range ps {
 		if p.AssignmentCount > 0 {

@@ -2,6 +2,7 @@ package department
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/Havens-blog/e-iam/internal/repository"
@@ -23,13 +24,16 @@ func (s *departmentService) Create(ctx context.Context, d domain.Department) (in
 
 func (s *departmentService) Update(ctx context.Context, d domain.Department) error {
 	_, err := s.repo.Update(ctx, d)
-	return err
+	if err != nil {
+		return fmt.Errorf("更新部门失败: %w", err)
+	}
+	return nil
 }
 
 func (s *departmentService) Delete(ctx context.Context, id int64) error {
 	childrenCount, err := s.repo.CountChildren(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("统计子部门数量失败: %w", err)
 	}
 	if childrenCount > 0 {
 		return ErrDeleteDeptWithChildren
@@ -37,7 +41,7 @@ func (s *departmentService) Delete(ctx context.Context, id int64) error {
 
 	membersCount, err := s.repo.CountMembers(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("统计部门成员数量失败: %w", err)
 	}
 	if membersCount > 0 {
 		return ErrDeleteDeptWithMembers
@@ -49,7 +53,7 @@ func (s *departmentService) Delete(ctx context.Context, id int64) error {
 func (s *departmentService) List(ctx context.Context) (domain.DepartmentTree, error) {
 	departments, err := s.repo.ListAll(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("加载部门列表失败: %w", err)
 	}
 
 	nodes := make(map[int64]*domain.DepartmentNode, len(departments))

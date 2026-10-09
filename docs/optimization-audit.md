@@ -12,7 +12,7 @@
 | 维度 | P0 | P1 | P2 | P3 | 宏观结论 |
 |------|----|----|----|----|----------|
 | ①工程/工具链 | 0 | 0 | — | — | gofmt/vet/test 全绿基线已建立；生成链存在跨平台路径漂移与 CI 缺失，**已修复** |
-| ②架构/代码质量 | 0 | 1 | 6 | 5 | 宏观分层健康，Domain/Transport/Service/pkg 依赖方向全部通过；问题集中在错误哨兵泄漏与命名一致性。②-P1-1/②-P2-1/②-P2-2/②-P2-4 **已修复**；I 前缀(pkg 对外契约)/裸 return P2 延后 |
+| ②架构/代码质量 | 0 | 1 | 6 | 5 | 宏观分层健康，Domain/Transport/Service/pkg 依赖方向全部通过；问题集中在错误哨兵泄漏与命名一致性。②-P1-1/②-P2-1/②-P2-2/②-P2-4/②-P2-5/②-P2-6 **已修复**；I 前缀(pkg 对外契约) P2-3 延后 |
 | ③性能 | 1 | 3 | 3 | 2 | 缓存/批处理基础设施成熟；PBAC 求值热路径重复校验是确定性浪费。③-P0-1/P1-1/P1-2/P1-3/P2-1/P2-2/P2-3 **全部已修复**；P3 择期 |
 | ④安全 | 0 | 3 | 4 | 4 | 近期硬化项（Fail-Closed/AK-SK 恒定时间/JWT 锁定/CORS 互斥/permission fail-closed）均有效；残留明文凭证、审计端点未鉴权、跨租户密钥操纵。④-P1-1/P1-2/P1-3/P2-1/P2-2/P2-3 **已修复**；间接依赖已升级；P2-4 运维处置 |
 
@@ -70,8 +70,8 @@
 ### ②-P2-5【P2·已修复】`PermissionProvider` 双处定义
 - 经 ②-P2-2 重命名后，internal 版 `domain.PermissionProvider → IPermissionProvider`，pkg 版 `capability.PermissionProvider` 保留原名为对外契约，两者不再同名冲突。
 
-### ②-P2-6【P2】service ~80 处裸 `return err` 未附加上下文
-- 抽样：`internal/service/user/service.go:118,135`、`tenant/tenant.go:167,190`、`permission/permission.go` 13 处（:88,93,440,445,450,786,1110,1142,1170,1321,1327,1333）。转发领域哨兵可豁免；转发不透明 DB/Repo 错误丢失调用点上下文属违规。待 ②-P1-1 翻译哨兵后重评。
+### ②-P2-6【P2·已修复】service ~80 处裸 `return err` 未附加上下文
+- 已为 8 个 service 文件（user/tenant/permission/policy/role/department/group/idp-application）中 63 处转发不透明 repo/DAO 错误的裸 `return err` 补 `fmt.Errorf("...: %w", err)` 上下文；errgroup 闭包重构为 `if err != nil { return fmt.Errorf(...) }; return nil` 区分失败 goroutine。豁免 70 处转发领域哨兵/service 方法的点。`%w` 保留错误链，`errors.Is` 断言不受影响。
 
 ### ②-P3（5 项，极低风险，可选）
 - P3-1 错误双重表达：`internal/errs` 与各 web 包 `errs.go` 并存（如 `ErrRoleCycleInheritance`），建议集中映射表。

@@ -105,12 +105,18 @@ func (s *permissionService) SearchSubjects(ctx context.Context, keyword string, 
 	eg.Go(func() error {
 		var err error
 		total, err = p.CountSubjects(ctx, keyword)
-		return err
+		if err != nil {
+			return fmt.Errorf("搜索主体-统计总数失败: %w", err)
+		}
+		return nil
 	})
 	eg.Go(func() error {
 		var err error
 		subjects, err = p.SearchSubjects(ctx, keyword, offset, limit)
-		return err
+		if err != nil {
+			return fmt.Errorf("搜索主体-分页查询失败: %w", err)
+		}
+		return nil
 	})
 
 	if err := eg.Wait(); err != nil {
@@ -193,7 +199,7 @@ func (s *permissionService) expandParentActions(ctx context.Context, targetCodes
 	// 1. 获取依赖于 targetCodes 的父级权限码
 	parents, err := s.permRepo.FindParentsByNeeds(ctx, targetCodes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("查询父级权限码失败: %w", err)
 	}
 
 	// 2. 合并并去重
@@ -277,7 +283,7 @@ func (s *permissionService) GetAuthorizedMenus(ctx context.Context, username str
 	menuURNs := slice.Map(allMenus, func(_ int, m domain.Menu) string { return m.URN() })
 	codesMap, err := s.permRepo.FindCodesByResourceURNs(ctx, menuURNs)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("查询菜单权限映射失败: %w", err)
 	}
 
 	// 3. 边界预过滤：非系统租户剔除掉所有包含 ScopeSystem 权限的菜单 URN
@@ -519,17 +525,26 @@ func (s *permissionService) GetPermissionManifest(ctx context.Context) (domain.P
 	eg.Go(func() error {
 		var err error
 		perms, err = s.permRepo.ListAllPermissions(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载权限清单-权限底数失败: %w", err)
+		}
+		return nil
 	})
 	eg.Go(func() error {
 		var err error
 		svcMetas, err = s.resourceSvc.ListServices(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载权限清单-服务元数据失败: %w", err)
+		}
+		return nil
 	})
 	eg.Go(func() error {
 		var err error
 		menuBindings, err = s.permRepo.GetMenuBindings(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载权限清单-菜单绑定失败: %w", err)
+		}
+		return nil
 	})
 
 	if err := eg.Wait(); err != nil {
@@ -862,7 +877,7 @@ func (s *permissionService) validatePersonalTenantAdmin(ctx context.Context, use
 	tid := ctxutil.GetTenantID(ctx)
 	tenant, err := s.tenantRepo.FindById(ctx, tid.Int64())
 	if err != nil {
-		return err
+		return fmt.Errorf("查询租户信息失败: %w", err)
 	}
 
 	if strings.HasSuffix(tenant.Code, "-personal") {
@@ -1103,7 +1118,7 @@ func (s *permissionService) listRoleAuthorizations(ctx context.Context, query do
 	// 分页拉取原子规则记录
 	rules, total, err := s.permRepo.ListCasbinRules(ctx, tid, query.Offset, query.Limit, v0Prefix, v1Prefix, query.Keyword)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("查询角色授权规则失败: %w", err)
 	}
 
 	// 核心流水线：转换 -> 回填
@@ -1218,7 +1233,7 @@ func (s *permissionService) fetchMetadataMap(ctx context.Context, urns []string)
 	eg.Go(func() error {
 		rs, err := s.roleSvc.ListByIncludeCodes(ctx, lo.Uniq(roleCodes))
 		if err != nil {
-			return err
+			return fmt.Errorf("回填元数据-角色信息失败: %w", err)
 		}
 
 		mu.Lock()
@@ -1397,19 +1412,28 @@ func (s *permissionService) fetchPolicySummaryData(ctx context.Context, actions 
 		} else {
 			perms, err = s.permRepo.FindByActions(ctx, lo.Uniq(actions))
 		}
-		return err
+		if err != nil {
+			return fmt.Errorf("加载策略摘要-权限底数失败: %w", err)
+		}
+		return nil
 	})
 
 	eg.Go(func() error {
 		var err error
 		serviceTotal, err = s.permRepo.CountByService(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载策略摘要-服务权限计数失败: %w", err)
+		}
+		return nil
 	})
 
 	eg.Go(func() error {
 		var err error
 		svcMetas, err = s.resourceSvc.ListServices(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载策略摘要-服务元数据失败: %w", err)
+		}
+		return nil
 	})
 
 	if err := eg.Wait(); err != nil {

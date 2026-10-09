@@ -2,6 +2,7 @@ package group
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
@@ -30,20 +31,23 @@ func (s *groupService) Create(ctx context.Context, g domain.Group) (int64, error
 
 func (s *groupService) Update(ctx context.Context, g domain.Group) error {
 	_, err := s.repo.Update(ctx, g)
-	return err
+	if err != nil {
+		return fmt.Errorf("更新用户组失败: %w", err)
+	}
+	return nil
 }
 
 func (s *groupService) Delete(ctx context.Context, id int64) error {
 	group, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("查询用户组失败: %w", err)
 	}
 
 	tid := ctxutil.GetTenantID(ctx).Int64()
 
 	// 1. 删除组实体和数据库中的成员关联
 	if err = s.repo.Delete(ctx, id); err != nil {
-		return err
+		return fmt.Errorf("删除用户组失败: %w", err)
 	}
 
 	// 2. 清除 Casbin 规则
@@ -80,13 +84,13 @@ func (s *groupService) AssignMembers(ctx context.Context, groupCode string, user
 	// 1. 获取组详情
 	group, err := s.repo.GetByCode(ctx, groupCode)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("查询用户组失败: %w", err)
 	}
 
 	// 2. 批量查找用户 ID
 	users, err := s.userRepo.FindUsersByUsernames(ctx, usernames)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("批量查询用户失败: %w", err)
 	}
 
 	userIDs := make([]int64, 0, len(users))
@@ -96,7 +100,7 @@ func (s *groupService) AssignMembers(ctx context.Context, groupCode string, user
 
 	// 3. 写入 GORM 关系表
 	if err = s.repo.BindMembers(ctx, group.ID, userIDs); err != nil {
-		return false, err
+		return false, fmt.Errorf("绑定组成员失败: %w", err)
 	}
 
 	// 4. 批量向 Casbin 添加分组策略
@@ -121,13 +125,13 @@ func (s *groupService) RemoveMembers(ctx context.Context, groupCode string, user
 	// 1. 获取组详情
 	group, err := s.repo.GetByCode(ctx, groupCode)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("查询用户组失败: %w", err)
 	}
 
 	// 2. 批量查找用户 ID
 	users, err := s.userRepo.FindUsersByUsernames(ctx, usernames)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("批量查询用户失败: %w", err)
 	}
 
 	userIDs := make([]int64, 0, len(users))
@@ -137,7 +141,7 @@ func (s *groupService) RemoveMembers(ctx context.Context, groupCode string, user
 
 	// 3. 解绑 GORM 关系
 	if err = s.repo.UnbindMembers(ctx, group.ID, userIDs); err != nil {
-		return false, err
+		return false, fmt.Errorf("解绑组成员失败: %w", err)
 	}
 
 	// 4. 批量向 Casbin 移除分组策略
@@ -157,7 +161,7 @@ func (s *groupService) RemoveMembers(ctx context.Context, groupCode string, user
 func (s *groupService) ListMembers(ctx context.Context, groupCode string, offset, limit int64, keyword string) ([]domain.User, int64, error) {
 	group, err := s.repo.GetByCode(ctx, groupCode)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("查询用户组失败: %w", err)
 	}
 
 	return s.repo.ListMembers(ctx, group.ID, offset, limit, keyword)
@@ -171,7 +175,7 @@ func (s *groupService) ListAttachedGroupsByUser(ctx context.Context, username st
 	if userID == 0 {
 		user, err := s.userRepo.FindByUsername(ctx, username)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, fmt.Errorf("查询用户失败: %w", err)
 		}
 		userID = user.ID
 	}
