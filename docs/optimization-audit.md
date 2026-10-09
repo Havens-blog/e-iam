@@ -141,8 +141,8 @@
 ### ④-P2-3【P2·已修复】gRPC Verify 凭证预言机（鉴权默认可选）
 - `internal/grpcx/server.go:25,73-78` AuthToken 为空不挂拦截器；`internal/grpc/tenant.go:20-28` Verify 暴露 VerifyKey。修复：`auth_token` 为空时启动失败；Verify 加调用方校验/限流。
 
-### ④-P2-4【P2·运维】本地 config/config.yaml 泄露真实基础设施凭证
-- `config/config.yaml`（未入库）含公网 IP `106.52.187.69` MySQL/Redis/etcd 凭证 + 弱 session_encrypted_key/auth_token + secure:false。运维处置：轮换全部凭证、换强随机值、生产强制 secure。
+### ④-P2-4【P2·已修复+运维】本地 config/config.yaml 泄露真实基础设施凭证
+- 代码侧 fail-fast 拒绝弱密钥：新增 `internal/cryptox/secrets.go` 的 `ValidateSecret`，校验 `session_encrypted_key`/`identity.encryption_key`/`grpc.server.eiam.auth_token` 三处——空值、长度 <32 字节、示例占位符（`your-grpc-auth-token`/`your-session-encrypt-key`/`your-identity-encryption-key`/`changeme`/`123456`）一律拒绝启动。**运维侧仍需轮换 config.yaml 中已落盘的真实凭证为强随机值**（代码侧已阻止弱值进入运行时）。
 
 ### ④-P3（4 项）
 - P3-1【已修复】LDAP `InsecureSkipVerify`（`pkg/ldapx/client.go`）：保留可配逃生舱（内网自签证书），但 ldaps 连接关闭校验时记 elog Warn 告警，让绕过可见可审计；登录路径已 EscapeFilter 无注入。

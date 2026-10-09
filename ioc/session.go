@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Havens-blog/e-iam/internal/cryptox"
 	"github.com/ecodeclub/ginx/session"
 	"github.com/ecodeclub/ginx/session/cookie"
 	"github.com/ecodeclub/ginx/session/header"
@@ -92,8 +93,8 @@ func InitSession(cmd redis.Cmdable) session.Provider {
 	if err := viper.UnmarshalKey("session", &cfg); err != nil {
 		panic(err)
 	}
-	if cfg.SessionEncryptedKey == "" {
-		panic("session_encrypted_key is required")
+	if err := cryptox.ValidateSecret("session_encrypted_key", cfg.SessionEncryptedKey); err != nil {
+		panic(err)
 	}
 
 	provider := ginRedis.NewSessionProvider(cmd, cfg.SessionEncryptedKey, sessionExpiration)

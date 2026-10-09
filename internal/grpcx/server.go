@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/Havens-blog/e-iam/internal/cryptox"
 	"github.com/gotomicro/ego/core/constant"
 	"github.com/gotomicro/ego/core/elog"
 	"github.com/gotomicro/ego/server"
@@ -93,11 +94,11 @@ func (s *Server) Name() string {
 }
 
 // Init 实现 server.Server 接口。
-// auth_token 为空时启动失败：gRPC 暴露 TenantService.Verify 等凭证校验端点，
-// 禁止在无鉴权密钥下裸奔（历史行为是静默放行，属配置遗漏导致的攻击面）。
+// 启动期 fail-fast：gRPC 暴露 TenantService.Verify 等凭证校验端点，
+// 禁止在无/弱鉴权密钥下裸奔。空值、过短值、示例占位符一律拒绝启动。
 func (s *Server) Init() error {
-	if s.config.AuthToken == "" {
-		return fmt.Errorf("grpc.server.eiam.auth_token 不能为空：gRPC 暴露凭证校验端点，必须配置 JWT 鉴权密钥")
+	if err := cryptox.ValidateSecret("grpc.server.eiam.auth_token", s.config.AuthToken); err != nil {
+		return fmt.Errorf("gRPC 鉴权密钥校验失败: %w", err)
 	}
 	return nil
 }
