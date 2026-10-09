@@ -46,8 +46,10 @@ func (h *Handler) Profile(ctx *ginx.Context, sess session.Session) (ginx.Result,
 			User:            ToUserVO(u),
 			Tenants:         ToTenantVOs(tenants),
 			CurrentTenantID: tenantID,
-			IsAdmin:         lo.Contains(roles, "admin"),
-			Permissions:     permissions,
+			// 管理员判定统一走 domain.HasAdminRole：role:admin 与 role:super_admin
+			// 均视为管理员（此前只认 "admin"，系统空间仅 super_admin 的管理员被误判）
+			IsAdmin:     domain.HasAdminRole(roles),
+			Permissions: permissions,
 		},
 	}, nil
 }
