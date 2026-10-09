@@ -246,6 +246,21 @@ func (mr *MockIPermissionDAOMockRecorder) ListBindingsByResURNs(ctx, resURNs any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBindingsByResURNs", reflect.TypeOf((*MockIPermissionDAO)(nil).ListBindingsByResURNs), ctx, resURNs)
 }
 
+// ListByServiceAndSource mocks base method.
+func (m *MockIPermissionDAO) ListByServiceAndSource(ctx context.Context, service, source string) ([]dao.Permission, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByServiceAndSource", ctx, service, source)
+	ret0, _ := ret[0].([]dao.Permission)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByServiceAndSource indicates an expected call of ListByServiceAndSource.
+func (mr *MockIPermissionDAOMockRecorder) ListByServiceAndSource(ctx, service, source any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByServiceAndSource", reflect.TypeOf((*MockIPermissionDAO)(nil).ListByServiceAndSource), ctx, service, source)
+}
+
 // ListCasbinRules mocks base method.
 func (m *MockIPermissionDAO) ListCasbinRules(ctx context.Context, tid, offset, limit int64, v0Prefix, v1Prefix, keyword string) ([]dao.CasbinRule, int64, error) {
 	m.ctrl.T.Helper()

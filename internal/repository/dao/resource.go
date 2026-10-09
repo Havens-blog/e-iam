@@ -76,6 +76,9 @@ type IResourceDAO interface {
 	FindMenuByName(ctx context.Context, name string) (Menu, error)
 	// ListAllMenus 列出所有状态为 Active 的菜单，按 sort 升序排列
 	ListAllMenus(ctx context.Context) ([]Menu, error)
+	// FindMenuByID 按主键精确查找单条菜单，供 GetMenu 点查路径，
+	// 替代 ListAllMenus 全表扫描后线性查找。未找到返回 errs.ErrRecordNotFound。
+	FindMenuByID(ctx context.Context, id int64) (Menu, error)
 	// ListMenusByParentID 列出指定父菜单下所有状态为 Active 的子菜单
 	ListMenusByParentID(ctx context.Context, parentID int64) ([]Menu, error)
 	// ListMenusByNames 根据名称列表批量查找状态为 Active 的菜单
@@ -158,6 +161,15 @@ func (d *ResourceDAO) ListAllMenus(ctx context.Context) ([]Menu, error) {
 	var menus []Menu
 	err := d.getDB(ctx).Where("status = ?", MenuStatusActive).Order("sort ASC").Find(&menus).Error
 	return menus, err
+}
+
+func (d *ResourceDAO) FindMenuByID(ctx context.Context, id int64) (Menu, error) {
+	var m Menu
+	err := d.getDB(ctx).Where("id = ?", id).First(&m).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return m, errs.ErrRecordNotFound
+	}
+	return m, err
 }
 
 func (d *ResourceDAO) ListMenusByNames(ctx context.Context, names []string) ([]Menu, error) {

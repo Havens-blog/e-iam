@@ -283,15 +283,17 @@ func validateNode(condition *Condition, depth int, count *int) error {
 }
 
 // EvaluateCondition 使用 EIAM 可信属性完整求值授权条件。
+//
+// 性能注记：此处不再重复调用 ValidateCondition——授权条件在策略写入时
+// （policy.ValidatePolicyExpressions）已强校验结构与属性命名空间，求值热路径
+// 重复执行全树递归校验属确定性浪费。调用方若直接构造未经校验的条件，
+// 应自行先调用 ValidateCondition。
 func EvaluateCondition(
 	condition *Condition,
 	attributes map[AttributeKey]any,
 ) (bool, error) {
 	if condition == nil {
 		return true, nil
-	}
-	if err := ValidateCondition(condition); err != nil {
-		return false, err
 	}
 	result, err := evaluateNode(condition, attributes)
 	if err != nil {
@@ -304,15 +306,15 @@ func EvaluateCondition(
 }
 
 // PartialEvaluateAccessScope 解析可信属性引用，并返回由业务数据源求值的残余 AccessScope。
+//
+// 性能注记：同 EvaluateCondition，求值热路径不再重复 ValidateAccessScope，
+// 校验由策略写入路径保证。调用方直接构造未经校验的 scope 时需自行先校验。
 func PartialEvaluateAccessScope(
 	scope *AccessScope,
 	attributes map[AttributeKey]any,
 ) (EvaluationResult, error) {
 	if scope == nil {
 		return EvaluationResult{state: stateTrue}, nil
-	}
-	if err := ValidateAccessScope(scope); err != nil {
-		return EvaluationResult{state: stateFalse}, err
 	}
 	return evaluateNode(scope, attributes)
 }

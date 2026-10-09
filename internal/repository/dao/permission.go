@@ -73,6 +73,9 @@ type IPermissionDAO interface {
 	GetByCode(ctx context.Context, code string) (Permission, error)
 	// ListAll 查询系统中全部逻辑权限定义
 	ListAll(ctx context.Context) ([]Permission, error)
+	// ListByServiceAndSource 按 service+source 精确查询逻辑权限定义，
+	// 供资产对账清理路径直接走索引过滤，避免 ListAll 全表扫描后内存过滤。
+	ListByServiceAndSource(ctx context.Context, service, source string) ([]Permission, error)
 
 	// BindResources 批量写入物理资源绑定关系；以 (perm_code, tenant_id, resource_urn) 为唯一索引进行 Upsert
 	BindResources(ctx context.Context, bindings []PermissionBinding) error
@@ -170,6 +173,12 @@ func (d *PermissionDAO) GetByCode(ctx context.Context, code string) (Permission,
 func (d *PermissionDAO) ListAll(ctx context.Context) ([]Permission, error) {
 	var res []Permission
 	err := d.getDB(ctx).Find(&res).Error
+	return res, err
+}
+
+func (d *PermissionDAO) ListByServiceAndSource(ctx context.Context, service, source string) ([]Permission, error) {
+	var res []Permission
+	err := d.getDB(ctx).Where("service = ? AND source = ?", service, source).Find(&res).Error
 	return res, err
 }
 

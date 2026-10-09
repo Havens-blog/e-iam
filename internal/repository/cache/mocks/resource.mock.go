@@ -56,6 +56,35 @@ func (mr *MockIResourceCacheMockRecorder) GetAPI(ctx, service, method, path any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPI", reflect.TypeOf((*MockIResourceCache)(nil).GetAPI), ctx, service, method, path)
 }
 
+// GetAllMenus mocks base method.
+func (m *MockIResourceCache) GetAllMenus(ctx context.Context) ([]domain.Menu, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllMenus", ctx)
+	ret0, _ := ret[0].([]domain.Menu)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllMenus indicates an expected call of GetAllMenus.
+func (mr *MockIResourceCacheMockRecorder) GetAllMenus(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMenus", reflect.TypeOf((*MockIResourceCache)(nil).GetAllMenus), ctx)
+}
+
+// InvalidateAllMenus mocks base method.
+func (m *MockIResourceCache) InvalidateAllMenus(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InvalidateAllMenus", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InvalidateAllMenus indicates an expected call of InvalidateAllMenus.
+func (mr *MockIResourceCacheMockRecorder) InvalidateAllMenus(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InvalidateAllMenus", reflect.TypeOf((*MockIResourceCache)(nil).InvalidateAllMenus), ctx)
+}
+
 // InvalidateServiceAPIs mocks base method.
 func (m *MockIResourceCache) InvalidateServiceAPIs(ctx context.Context, service string) error {
 	m.ctrl.T.Helper()
@@ -82,6 +111,20 @@ func (m *MockIResourceCache) SetAPI(ctx context.Context, service, method, path s
 func (mr *MockIResourceCacheMockRecorder) SetAPI(ctx, service, method, path, api any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAPI", reflect.TypeOf((*MockIResourceCache)(nil).SetAPI), ctx, service, method, path, api)
+}
+
+// SetAllMenus mocks base method.
+func (m *MockIResourceCache) SetAllMenus(ctx context.Context, menus []domain.Menu) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetAllMenus", ctx, menus)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetAllMenus indicates an expected call of SetAllMenus.
+func (mr *MockIResourceCacheMockRecorder) SetAllMenus(ctx, menus any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAllMenus", reflect.TypeOf((*MockIResourceCache)(nil).SetAllMenus), ctx, menus)
 }
 
 // SetEmptyAPI mocks base method.

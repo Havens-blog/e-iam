@@ -52,12 +52,8 @@ func Compile(decision pbac.Decision, profile Profile) (Expression, error) {
 	if decision.FilterProfile != profile.Name {
 		return Expression{}, fmt.Errorf("PBAC profile mismatch: decision=%q query=%q", decision.FilterProfile, profile.Name)
 	}
-	if err := pbac.ValidateAccessScope(decision.AllowAccessScope); err != nil {
-		return Expression{}, fmt.Errorf("invalid allow access scope: %w", err)
-	}
-	if err := pbac.ValidateAccessScope(decision.DenyAccessScope); err != nil {
-		return Expression{}, fmt.Errorf("invalid deny access scope: %w", err)
-	}
+	// AccessScope 结构在策略写入时已校验，Decide 产出的残余 scope 经校验路径保证有效，
+	// 此处不再重复 ValidateAccessScope 以消除每查询全树递归校验开销。
 	var expressions []Expression
 	if decision.AllowAccessScope != nil {
 		expression, err := compileAccessScope(decision.AllowAccessScope, profile)

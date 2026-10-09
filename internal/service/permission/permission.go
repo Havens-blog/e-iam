@@ -30,6 +30,19 @@ import (
 	"github.com/samber/lo"
 )
 
+// actionSortRules 动作权重排序规则。正则编译有 AST+锁开销，
+// 提升为包级一次性初始化，避免 sortActions 在 toGroupNodes 递归
+// 构建 manifest 分组树时对每个节点重复 MustCompile 4 个正则。
+var actionSortRules = []struct {
+	pattern *regexp.Regexp
+	weight  int
+}{
+	{regexp.MustCompile(`^(view|list|get|manifest|show).*`), 100},
+	{regexp.MustCompile(`^(add|create|save|new).*`), 90},
+	{regexp.MustCompile(`^(edit|update|modify|toggle|change).*`), 80},
+	{regexp.MustCompile(`^(delete|revoke|remove|drop).*`), 70},
+}
+
 type permissionService struct {
 	enforcer    *casbin.SyncedEnforcer
 	resourceSvc resource.IResourceService
@@ -644,24 +657,11 @@ func (t *groupTrie) toGroupNodes(sortActions func([]string), codeToSortMap map[s
 
 // sortActions 动作权重排序算法 (支持正则匹配)
 func (s *permissionService) sortActions(actions []string) {
-	// 定义正则优先级规则 (按顺序匹配，命中即止)
-	type rule struct {
-		pattern *regexp.Regexp
-		weight  int
-	}
-
-	rules := []rule{
-		{pattern: regexp.MustCompile(`^(view|list|get|manifest|show).*`), weight: 100},
-		{pattern: regexp.MustCompile(`^(add|create|save|new).*`), weight: 90},
-		{pattern: regexp.MustCompile(`^(edit|update|modify|toggle|change).*`), weight: 80},
-		{pattern: regexp.MustCompile(`^(delete|revoke|remove|drop).*`), weight: 70},
-	}
-
 	priority := func(code string) int {
 		parts := strings.Split(code, ":")
 		action := parts[len(parts)-1]
 
-		for _, r := range rules {
+		for _, r := range actionSortRules {
 			if r.pattern.MatchString(action) {
 				return r.weight
 			}
