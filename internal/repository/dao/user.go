@@ -319,7 +319,7 @@ func (dao *userDAO) List(ctx context.Context, offset, limit int64, keyword strin
 		db = db.Where("username LIKE ?", "%"+keyword+"%")
 	}
 
-	err := db.Offset(int(offset)).Limit(int(limit)).Order("ctime DESC").Find(&us).Error
+	err := db.Scopes(Paginate(offset, limit)).Order("ctime DESC").Find(&us).Error
 	return us, err
 }
 
@@ -351,7 +351,7 @@ func (dao *userDAO) Search(ctx context.Context, keyword string, offset, limit in
 	}
 
 	// 增加排序，使其能替代原有的 ListMembers
-	err := db.Offset(int(offset)).Limit(int(limit)).Order("ctime DESC").Find(&us).Error
+	err := db.Scopes(Paginate(offset, limit)).Order("ctime DESC").Find(&us).Error
 	return us, err
 }
 
@@ -424,7 +424,7 @@ func (dao *userDAO) GetAttachedUsersWithFilter(ctx context.Context, roleCode str
 
 	// 4. 将关联子查询结果注入 Select 字段，执行具体的分页与 Order 详情获取
 	err = baseQuery.Select("*, (?) AS ctime", subQueryExpr).
-		Offset(int(offset)).Limit(int(limit)).
+		Scopes(Paginate(offset, limit)).
 		Order("ctime DESC").Find(&us).Error
 
 	return us, total, err

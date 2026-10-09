@@ -265,7 +265,7 @@ func (d *PermissionDAO) ListCasbinRules(ctx context.Context, tid, offset, limit 
 		return nil, 0, err
 	}
 
-	err := db.Limit(int(limit)).Offset(int(offset)).Order("id DESC").Find(&res).Error
+	err := db.Scopes(Paginate(offset, limit)).Order("id DESC").Find(&res).Error
 	return res, total, err
 }
 

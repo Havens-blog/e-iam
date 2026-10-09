@@ -117,7 +117,7 @@ func (dao *groupDAO) List(ctx context.Context, offset, limit int64) ([]Group, in
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	err := db.Offset(int(offset)).Limit(int(limit)).Order("ctime DESC").Find(&gs).Error
+	err := db.Scopes(Paginate(offset, limit)).Order("ctime DESC").Find(&gs).Error
 	return gs, total, err
 }
 
@@ -127,7 +127,7 @@ func (dao *groupDAO) Search(ctx context.Context, offset, limit int64, keyword st
 	if keyword != "" {
 		db = db.Where("name LIKE ? OR code LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
 	}
-	err := db.Offset(int(offset)).Limit(int(limit)).Order("ctime DESC").Find(&gs).Error
+	err := db.Scopes(Paginate(offset, limit)).Order("ctime DESC").Find(&gs).Error
 	return gs, err
 }
 
@@ -181,7 +181,7 @@ func (dao *groupDAO) ListMembers(ctx context.Context, groupID int64, offset, lim
 		return nil, 0, err
 	}
 
-	err = db.Offset(int(offset)).Limit(int(limit)).Order("ctime DESC").Find(&users).Error
+	err = db.Scopes(Paginate(offset, limit)).Order("ctime DESC").Find(&users).Error
 	return users, total, err
 }
 
@@ -211,7 +211,7 @@ func (dao *groupDAO) ListGroupsByUserID(ctx context.Context, userID int64, offse
 		return nil, 0, err
 	}
 
-	err := db.Offset(int(offset)).Limit(int(limit)).Order("ctime DESC").Find(&gs).Error
+	err := db.Scopes(Paginate(offset, limit)).Order("ctime DESC").Find(&gs).Error
 	return gs, total, err
 }
 
@@ -231,6 +231,6 @@ func (dao *groupDAO) ListGroupsByCodes(ctx context.Context, codes []string, offs
 		return nil, 0, err
 	}
 
-	err := db.Offset(int(offset)).Limit(int(limit)).Order("ctime DESC").Find(&gs).Error
+	err := db.Scopes(Paginate(offset, limit)).Order("ctime DESC").Find(&gs).Error
 	return gs, total, err
 }

@@ -111,7 +111,7 @@ func (d *policyDAO) GetByCode(ctx context.Context, code string) (Policy, error) 
 func (d *policyDAO) List(ctx context.Context, offset, limit int64) ([]Policy, error) {
 	var ps []Policy
 	err := d.db.WithContext(ctx).Model(&Policy{}).
-		Offset(int(offset)).Limit(int(limit)).Find(&ps).Error
+		Scopes(Paginate(offset, limit)).Find(&ps).Error
 	return ps, err
 }
 
@@ -130,7 +130,7 @@ func (d *policyDAO) Search(ctx context.Context, offset, limit int64, keyword str
 	if policyType != 0 {
 		query = query.Where("type = ?", policyType)
 	}
-	err := query.Offset(int(offset)).Limit(int(limit)).Find(&ps).Error
+	err := query.Scopes(Paginate(offset, limit)).Find(&ps).Error
 	return ps, err
 }
 
@@ -206,7 +206,7 @@ func (d *policyDAO) GetCodesBySubjectWithPagination(ctx context.Context, subType
 		return nil, 0, err
 	}
 
-	err = query.Offset(int(offset)).Limit(int(limit)).Pluck("policy_code", &codes).Error
+	err = query.Scopes(Paginate(offset, limit)).Pluck("policy_code", &codes).Error
 	return codes, total, err
 }
 
@@ -254,7 +254,7 @@ func (d *policyDAO) GetAttachedPoliciesWithFilter(ctx context.Context, subType, 
 
 	// 4. 将关联子查询结果注入 Select 字段，执行具体的分页与 Order 详情获取
 	err = baseQuery.Select("*, (?) AS ctime", subQueryExpr).
-		Offset(int(offset)).Limit(int(limit)).
+		Scopes(Paginate(offset, limit)).
 		Order("ctime DESC").Find(&ps).Error
 
 	return ps, total, err

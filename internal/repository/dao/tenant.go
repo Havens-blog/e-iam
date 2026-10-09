@@ -191,7 +191,7 @@ func (d *TenantDAO) FindByCode(ctx context.Context, code string) (Tenant, error)
 
 func (d *TenantDAO) FindAll(ctx context.Context, offset, limit int64, keyword string) ([]Tenant, error) {
 	var ts []Tenant
-	err := d.tenantQuery(ctx, keyword).Offset(int(offset)).Limit(int(limit)).Find(&ts).Error
+	err := d.tenantQuery(ctx, keyword).Scopes(Paginate(offset, limit)).Find(&ts).Error
 	return ts, err
 }
 
@@ -301,7 +301,7 @@ func (d *TenantDAO) GetAttachedTenantsWithFilter(ctx context.Context, userID, ti
 
 	// 4. 将子查询结果注入 Select 字段，执行具体的分页与 Order 详情获取
 	err = baseQuery.Select("*, (?) AS ctime", subQueryExpr).
-		Offset(int(offset)).Limit(int(limit)).
+		Scopes(Paginate(offset, limit)).
 		Order("ctime DESC").Find(&ts).Error
 
 	return ts, total, err
