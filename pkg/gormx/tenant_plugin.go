@@ -94,13 +94,17 @@ func (p *TenantPlugin) handleCreate(db *gorm.DB) {
 		return
 	}
 
-	tid := ctxutil.GetTenantID(db.Statement.Context)
-	if tid == 0 {
+	// 无 tenant_id 列的表没有隔离语义，直接放行（与查询/更新路径一致）
+	field, ok := db.Statement.Schema.FieldsByDBName[p.tenantColumn]
+	if !ok {
 		return
 	}
 
-	field, ok := db.Statement.Schema.FieldsByDBName[p.tenantColumn]
-	if !ok {
+	tid := ctxutil.GetTenantID(db.Statement.Context)
+	if tid <= 0 {
+		// Fail-Closed：创建与查询/更新/删除一致，无租户上下文直接报错，
+		// 杜绝漏挂中间件或会话损坏时数据以 0 租户或攻击者自填租户落库
+		_ = db.AddError(errors.New("多租户安全拦截：创建操作缺少租户上下文，请通过 ctxutil.WithTenantID 注入或使用 gormx.IgnoreTenantContext(ctx) 显式提权"))
 		return
 	}
 
@@ -138,9 +142,9 @@ func (p *TenantPlugin) setTenantField(ctx context.Context, field *schema.Field, 
 		return
 	}
 
-	if _, isZero := field.ValueOf(ctx, value); isZero {
-		_ = field.Set(ctx, value, tid)
-	}
+	// 上下文租户 ID 是唯一可信来源：无论模型自带什么值一律以上下文为准，
+	// 防止请求体可控 TenantID 造成任意租户投毒
+	_ = field.Set(ctx, value, tid)
 }
 
 // handleQuery 在查询生命周期织入智能多租户安全边界

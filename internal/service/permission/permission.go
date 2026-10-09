@@ -130,12 +130,10 @@ func (s *permissionService) CheckAPIDecision(ctx context.Context, username, serv
 		return pbac.Decision{}, fmt.Errorf("查询接口映射错误: %w", err)
 	}
 
-	// 3. 放行逻辑：未绑定权限代码的资源视为公共资产，仅需登录即可访问
+	// 3. Fail-Closed：资产未绑定任何权限码时统一拒绝（不再“仅登录即放行”）。
+	//    绑定操作经由权限管理 API（自身已绑码）完成，不影响治理闭环
 	if len(targetCodes) == 0 {
-		if api.FilterProfile != "" {
-			return pbac.Decision{ReasonCode: pbac.ReasonAssetUnbound, Reason: "AccessScope-aware resource has no action binding"}, nil
-		}
-		return pbac.Decision{Allowed: true}, nil
+		return pbac.Decision{ReasonCode: pbac.ReasonAssetUnbound, Reason: "API asset has no action binding"}, nil
 	}
 
 	// 4. 边界拦截：普通租户严禁访问系统级权限点

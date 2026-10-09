@@ -159,13 +159,20 @@ func TestTenantPlugin_Create(t *testing.T) {
 			},
 		},
 		{
-			name:     "已显式指定租户ID时不覆盖",
+			name:     "模型自带租户ID被上下文强制覆盖_防请求体租户投毒",
 			tenantID: 300,
 			run: func(t *testing.T, db *gorm.DB) {
 				user := TestUser{Name: "User3", TenantID: 999}
 				err := db.Create(&user).Error
 				require.NoError(t, err)
-				assert.Equal(t, int64(999), user.TenantID)
+				assert.Equal(t, int64(300), user.TenantID)
+			},
+		},
+		{
+			name: "缺失租户上下文时创建被阻断_Fail_Closed",
+			run: func(t *testing.T, db *gorm.DB) {
+				err := db.Create(&TestUser{Name: "NoCtx"}).Error
+				require.Error(t, err)
 			},
 		},
 	}
@@ -184,25 +191,25 @@ func TestTenantPlugin_Query(t *testing.T) {
 
 	// 统一的数据环境装载
 	seedData := func(t *testing.T, db *gorm.DB) {
-		require.NoError(t, db.Session(&gorm.Session{}).Create([]TestUser{
+		require.NoError(t, db.WithContext(IgnoreTenantContext(context.Background())).Create([]TestUser{
 			{Name: "SysUser", TenantID: ctxutil.SystemTenantID},
 			{Name: "TenantAUser", TenantID: 10},
 			{Name: "TenantBUser", TenantID: 20},
 		}).Error)
 
-		require.NoError(t, db.Session(&gorm.Session{}).Create([]TestSharedResource{
+		require.NoError(t, db.WithContext(IgnoreTenantContext(context.Background())).Create([]TestSharedResource{
 			{Name: "SysShared", TenantID: ctxutil.SystemTenantID},
 			{Name: "TenantAShared", TenantID: 10},
 			{Name: "TenantBShared", TenantID: 20},
 		}).Error)
 
-		require.NoError(t, db.Session(&gorm.Session{}).Create([]TestPrivateResource{
+		require.NoError(t, db.WithContext(IgnoreTenantContext(context.Background())).Create([]TestPrivateResource{
 			{Name: "SysPrivate", TenantID: ctxutil.SystemTenantID},
 			{Name: "TenantAPrivate", TenantID: 10},
 			{Name: "TenantBPrivate", TenantID: 20},
 		}).Error)
 
-		require.NoError(t, db.Session(&gorm.Session{}).Create([]TestConditionResource{
+		require.NoError(t, db.WithContext(IgnoreTenantContext(context.Background())).Create([]TestConditionResource{
 			{Name: "SysCondMatched", Type: 1, TenantID: ctxutil.SystemTenantID},
 			{Name: "SysCondUnmatched", Type: 2, TenantID: ctxutil.SystemTenantID},
 			{Name: "TenantACond", Type: 2, TenantID: 10},
@@ -329,7 +336,7 @@ func TestTenantPlugin_WriteStrict(t *testing.T) {
 
 	// 统一的数据环境装配（采用完全确定的 Static ID 插入，彻底消除了跨闭包共享实体指针的全局脏味道）
 	seedData := func(t *testing.T, db *gorm.DB) {
-		require.NoError(t, db.Session(&gorm.Session{}).Create([]TestUser{
+		require.NoError(t, db.WithContext(IgnoreTenantContext(context.Background())).Create([]TestUser{
 			{ID: 1, Name: "UserA", TenantID: 10},
 			{ID: 2, Name: "UserB", TenantID: 20},
 		}).Error)
@@ -400,7 +407,7 @@ func TestTenantPlugin_CustomOptions(t *testing.T) {
 	defaultModels := []any{&CustomEntity{}}
 
 	seedData := func(t *testing.T, db *gorm.DB) {
-		require.NoError(t, db.Session(&gorm.Session{}).Create([]CustomEntity{
+		require.NoError(t, db.WithContext(IgnoreTenantContext(context.Background())).Create([]CustomEntity{
 			{Name: "SysData", CustomTenantID: 999},
 			{Name: "TenantAData", CustomTenantID: 100},
 		}).Error)
@@ -456,7 +463,7 @@ func TestTenantPlugin_Ignore(t *testing.T) {
 	defaultModels := []any{&TestIgnoreResource{}}
 
 	seedData := func(t *testing.T, db *gorm.DB) {
-		require.NoError(t, db.Session(&gorm.Session{}).Create([]TestIgnoreResource{
+		require.NoError(t, db.WithContext(IgnoreTenantContext(context.Background())).Create([]TestIgnoreResource{
 			{Name: "ResourceA", TenantID: 10},
 			{Name: "ResourceB", TenantID: 20},
 		}).Error)
