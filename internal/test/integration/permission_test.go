@@ -9,6 +9,7 @@ import (
 	"github.com/Duke1616/eiam/internal/domain"
 	"github.com/Duke1616/eiam/internal/errs"
 	"github.com/Duke1616/eiam/internal/repository"
+	cachemocks "github.com/Duke1616/eiam/internal/repository/cache/mocks"
 	"github.com/Duke1616/eiam/internal/repository/dao"
 	"github.com/Duke1616/eiam/internal/service/permission"
 	"github.com/Duke1616/eiam/internal/service/resource"
@@ -17,6 +18,7 @@ import (
 	"github.com/Duke1616/eiam/internal/service/tenant"
 	testioc "github.com/Duke1616/eiam/internal/test/ioc"
 	"github.com/Duke1616/eiam/pkg/ctxutil"
+	"github.com/Duke1616/eiam/pkg/gormx"
 	"github.com/casbin/casbin/v2"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -234,13 +236,19 @@ func (s *PermissionSuite) TestIngestPhysicalClearAndReload() {
 	permDAO := dao.NewPermissionDAO(s.db)
 	resDAO := dao.NewResourceDAO(s.db)
 	svcDAO := dao.NewServiceDAO(s.db)
+	permCache := cachemocks.NewMockIPermissionCache(s.ctrl)
+	permCache.EXPECT().DeleteCodesByResources(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	permCache.EXPECT().ClearAllPermissionCaches(gomock.Any()).Return(nil).AnyTimes()
+	resCache := cachemocks.NewMockIResourceCache(s.ctrl)
+	resCache.EXPECT().InvalidateServiceAPIs(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	engine := ingestion.NewEngine(
-		repository.NewPermissionRepository(permDAO),
-		repository.NewResourceRepository(resDAO),
+		repository.NewPermissionRepository(permDAO, permCache),
+		repository.NewResourceRepository(resDAO, resCache),
 		repository.NewServiceRepository(svcDAO),
 	)
 
-	ctx := context.Background()
+	ctx := gormx.IgnoreTenantContext(context.Background())
+	db := s.db.WithContext(ctx)
 	service := "test_clean_svc"
 
 	// 2. 构造第一次 Ingest Snap1
@@ -262,15 +270,15 @@ func (s *PermissionSuite) TestIngestPhysicalClearAndReload() {
 
 	// 验证第一次 Ingest 成功
 	var countPerms int64
-	s.db.Model(&dao.Permission{}).Where("service = ?", service).Count(&countPerms)
+	db.Model(&dao.Permission{}).Where("service = ?", service).Count(&countPerms)
 	assert.Equal(s.T(), int64(1), countPerms)
 
 	var countAPIs int64
-	s.db.Model(&dao.API{}).Where("service = ?", service).Count(&countAPIs)
+	db.Model(&dao.API{}).Where("service = ?", service).Count(&countAPIs)
 	assert.Equal(s.T(), int64(1), countAPIs)
 
 	var countBindings int64
-	s.db.Model(&dao.PermissionBinding{}).Where("perm_code = ?", "test:perm:p1").Count(&countBindings)
+	db.Model(&dao.PermissionBinding{}).Where("perm_code = ?", "test:perm:p1").Count(&countBindings)
 	assert.Equal(s.T(), int64(1), countBindings)
 
 	// 3. 构造第二次 Ingest Snap2 (资产发生了颠覆性修改，原来 p1, api1 被彻底拿掉，换成了 p2, api2)
@@ -292,25 +300,25 @@ func (s *PermissionSuite) TestIngestPhysicalClearAndReload() {
 
 	// 验证强一致对齐效果：
 	// A. 旧权限和旧 API 已经被物理删除，新权限和新 API 成功录入
-	s.db.Model(&dao.Permission{}).Where("service = ?", service).Count(&countPerms)
+	db.Model(&dao.Permission{}).Where("service = ?", service).Count(&countPerms)
 	assert.Equal(s.T(), int64(1), countPerms) // 总共依然是 1 个
 	var p dao.Permission
-	err = s.db.Where("service = ?", service).First(&p).Error
+	err = db.Where("service = ?", service).First(&p).Error
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), "test:perm:p2", p.Code) // 应该是 p2
 
-	s.db.Model(&dao.API{}).Where("service = ?", service).Count(&countAPIs)
+	db.Model(&dao.API{}).Where("service = ?", service).Count(&countAPIs)
 	assert.Equal(s.T(), int64(1), countAPIs) // 总共依然是 1 个
 	var a dao.API
-	err = s.db.Where("service = ?", service).First(&a).Error
+	err = db.Where("service = ?", service).First(&a).Error
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), "/api/v1/p2", a.Path) // 应该是 p2
 
 	// B. 旧的绑定关系已经被完全删除，新的绑定关系成功录入
-	s.db.Model(&dao.PermissionBinding{}).Where("perm_code = ?", "test:perm:p1").Count(&countBindings)
+	db.Model(&dao.PermissionBinding{}).Where("perm_code = ?", "test:perm:p1").Count(&countBindings)
 	assert.Equal(s.T(), int64(0), countBindings) // p1 绑定应该为 0
 
-	s.db.Model(&dao.PermissionBinding{}).Where("perm_code = ?", "test:perm:p2").Count(&countBindings)
+	db.Model(&dao.PermissionBinding{}).Where("perm_code = ?", "test:perm:p2").Count(&countBindings)
 	assert.Equal(s.T(), int64(1), countBindings) // p2 绑定应该为 1
 }
 
@@ -320,13 +328,19 @@ func (s *PermissionSuite) TestIngestMenusAndPhysicalClearProtection() {
 	permDAO := dao.NewPermissionDAO(s.db)
 	resDAO := dao.NewResourceDAO(s.db)
 	svcDAO := dao.NewServiceDAO(s.db)
+	permCache := cachemocks.NewMockIPermissionCache(s.ctrl)
+	permCache.EXPECT().DeleteCodesByResources(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	permCache.EXPECT().ClearAllPermissionCaches(gomock.Any()).Return(nil).AnyTimes()
+	resCache := cachemocks.NewMockIResourceCache(s.ctrl)
+	resCache.EXPECT().InvalidateServiceAPIs(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	engine := ingestion.NewEngine(
-		repository.NewPermissionRepository(permDAO),
-		repository.NewResourceRepository(resDAO),
+		repository.NewPermissionRepository(permDAO, permCache),
+		repository.NewResourceRepository(resDAO, resCache),
 		repository.NewServiceRepository(svcDAO),
 	)
 
-	ctx := context.Background()
+	ctx := gormx.IgnoreTenantContext(context.Background())
+	db := s.db.WithContext(ctx)
 
 	// 1. 模拟全量对齐菜单绑定。此时数据库中并没有 "test:perm:p1" 的 Permission 记录
 	menus := domain.MenuTree{
@@ -341,7 +355,7 @@ func (s *PermissionSuite) TestIngestMenusAndPhysicalClearProtection() {
 
 	// 验证菜单已同步，且其绑定的 perm_id 此时是 0
 	var pb dao.PermissionBinding
-	err = s.db.Where("resource_urn = ?", "eiam:menu:TestMenu").First(&pb).Error
+	err = db.Where("resource_urn = ?", "eiam:menu:TestMenu").First(&pb).Error
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "test:perm:p1", pb.PermCode)
 	assert.Equal(s.T(), int64(0), pb.PermId)
@@ -368,13 +382,13 @@ func (s *PermissionSuite) TestIngestMenusAndPhysicalClearProtection() {
 	// 3. 验证效果
 	// A. 菜单绑定还在，并没有被 PhysicalClearService 误删
 	var pbAfter dao.PermissionBinding
-	err = s.db.Where("resource_urn = ?", "eiam:menu:TestMenu").First(&pbAfter).Error
+	err = db.Where("resource_urn = ?", "eiam:menu:TestMenu").First(&pbAfter).Error
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "test:perm:p1", pbAfter.PermCode)
 
 	// B. 对应的权限已被写入
 	var perm dao.Permission
-	err = s.db.Where("code = ?", "test:perm:p1").First(&perm).Error
+	err = db.Where("code = ?", "test:perm:p1").First(&perm).Error
 	require.NoError(s.T(), err)
 
 	// 4. 重启服务/重新 Ingest，验证依然稳定且不会丢失绑定
@@ -383,7 +397,7 @@ func (s *PermissionSuite) TestIngestMenusAndPhysicalClearProtection() {
 
 	// 再次验证菜单绑定依然正常存在
 	var pbReload dao.PermissionBinding
-	err = s.db.Where("resource_urn = ?", "eiam:menu:TestMenu").First(&pbReload).Error
+	err = db.Where("resource_urn = ?", "eiam:menu:TestMenu").First(&pbReload).Error
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "test:perm:p1", pbReload.PermCode)
 }

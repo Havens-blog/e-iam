@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Duke1616/eiam/cmd/cert"
 	"github.com/Duke1616/eiam/cmd/migrate"
 	"github.com/Duke1616/eiam/cmd/server"
+	"github.com/Duke1616/eiam/cmd/token"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gotomicro/ego/core/elog"
 	"github.com/spf13/cobra"
@@ -33,6 +35,8 @@ func main() {
 	// 3. 注册启动服务的子命令
 	rootCmd.AddCommand(server.NewCommand())
 	rootCmd.AddCommand(migrate.NewCommand())
+	rootCmd.AddCommand(token.NewCommand())
+	rootCmd.AddCommand(cert.NewCommand())
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

@@ -15,6 +15,7 @@
 package ioc
 
 import (
+	"strings"
 	"time"
 
 	"github.com/ecodeclub/ginx/session"
@@ -23,54 +24,81 @@ import (
 	"github.com/ecodeclub/ginx/session/mixin"
 	ginRedis "github.com/ecodeclub/ginx/session/redis"
 	"github.com/redis/go-redis/v9"
+	"github.com/samber/lo"
 	"github.com/spf13/viper"
 )
 
-func InitSession(cmd redis.Cmdable) session.Provider {
-	type Config struct {
-		SessionEncryptedKey string `mapstructure:"session_encrypted_key"`
-		Cookie              struct {
-			Domain string `mapstructure:"domain"`
-			Name   string `mapstructure:"name"`
-		} `mapstructure:"cookie"`
-	}
-	var cfg Config
+type TokenCarrierSource string
 
-	err := viper.UnmarshalKey("session", &cfg)
-	if err != nil {
-		panic(err)
-	}
+const (
+	TokenCarrierCookie TokenCarrierSource = "cookie"
+	TokenCarrierToken  TokenCarrierSource = "token"
+	TokenCarrierHeader                    = "X-Token-Carrier"
+	sessionExpiration                     = 30 * 24 * time.Hour
+)
 
-	if cfg.SessionEncryptedKey == "" {
-		panic("session_encrypted_key is required")
+func (t TokenCarrierSource) String() string {
+	return string(t)
+}
+
+type sessionConfig struct {
+	SessionEncryptedKey string              `mapstructure:"session_encrypted_key"`
+	TokenCarrier        string              `mapstructure:"token_carrier"`
+	Cookie              sessionCookieConfig `mapstructure:"cookie"`
+}
+
+type sessionCookieConfig struct {
+	Domain string `mapstructure:"domain"`
+	Name   string `mapstructure:"name"`
+	Secure *bool  `mapstructure:"secure"`
+}
+
+func ConfiguredTokenCarrier() TokenCarrierSource {
+	return parseTokenCarrier(viper.GetString("session.token_carrier"))
+}
+
+func parseTokenCarrier(value string) TokenCarrierSource {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "", TokenCarrierCookie.String():
+		return TokenCarrierCookie
+	case TokenCarrierToken.String():
+		return TokenCarrierToken
+	default:
+		panic("session.token_carrier must be cookie or token")
 	}
-	if cfg.SessionEncryptedKey == "" {
-		panic("session_encrypted_key is required")
-	}
-	if cfg.Cookie.Name == "" {
+}
+
+func newCookieTokenCarrier(cfg sessionCookieConfig) *cookie.TokenCarrier {
+	if cfg.Name == "" {
 		panic("cookie.name is required")
 	}
-	if cfg.Cookie.Domain == "" {
-		panic("cookie.domain is required")
-	}
 
-	const day = time.Hour * 24 * 30
-	sp := ginRedis.NewSessionProvider(cmd, cfg.SessionEncryptedKey, day)
-	// Secure 标记可配置：本地开发经 nginx 明文 http://localhost:8888 访问时必须为 false，
-	// 否则浏览器拒绝存储会话 cookie，登录后 tenant/switch 等接口全部 401
-	var secure bool
-	if err := viper.UnmarshalKey("session.cookie.secure", &secure); err != nil {
+	// 允许 Domain 留空，缺省时作为 Host-only Cookie 自动适配当前访问域名
+	return &cookie.TokenCarrier{
+		MaxAge:   int(sessionExpiration.Seconds()),
+		Name:     cfg.Name,
+		Path:     "/",
+		Secure:   lo.FromPtrOr(cfg.Secure, true),
+		HttpOnly: false,
+		Domain:   cfg.Domain,
+	}
+}
+
+func InitSession(cmd redis.Cmdable) session.Provider {
+	var cfg sessionConfig
+	if err := viper.UnmarshalKey("session", &cfg); err != nil {
 		panic(err)
 	}
-	cookieC := &cookie.TokenCarrier{
-		MaxAge:   int(day.Seconds()),
-		Name:     cfg.Cookie.Name,
-		Path:     "/",
-		Secure:   secure,
-		HttpOnly: false,
-		Domain:   cfg.Cookie.Domain,
+	if cfg.SessionEncryptedKey == "" {
+		panic("session_encrypted_key is required")
 	}
-	headerC := header.NewTokenCarrier()
-	sp.TokenCarrier = mixin.NewTokenCarrier(headerC, cookieC)
-	return sp
+
+	provider := ginRedis.NewSessionProvider(cmd, cfg.SessionEncryptedKey, sessionExpiration)
+	headerCarrier := header.NewTokenCarrier()
+	if parseTokenCarrier(cfg.TokenCarrier) == TokenCarrierToken {
+		provider.TokenCarrier = headerCarrier
+		return provider
+	}
+	provider.TokenCarrier = mixin.NewTokenCarrier(newCookieTokenCarrier(cfg.Cookie), headerCarrier)
+	return provider
 }

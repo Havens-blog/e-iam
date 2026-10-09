@@ -95,7 +95,6 @@ func (s *tenantKeyService) UpdateKeyStatus(ctx context.Context, id int64, status
 	return s.repo.UpdateStatus(ctx, id, status)
 }
 
-// generateRandomHex 生成指定长度的十六进制随机字符串
 func generateRandomHex(length int) (string, error) {
 	bytes := make([]byte, length/2)
 	if _, err := rand.Read(bytes); err != nil {

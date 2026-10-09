@@ -12,6 +12,13 @@ var (
 	// ErrRoleSelfInheritance 角色禁止继承自身
 	ErrRoleSelfInheritance = errors.New("角色禁止继承自身")
 
+	// 菜单拓扑层级相关错误
+	ErrMenuSelfParent  = errors.New("菜单禁止将自身设为父节点")
+	ErrMenuCycleParent = errors.New("菜单禁止移入自身的子孙节点（防止循环引用死循环）")
+
+	// 多租户隔离相关错误
+	ErrMissingTenantContext = errors.New("多租户安全拦截：未显式声明 IgnoreTenant 且缺失有效租户上下文")
+
 	ErrUserExist          = errors.New("用户名已存在")
 	ErrInvalidUser        = errors.New("账号或密码错误")
 	ErrProviderNotFound   = errors.New("未找到指定的身份源适配器")
@@ -47,4 +54,24 @@ var (
 	// 租户密钥相关错误
 	ErrTenantKeyDisabled = errors.New("租户凭证已被禁用")
 	ErrInvalidTenantKey  = errors.New("凭证密钥不正确")
+	ErrInvalidToken      = errors.New("无效的通信令牌")
+
+	// MFA 多因素认证相关错误
+	ErrMfaAttemptsExhausted = errors.New("MFA 验证失败次数过多")
+	ErrMfaTokenNotFound     = errors.New("MFA 令牌已过期或无效")
+
+	// 统一接入应用 (Application) 与单点登录 (IdP / OIDC / CAS) 相关错误
+	ErrApplicationNotFound     = errors.New("接入应用不存在或已被移除")
+	ErrApplicationSecretWrong  = errors.New("应用客户端密钥错误")
+	ErrUnsupportedProtocol     = errors.New("不支持的应用单点登录协议类型")
+	ErrInvalidRedirectURI      = errors.New("回调地址不在应用配置的合法白名单中")
+	ErrInvalidAuthRequest      = errors.New("授权会话无效或已过期")
+	ErrCasInvalidService       = errors.New("目标服务与当初签发票据的地址不匹配")
+	ErrCasTicketInvalid        = errors.New("票据无效或已过期")
+	ErrCasUserNotFound         = errors.New("凭据关联用户不存在或状态异常")
+	ErrCasServiceNotRegistered = errors.New("目标服务未在当前租户或系统级接入应用白名单中注册")
+	ErrSamlInvalidRequest       = errors.New("SAML 请求格式非法或无法解析")
+	ErrSamlIssuerNotRegistered  = errors.New("SAML 目标应用未在当前租户或系统级白名单中注册")
+	ErrSamlInvalidACSURL        = errors.New("SAML ACS 回调地址不在应用配置的合法白名单中")
+	ErrSamlSigningFailed        = errors.New("SAML 断言签名生成失败")
 )

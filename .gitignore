@@ -1,7 +1,8 @@
-/config/
+/config/*
+!/config/config.example.yaml
 /internal/test/config/
 logs/
 .idea/
 .env
-
 .claude/
+.DS_Store

@@ -7,13 +7,20 @@
 package ioc
 
 import (
+	"github.com/Duke1616/eiam/internal/event/audit"
 	"github.com/Duke1616/eiam/internal/grpc"
 	"github.com/Duke1616/eiam/internal/repository"
 	"github.com/Duke1616/eiam/internal/repository/cache"
 	"github.com/Duke1616/eiam/internal/repository/dao"
+	audit2 "github.com/Duke1616/eiam/internal/service/audit"
 	"github.com/Duke1616/eiam/internal/service/department"
-	discovery2 "github.com/Duke1616/eiam/internal/service/discovery"
+	"github.com/Duke1616/eiam/internal/service/discovery"
 	"github.com/Duke1616/eiam/internal/service/group"
+	"github.com/Duke1616/eiam/internal/service/idp"
+	"github.com/Duke1616/eiam/internal/service/idp/cas"
+	"github.com/Duke1616/eiam/internal/service/idp/claims"
+	"github.com/Duke1616/eiam/internal/service/idp/oidc"
+	"github.com/Duke1616/eiam/internal/service/idp/saml"
 	"github.com/Duke1616/eiam/internal/service/invitation"
 	"github.com/Duke1616/eiam/internal/service/permission"
 	"github.com/Duke1616/eiam/internal/service/permission/checker"
@@ -25,10 +32,12 @@ import (
 	"github.com/Duke1616/eiam/internal/service/user"
 	"github.com/Duke1616/eiam/internal/service/user/ldap"
 	"github.com/Duke1616/eiam/internal/service/user/passkey"
+	audit3 "github.com/Duke1616/eiam/internal/web/audit"
 	department2 "github.com/Duke1616/eiam/internal/web/department"
-	"github.com/Duke1616/eiam/internal/web/discovery"
+	discovery2 "github.com/Duke1616/eiam/internal/web/discovery"
 	group2 "github.com/Duke1616/eiam/internal/web/group"
 	"github.com/Duke1616/eiam/internal/web/identity_source"
+	idp2 "github.com/Duke1616/eiam/internal/web/idp"
 	invitation2 "github.com/Duke1616/eiam/internal/web/invitation"
 	permission2 "github.com/Duke1616/eiam/internal/web/permission"
 	policy2 "github.com/Duke1616/eiam/internal/web/policy"
@@ -36,8 +45,6 @@ import (
 	tenant2 "github.com/Duke1616/eiam/internal/web/tenant"
 	user2 "github.com/Duke1616/eiam/internal/web/user"
 	"github.com/Duke1616/eiam/pkg/web/middleware"
-	"github.com/RediSearch/redisearch-go/v2/redisearch"
-	"github.com/google/wire"
 )
 
 import (
@@ -46,6 +53,7 @@ import (
 
 // Injectors from wire.go:
 
+// InitApp 统一编排并装配完整企业级 EIAM 应用服务实例
 func InitApp() (*App, error) {
 	cmdable := InitRedis()
 	provider := InitSession(cmdable)
@@ -62,7 +70,8 @@ func InitApp() (*App, error) {
 	iPolicyDAO := dao.NewPolicyDAO(db)
 	iPolicyRepository := repository.NewPolicyRepository(iPolicyDAO)
 	iPermissionDAO := dao.NewPermissionDAO(db)
-	iPermissionRepository := repository.NewPermissionRepository(iPermissionDAO)
+	iPermissionCache := cache.NewPermissionCache(cmdable)
+	iPermissionRepository := repository.NewPermissionRepository(iPermissionDAO, iPermissionCache)
 	iBoundaryChecker := checker.NewBoundaryChecker(iPermissionRepository)
 	iPolicyService := policy.NewPolicyService(iPolicyRepository, iBoundaryChecker)
 	syncedEnforcer := InitCasbin(db)
@@ -76,27 +85,32 @@ func InitApp() (*App, error) {
 	iIdentitySourceRepository := repository.NewIdentitySourceRepository(iIdentitySourceDAO, iIdentitySourceCache)
 	cryptoManager := InitCryptoManager()
 	iService := InitIdentitySourceService(iIdentitySourceRepository, cryptoManager)
+	iUserService := user.NewUserService(iUserRepository, iTenantService, iService, cryptoManager)
+	iAuditProducer := audit.NewProducer(cmdable)
 	v2 := InitCredentialProviders(iService)
-	iUserService := user.NewUserService(iUserRepository, iTenantService, iService, v2, cryptoManager)
+	iAuthCoordinator := user.NewAuthCoordinator(iUserRepository, iTenantService, iService, cryptoManager, iAuditProducer, v2)
 	client := InitRedisSearch()
 	redisearchLdapUserCache := InitLdapUserCache(client)
-	ldapService := ldap.NewLdapService(iUserRepository, iTenantService, iService, redisearchLdapUserCache)
+	iLdapService := ldap.NewLdapService(iUserRepository, iTenantService, iService, redisearchLdapUserCache)
 	iPasskeyService := passkey.NewPasskeyService(iUserRepository, iService)
 	iGroupDAO := dao.NewGroupDAO(db)
 	iGroupRepository := repository.NewGroupRepository(iGroupDAO, iUserRepository)
 	iGroupService := group.NewGroupService(iGroupRepository, iUserRepository, syncedEnforcer)
 	iSubjectRegistry := InitSearchSubjectProviders(iRoleService, iUserService, iGroupService)
 	iResourceDAO := dao.NewResourceDAO(db)
-	iResourceRepository := repository.NewResourceRepository(iResourceDAO)
+	iResourceCache := cache.NewResourceCache(cmdable)
+	iResourceRepository := repository.NewResourceRepository(iResourceDAO, iResourceCache)
 	iServiceDAO := dao.NewServiceDAO(db)
 	iServiceRepository := repository.NewServiceRepository(iServiceDAO)
 	iResourceService := resource.NewResourceService(iResourceRepository, iServiceRepository)
 	iAuthorizer := InitOPA()
 	iPermissionService := permission.NewPermissionService(syncedEnforcer, iPolicyService, iRoleService, iSubjectRegistry, iResourceService, iPermissionRepository, iAuthorizer, iBoundaryChecker, iTenantRepository)
-	handler := user2.NewUserHandler(iUserService, iTenantService, ldapService, iService, iPasskeyService, iPermissionService, provider)
+	handler := user2.NewUserHandler(iUserService, iAuthCoordinator, iTenantService, iLdapService, iService, iPasskeyService, iPermissionService)
 	policyHandler := policy2.NewHandler(iPolicyService, iUserService, iPermissionService)
-	tenantHandler := tenant2.NewHandler(iTenantService, iPermissionService, provider)
-	permissionHandler := permission2.NewHandler(iPermissionService, provider)
+	tenantHandler := tenant2.NewHandler(iTenantService, iPermissionService)
+	auditConfig := InitAuditConfig()
+	iAuditMatcher := InitAuditMatcher(auditConfig)
+	permissionHandler := permission2.NewHandler(iPermissionService, iAuditMatcher)
 	roleHandler := role2.NewHandler(iRoleService, iPermissionService, iUserService)
 	iDepartmentDAO := dao.NewDepartmentDAO(db)
 	iDepartmentRepository := repository.NewDepartmentRepository(iDepartmentDAO, iUserRepository)
@@ -109,20 +123,48 @@ func InitApp() (*App, error) {
 	iInvitationService := invitation.NewInvitationService(iInvitationRepository, iTenantRepository, iPermissionService, iUserService)
 	invitationHandler := invitation2.NewHandler(iInvitationService, provider)
 	clientv3Client := InitEtcd()
-	registry := InitCapabilityRegistry(clientv3Client)
-	discoveryHandler := discovery.NewHandler(registry)
+	reporter := InitCapabilityRegistry(clientv3Client)
+	iDiscoveryCache := cache.NewDiscoveryCache(cmdable)
+	iDiscoveryService := discovery.NewDiscoveryService(reporter, iDiscoveryCache)
+	iTokenService := discovery.NewTokenService(iTenantKeyRepository, iServiceRepository)
+	discoveryHandler := discovery2.NewHandler(iDiscoveryService, iTokenService)
+	iAuditDAO := dao.NewAuditDAO(db)
+	iAuditRepository := repository.NewAuditRepository(iAuditDAO)
+	iAuditService := audit2.NewService(iAuditRepository)
+	auditHandler := audit3.NewHandler(iAuditService, iAuditProducer)
+	iApplicationDAO := dao.NewApplicationDAO(db)
+	iOidcCache := cache.NewOidcCache(cmdable)
+	iApplicationRepository := repository.NewApplicationRepository(iApplicationDAO, iOidcCache)
+	idpIService := idp.NewApplicationService(iApplicationRepository)
+	iClaimsResolver := claims.NewClaimsResolver(iUserRepository, iPermissionService)
+	idPConfig := InitIdPConfig()
+	iKeyManager, err := InitKeyManager(idPConfig, iOidcCache)
+	if err != nil {
+		return nil, err
+	}
+	iOidcService := oidc.NewService(iApplicationRepository, iClaimsResolver, iTenantService, iOidcCache, iKeyManager, iAuditProducer)
+	iCasCache := cache.NewCasCache(cmdable)
+	iCasService := cas.NewCasService(iCasCache, iClaimsResolver, iApplicationRepository, iTenantService)
+	iSamlCache := cache.NewSamlCache(cmdable)
+	iCertificateManager, err := InitSamlCertManager(idPConfig, iSamlCache)
+	if err != nil {
+		return nil, err
+	}
+	iSamlService := saml.NewSamlService(iCertificateManager, iClaimsResolver, iApplicationRepository)
+	idpHandler := idp2.NewHandler(idpIService, iOidcService, iCasService, iSamlService)
 	tenancyBuilder := middleware.NewTenancyBuilder(provider)
-	component := InitGinWebServer(provider, listener, v, handler, policyHandler, tenantHandler, permissionHandler, roleHandler, departmentHandler, groupHandler, identity_sourceHandler, invitationHandler, discoveryHandler, tenancyBuilder, iPermissionService)
+	component := InitGinWebServer(provider, listener, v, handler, policyHandler, tenantHandler, permissionHandler, roleHandler, departmentHandler, groupHandler, identity_sourceHandler, invitationHandler, discoveryHandler, auditHandler, idpHandler, tenancyBuilder, iPermissionService, iAuditProducer)
 	userServiceServer := grpc.NewUserServer(iUserService, iPermissionService)
 	tenantServiceServer := grpc.NewTenantServiceServer(iTenantKeyService)
 	departmentServiceServer := grpc.NewDepartmentServer(iDepartmentService)
 	server := InitGrpcServer(userServiceServer, tenantServiceServer, departmentServiceServer)
 	engine := ingestion.NewEngine(iPermissionRepository, iResourceRepository, iServiceRepository)
-	iInitializer := resource.NewResourceInitializer(engine, registry)
+	iInitializer := resource.NewResourceInitializer(engine, reporter)
 	v3 := InitProviders()
 	dlockClient := InitDLock(cmdable)
-	worker := discovery2.NewWorker(clientv3Client, engine, iInitializer, dlockClient)
-	v4 := InitTasks(worker)
+	worker := discovery.NewWorker(clientv3Client, iDiscoveryService, iInitializer, dlockClient)
+	consumer := audit.NewConsumer(cmdable, iAuditRepository)
+	v4 := InitTasks(worker, consumer)
 	app := &App{
 		Web:       component,
 		Server:    server,
@@ -133,26 +175,13 @@ func InitApp() (*App, error) {
 	return app, nil
 }
 
-// wire.go:
-
-var BaseSet = wire.NewSet(
-	InitDB,
-	InitRedis,
-	InitSession,
-	InitCasbin,
-	InitListener,
-	InitOPA,
-	InitEtcd,
-	InitDLock,
-	InitCapabilityRegistry,
-
-	InitRedisSearch,
-	InitCredentialProviders,
-
-	InitServiceConfig,
-	InitCryptoManager,
-)
-
-func InitLdapUserCache(conn *redisearch.Client) cache.RedisearchLdapUserCache {
-	return cache.NewRedisearchLdapUserCache(conn)
+// InitTokenService 为 CLI Token 生成命令提供专用的轻量级依赖注入树 (Wire 原生自动编排，仅需 DB 依赖)
+func InitTokenService() (discovery.ITokenService, error) {
+	db := InitDBWithoutMigrate()
+	iTenantKeyDAO := dao.NewTenantKeyDAO(db)
+	iTenantKeyRepository := repository.NewTenantKeyRepository(iTenantKeyDAO)
+	iServiceDAO := dao.NewServiceDAO(db)
+	iServiceRepository := repository.NewServiceRepository(iServiceDAO)
+	iTokenService := discovery.NewTokenService(iTenantKeyRepository, iServiceRepository)
+	return iTokenService, nil
 }

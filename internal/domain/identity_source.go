@@ -89,6 +89,7 @@ type LDAPConfig struct {
 	MailAttribute        string `json:"mail_attribute"`
 	DisplayNameAttribute string `json:"display_name_attribute"`
 	TitleAttribute       string `json:"title_attribute"`
+	PhoneAttribute       string `json:"phone_attribute"`
 
 	// 过滤条件
 	UserFilter     string `json:"user_filter"`      // 用于登录/单人查询
@@ -124,7 +125,13 @@ func (ident OidcIdentity) BuildUserIdentity() UserIdentity {
 			UnionID: getClaimString(ident.RawClaims, "union_id"),
 			OpenID:  getClaimString(ident.RawClaims, "open_id"),
 		}
-		id.IdentityID = id.FeishuInfo.UserID
+		// 飞书唯一标识多级容错：优先工号，缺省时降级联合标识
+		for _, candidate := range []string{id.FeishuInfo.UserID, id.FeishuInfo.UnionID, id.FeishuInfo.OpenID, ident.ExternalID} {
+			if candidate != "" {
+				id.IdentityID = candidate
+				break
+			}
+		}
 	case SourceWechat.String():
 		id.WechatInfo = WechatInfo{UserID: ident.ExternalID}
 		id.IdentityID = ident.ExternalID
@@ -154,4 +161,16 @@ func getClaimString(claims map[string]interface{}, keys ...string) string {
 	}
 
 	return ""
+}
+
+// OAuthStateContext 记录 OAuth/OIDC 授权全生命周期中透传的业务上下文
+type OAuthStateContext struct {
+	StateID     string            `json:"state_id"`     // 防重放与防 CSRF 的唯一 State 随机值
+	SourceID    int64             `json:"source_id"`    // 认证源 ID
+	Nonce       string            `json:"nonce"`        // OIDC Nonce
+	TenantID    int64             `json:"tenant_id"`    // 目标租户 ID（可选）
+	RedirectURL string            `json:"redirect_url"` // 登录完成后需要恢复的深度业务页面（可选，如 /join?code=xxx）
+	InviteCode  string            `json:"invite_code"`  // 邀请码（可选）
+	Extra       map[string]string `json:"extra"`        // 扩展业务自定义键值对
+	CreatedAt   int64             `json:"created_at"`   // 创建时间戳
 }

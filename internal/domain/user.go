@@ -55,14 +55,33 @@ type User struct {
 	Source      Source
 	MfaType     string
 	MfaSecret   string
-	Ctime       int64
-	Utime       int64
-	LastLoginAt int64
+	Ctime              int64
+	Utime              int64
+	LastLoginAt        int64
+	LastActiveTenantID int64
 
 	// 各司其职：侧写资料归公司
 	Profile UserProfile
 	// 一表通行：身份标识归个人
 	Identities []UserIdentity
+}
+
+// IsActive 判断用户是否处于正常启用激活状态
+func (u User) IsActive() bool {
+	return u.Status == StatusActive
+}
+
+// IsDisabled 判断用户是否已被管理员禁用
+func (u User) IsDisabled() bool {
+	return u.Status == StatusDisable
+}
+
+// DisplayName 返回用户的友好展示名称 (优先昵称，回退用户名)
+func (u User) DisplayName() string {
+	if u.Profile.Nickname != "" {
+		return u.Profile.Nickname
+	}
+	return u.Username
 }
 
 // UserProfile 业务名片
@@ -115,7 +134,12 @@ func (id UserIdentity) IdentityKey() string {
 	case "ldap":
 		return id.LdapInfo.DN
 	case "feishu":
-		return id.FeishuInfo.UserID
+		for _, candidate := range []string{id.FeishuInfo.UserID, id.FeishuInfo.UnionID, id.FeishuInfo.OpenID} {
+			if candidate != "" {
+				return candidate
+			}
+		}
+		return ""
 	case "wechat":
 		return id.WechatInfo.UserID
 	default:
@@ -144,14 +168,14 @@ type LoginResult struct {
 	User     User
 	TenantID int64
 	Tenants  []Tenant
+	AuthType string `json:"auth_type"` // 本次登录成功所使用的真实认证方式 (local, ldap, oidc, passkey 等)
 
 	// MFA/Passkey 流程支持
 	MfaRequired bool   `json:"mfa_required"`
 	MfaToken    string `json:"mfa_token"`
 
-	MustSelectTenant bool   `json:"must_select_tenant"`
-	MustBind         bool   `json:"must_bind"`
-	BindToken        string `json:"bind_token"`
+	MustBind  bool   `json:"must_bind"`
+	BindToken string `json:"bind_token"`
 }
 
 // CredentialProvider 外部凭证提供者策略接口。
