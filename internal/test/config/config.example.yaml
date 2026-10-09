@@ -1,0 +1,21 @@
+# 集成测试配置模板
+# 使用方式：复制本文件为同目录 config.yaml，填入真实测试环境连接信息后执行
+#   go test ./internal/test/integration/...
+# 缺失 config.yaml 时集成测试自动跳过（Skip），不影响 go build / go vet / 单元测试。
+# 注意：config.yaml 已被 .gitignore 排除，切勿提交真实连接信息。
+
+mysql:
+  dsn: "eiam:123456@tcp(127.0.0.1:3306)/eiam_test?charset=utf8mb4&parseTime=True&loc=Local&multiStatements=true"
+
+redis:
+  addr: "127.0.0.1:6379"
+  password: ""
+  db: 0
+
+# Casbin Redis Watcher 配置（InitCasbin 使用）
+casbin:
+  redis:
+    addr: "127.0.0.1:6379"
+    db: 0
+    username: ""
+    password: ""

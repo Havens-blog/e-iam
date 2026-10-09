@@ -59,6 +59,17 @@ func InitDBWithoutMigrate() *gorm.DB {
 		panic(err)
 	}
 
+	// 显式连接池参数：database/sql 默认 MaxOpenConns=0（无上限），
+	// 高峰 + 慢查询时可能打穿 MySQL max_connections(默认 151)，必须收口
+	sqlPool, err := db.DB()
+	if err != nil {
+		panic(err)
+	}
+	sqlPool.SetMaxOpenConns(100)
+	sqlPool.SetMaxIdleConns(30)
+	sqlPool.SetConnMaxLifetime(30 * time.Minute)
+	sqlPool.SetConnMaxIdleTime(10 * time.Minute)
+
 	// 注册多租户隔离插件
 	if err = db.Use(gormx.NewTenantPlugin()); err != nil {
 		panic(err)
@@ -72,6 +83,8 @@ func WaitForDBSetup(dsn string) {
 	if err != nil {
 		panic(err)
 	}
+	// 探测连接仅供启动等待使用，成功后退还底层连接池资源
+	defer func() { _ = sqlDB.Close() }()
 	const maxInterval = 10 * time.Second
 	const maxRetries = 10
 	strategy, err := retry.NewExponentialBackoffRetryStrategy(time.Second, maxInterval, maxRetries)
