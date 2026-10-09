@@ -13,8 +13,8 @@
 |------|----|----|----|----|----------|
 | ①工程/工具链 | 0 | 0 | — | — | gofmt/vet/test 全绿基线已建立；生成链存在跨平台路径漂移与 CI 缺失，**已修复** |
 | ②架构/代码质量 | 0 | 1 | 6 | 5 | 宏观分层健康，Domain/Transport/Service/pkg 依赖方向全部通过；问题集中在错误哨兵泄漏与命名一致性。②-P1-1/②-P2-1 **已修复**；I 前缀/分页助手 P2 延后独立 PR |
-| ③性能 | 1 | 3 | 3 | 2 | 缓存/批处理基础设施成熟；PBAC 求值热路径重复校验是确定性浪费。③-P0-1/P1-2/P1-3/P2-1/P2-2/P2-3 **已修复**；③-P1-1 延后独立 PR |
-| ④安全 | 0 | 3 | 4 | 4 | 近期硬化项（Fail-Closed/AK-SK 恒定时间/JWT 锁定/CORS 互斥/permission fail-closed）均有效；残留明文凭证、审计端点未鉴权、跨租户密钥操纵。④-P1-1/P1-2/P1-3/P2-1/P2-2/P2-3 **已修复**；P2-4 运维处置 |
+| ③性能 | 1 | 3 | 3 | 2 | 缓存/批处理基础设施成熟；PBAC 求值热路径重复校验是确定性浪费。③-P0-1/P1-1/P1-2/P1-3/P2-1/P2-2/P2-3 **全部已修复**；P3 择期 |
+| ④安全 | 0 | 3 | 4 | 4 | 近期硬化项（Fail-Closed/AK-SK 恒定时间/JWT 锁定/CORS 互斥/permission fail-closed）均有效；残留明文凭证、审计端点未鉴权、跨租户密钥操纵。④-P1-1/P1-2/P1-3/P2-1/P2-2/P2-3 **已修复**；间接依赖已升级；P2-4 运维处置 |
 
 **依赖漏洞**：`govulncheck` 调用链 0 可利用；5 个间接依赖漏洞均未被调用，可低风险升级（见 ④依赖小节）。
 
@@ -89,7 +89,7 @@
 ### ③-P0-1【P0·最高优先·已修复】PBAC 求值热路径重复全树校验
 - `pkg/pbac/condition.go:286 EvaluateCondition→ValidateCondition(:159)`；`:307 PartialEvaluateAccessScope→ValidateAccessScope(:176)`；`pkg/pbac/gormx/filter.go:55-60 Compile` 再两次校验。策略写入 `policy.go:109 ValidatePolicyExpressions` 已强校验，求值路径可删校验直接走 `evaluateNode`。零行为变更，预计复杂 PBAC allocs/op ↓10-20%。
 
-### ③-P1-1【P1·暂缓独立 PR】CheckAPIDecision 串行 5+ 次 DB/Redis 往返
+### ③-P1-1【P1·已修复】CheckAPIDecision 串行 5+ 次 DB/Redis 往返
 - `internal/service/permission/permission.go:112`；`getEffectivePolicies`（:391 `GetAttachedBySubjects` 双 DB + `ListByIncludeCodes` DB）每请求无缓存。建议按 `(tenant_id,username)` Redis 短缓存 + 变更点失效。中等改动，建议独立 PR。
 
 ### ③-P1-2【P1·已修复】ListAllMenus 全表扫描无缓存
@@ -150,8 +150,8 @@
 - P3-3 go-jose v3 v3.0.5 间接依赖停维护（直接用 v4 v4.1.4）。
 - P3-4 审计 AfterState 自由文本日志注入/存储 XSS 拼面（`audit/handler.go:48`、`middleware/audit.go:228-249`）。
 
-### ④-依赖【govulncheck】
-调用链 0 可利用漏洞。5 间接依赖未被调用，可低风险升级：etcd client v3.6.11→v3.6.14、klauspost/compress v1.18.4→v1.18.7、Azure/go-ntlmssp→v0.1.1、valyala/fasthttp v1.45.0→v1.70.0；golang.org/x/crypto v0.57.0 暂无修复版。`golang-jwt/jwt/v4 v4.5.2` 已是 CVE-2025-30204 修复版且使用安全；建议长期收敛到单一 v5。
+### ④-依赖【govulncheck·已升级】
+调用链 0 可利用漏洞。间接依赖已低风险升级：etcd client v3.6.11→v3.6.14、klauspost/compress v1.18.4→v1.18.7、Azure/go-ntlmssp→v0.1.1、valyala/fasthttp v1.45.0→v1.70.0（连带 andybalholm/brotli v1.2.0→v1.2.1）；`golang.org/x/crypto v0.57.0` 暂无修复版。`golang-jwt/jwt/v4 v4.5.2` 已是 CVE-2025-30204 修复版且使用安全；建议长期收敛到单一 v5。
 
 ---
 
@@ -159,7 +159,7 @@
 
 - **批次① 已提交**：①-1~①-5 全部（gofmt、生成链本地化、CI 护栏）。
 - **批次② 已提交**：②-P1-1（gRPC gorm 剥离 + errs.ErrUserNotFound）、②-P2-1（Repo gorm 剥离）。②-P2-2（9 internal 接口 I 前缀，`Engine` 与 `gin.Engine` 冲突风险）与 ②-P2-4（DAO 分页助手 18 处）延后独立 PR。暂缓 P2-3/P2-5/P2-6/P3。
-- **批次③ 已提交**：③-P0-1（PBAC 移除重复校验，bench 基线 EvaluateCondition_Complex 977→622 ns/op ↓36%、PartialEvaluateAccessScope 208→154 ↓26%）、③-P2-1（正则包级 var）、③-P1-3（PhysicalClearService DB 过滤）、③-P1-2（ListAllMenus Redis 缓存 + 变更失效）、③-P2-2（GetMenu 主键点查）、③-P2-3（pbac bench 基线）。③-P1-1（CheckAPIDecision 串行往返，中等改动）延后独立 PR、P3 择期。
-- **批次④ 已提交**：permission.go fail-closed、④-P1-1（凭证 SHA-256 哈希存储 + 双轨兼容迁移）、④-P1-2（审计端点 fail-closed 令牌鉴权 + 自由文本长度收敛）、④-P1-3（UpdateStatus tenant_id 归属过滤）、④-P2-1（SameSite=Lax）、④-P2-2（Logout 同源校验）、④-P2-3（gRPC auth_token 强制非空）。间接依赖升级（govulncheck 调用链 0 可利用）择期。P2-4 运维处置、P3 择期。
+- **批次③ 已提交**：③-P0-1（PBAC 移除重复校验，bench 基线 EvaluateCondition_Complex 977→622 ns/op ↓36%、PartialEvaluateAccessScope 208→154 ↓26%）、③-P2-1（正则包级 var）、③-P1-3（PhysicalClearService DB 过滤）、③-P1-2（ListAllMenus Redis 缓存 + 变更失效）、③-P2-2（GetMenu 主键点查）、③-P2-3（pbac bench 基线）、③-P1-1（getEffectivePolicies Redis 短缓存 30s+jitter，AssignRolesToUser/RemoveRolesFromUser 即时失效；跨服务变更走 TTL 兜底）。P3 择期。
+- **批次④ 已提交**：permission.go fail-closed、④-P1-1（凭证 SHA-256 哈希存储 + 双轨兼容迁移）、④-P1-2（审计端点 fail-closed 令牌鉴权 + 自由文本长度收敛）、④-P1-3（UpdateStatus tenant_id 归属过滤）、④-P2-1（SameSite=Lax）、④-P2-2（Logout 同源校验 + 白名单精确比对）、④-P2-3（gRPC auth_token 强制非空）、间接依赖升级（etcd v3.6.14、klauspost v1.18.7、go-ntlmssp v0.1.1、fasthttp v1.70.0）。P2-4 运维处置、P3 择期。
 
 **验证闭环**：`gofmt -l` 0；`go build ./...` ✅；`go vet ./...` ✅；`go test ./...` ✅；生成链一致性 `go generate ./...` 零 diff。`go test -race ./...` 由 CI（Linux，gcc 可用）在 PR 时执行；本机 Windows 无 C 编译器，无法本地构建 cgo/race。
