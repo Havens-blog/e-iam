@@ -146,9 +146,9 @@
 
 ### ④-P3（4 项）
 - P3-1【已修复】LDAP `InsecureSkipVerify`（`pkg/ldapx/client.go`）：保留可配逃生舱（内网自签证书），但 ldaps 连接关闭校验时记 elog Warn 告警，让绕过可见可审计；登录路径已 EscapeFilter 无注入。
-- P3-2 JWT 单密钥无 kid 轮换（`idp/oidc/key.go:107-122`）。
-- P3-3 go-jose v3 v3.0.5 间接依赖停维护（直接用 v4 v4.1.4）。
-- P3-4 审计 AfterState 自由文本日志注入/存储 XSS 拼面（`audit/handler.go:48`、`middleware/audit.go:228-249`）。
+- P3-2【已修复】JWT kid 感知验签（`idp/oidc/key.go`）：SignJWT 已设 kid；VerifyJWT 改为从 token 头部取 kid 经 KeyByID 定位公钥校验（非固定当前公钥），为密钥轮换（多公钥并存、旧 kid 宽限期验签）预留能力。完整集群轮换（缓存多密钥历史 + TTL 宽限）需独立功能迭代。
+- P3-3【评估·上游阻断】go-jose v3 v3.0.5 间接依赖停维护，但经 `coreos/go-oidc/v3` 间接引入（`internal/service/identity_source` OIDC 客户端用），上游未迁移 v4，本仓库无法单方面移除；直接 OIDC Provider 已用 v4。待上游迁移后收敛。
+- P3-4【评估·前端处置】审计 AfterState 自由文本日志注入/存储 XSS 拼面：服务端已做长度截断（≤4096，batch ④ `sanitizeAuditText`），审计日志经 JSON API 返回（无服务端 HTML 渲染，JSON 字符串不被浏览器执行）；存储 XSS 实际风险在前端审计查看页渲染 AfterState 时须强制转义，属前端职责。
 
 ### ④-依赖【govulncheck·已升级】
 调用链 0 可利用漏洞。间接依赖已低风险升级：etcd client v3.6.11→v3.6.14、klauspost/compress v1.18.4→v1.18.7、Azure/go-ntlmssp→v0.1.1、valyala/fasthttp v1.45.0→v1.70.0（连带 andybalholm/brotli v1.2.0→v1.2.1）；`golang.org/x/crypto v0.57.0` 暂无修复版。`golang-jwt/jwt/v4 v4.5.2` 已是 CVE-2025-30204 修复版且使用安全；建议长期收敛到单一 v5。
