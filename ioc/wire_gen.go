@@ -113,11 +113,10 @@ func InitApp() (*App, error) {
 	discoveryHandler := discovery.NewHandler(registry)
 	tenancyBuilder := middleware.NewTenancyBuilder(provider)
 	component := InitGinWebServer(provider, listener, v, handler, policyHandler, tenantHandler, permissionHandler, roleHandler, departmentHandler, groupHandler, identity_sourceHandler, invitationHandler, discoveryHandler, tenancyBuilder, iPermissionService)
-	registryRegistry := InitRegistry(clientv3Client)
 	userServiceServer := grpc.NewUserServer(iUserService, iPermissionService)
 	tenantServiceServer := grpc.NewTenantServiceServer(iTenantKeyService)
 	departmentServiceServer := grpc.NewDepartmentServer(iDepartmentService)
-	server := InitGrpcServer(registryRegistry, userServiceServer, tenantServiceServer, departmentServiceServer)
+	server := InitGrpcServer(userServiceServer, tenantServiceServer, departmentServiceServer)
 	engine := ingestion.NewEngine(iPermissionRepository, iResourceRepository, iServiceRepository)
 	iInitializer := resource.NewResourceInitializer(engine, registry)
 	v3 := InitProviders()
@@ -145,7 +144,6 @@ var BaseSet = wire.NewSet(
 	InitOPA,
 	InitEtcd,
 	InitDLock,
-	InitRegistry,
 	InitCapabilityRegistry,
 
 	InitRedisSearch,

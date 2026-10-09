@@ -45,7 +45,6 @@ var BaseSet = wire.NewSet(
 	InitOPA,
 	InitEtcd,
 	InitDLock,
-	InitRegistry,
 	InitCapabilityRegistry,
 
 	// LDAP 基础设施

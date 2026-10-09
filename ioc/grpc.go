@@ -4,24 +4,22 @@ import (
 	departmentv1 "github.com/Duke1616/eiam/api/proto/gen/eiam/department/v1"
 	tenantv1 "github.com/Duke1616/eiam/api/proto/gen/eiam/tenant/v1"
 	userv1 "github.com/Duke1616/eiam/api/proto/gen/eiam/user/v1"
-	grpcpkg "github.com/Duke1616/etask/pkg/grpc"
-	registrysdk "github.com/Duke1616/etask/pkg/grpc/registry"
+	"github.com/Duke1616/eiam/internal/grpcx"
 
 	"github.com/spf13/viper"
 )
 
 func InitGrpcServer(
-	registry registrysdk.Registry,
 	userServer userv1.UserServiceServer,
 	tenantServer tenantv1.TenantServiceServer,
 	departmentServer departmentv1.DepartmentServiceServer,
-) *grpcpkg.Server {
-	var cfg grpcpkg.ServerConfig
+) *grpcx.Server {
+	var cfg grpcx.ServerConfig
 	if err := viper.UnmarshalKey("grpc.server.eiam", &cfg); err != nil {
 		panic(err)
 	}
 
-	server := grpcpkg.NewServer(cfg, registry, grpcpkg.WithJWTAuth(cfg.AuthToken))
+	server := grpcx.NewServer(cfg, grpcx.WithJWTAuth(cfg.AuthToken))
 
 	userv1.RegisterUserServiceServer(server, userServer)
 	tenantv1.RegisterTenantServiceServer(server, tenantServer)
