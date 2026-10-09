@@ -27,19 +27,22 @@ session:
     name: "eiam-session-token"
     # 生产环境启用 HTTPS 时应设为 true
     secure: false
+    # 默认 true（代码层默认），防 XSS 直读会话 Cookie；前端必须读 Cookie 的调试场景才显式置 false
+    http_only: true
 
 etcd:
   endpoints:
     - 127.0.0.1:2379
 
 identity:
-  # 敏感用户数据落库对称加密密钥
-  encryption_key: 1234567890
+  # 敏感用户数据落库对称加密密钥（KEK）。
+  # 务必替换为强随机值（如 openssl rand -base64 32），各环境独立；严禁使用示例值/弱口令
+  encryption_key: "your-identity-encryption-key"
 
 discovery:
   # 微服务 API 资产自发现注册端点认证
-  # 密钥通过 `eiam token gen --service <name>` 命令生成
-  auth_enabled: false # 是否强制校验微服务上报 Token
+  # 密钥通过 `eiam token gen --service <name>` 命令生成（务必强随机，勿用示例值）
+  auth_enabled: true # 生产必须强制校验微服务上报 Token，防匿名伪造资产目录
 
 casbin:
   # Casbin 权限层级图缓存

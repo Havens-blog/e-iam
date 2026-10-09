@@ -28,9 +28,10 @@ const (
 // InterceptorBuilder 构建并校验 HS256 JWT，并产出 gRPC 一元服务端拦截器。
 // 行为逐字移植自 etask pkg/grpc/interceptors/jwt。
 type InterceptorBuilder struct {
-	key    string
-	issuer string
-	exp    time.Duration
+	key      string
+	issuer   string
+	audience string
+	exp      time.Duration
 }
 
 // Decode 解析并校验 token 字符串，返回受信 MapClaims。
@@ -41,9 +42,9 @@ func (b *InterceptorBuilder) Decode(tokenString string) (jwt.MapClaims, error) {
 	// 去除可能的 Bearer 前缀（兼容不同客户端实现）
 	tokenString = strings.TrimPrefix(tokenString, BearerPrefix)
 
-	// 解析 Token
+	// 解析 Token；仅接受 HS256：拒绝非对称算法与其他 HMAC 变体，防算法混淆攻击
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		if token.Method != jwt.SigningMethodHS256 {
 			return nil, fmt.Errorf("不支持的签名算法: %v", token.Header["alg"])
 		}
 		return []byte(b.key), nil
@@ -55,6 +56,14 @@ func (b *InterceptorBuilder) Decode(tokenString string) (jwt.MapClaims, error) {
 
 	// 验证 Token 有效性
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		// 强制校验签发者，防止用其他系统的同密钥令牌横向访问
+		if b.issuer != "" && !claims.VerifyIssuer(b.issuer, true) {
+			return nil, fmt.Errorf("无效的令牌签发者")
+		}
+		// 受众校验：仅当显式配置 audience 时启用（向后兼容）
+		if b.audience != "" && !claims.VerifyAudience(b.audience, true) {
+			return nil, fmt.Errorf("无效的令牌受众")
+		}
 		return claims, nil
 	}
 	return nil, fmt.Errorf("无效的令牌")
@@ -131,6 +140,13 @@ type JwtOption func(*InterceptorBuilder)
 func WithIssuer(issuer string) JwtOption {
 	return func(b *InterceptorBuilder) {
 		b.issuer = issuer
+	}
+}
+
+// WithAudience 设置受众（非空时 Decode 强制校验 aud）
+func WithAudience(audience string) JwtOption {
+	return func(b *InterceptorBuilder) {
+		b.audience = audience
 	}
 }
 

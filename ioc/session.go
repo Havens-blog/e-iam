@@ -48,9 +48,10 @@ type sessionConfig struct {
 }
 
 type sessionCookieConfig struct {
-	Domain string `mapstructure:"domain"`
-	Name   string `mapstructure:"name"`
-	Secure *bool  `mapstructure:"secure"`
+	Domain   string `mapstructure:"domain"`
+	Name     string `mapstructure:"name"`
+	Secure   *bool  `mapstructure:"secure"`
+	HttpOnly *bool  `mapstructure:"http_only"`
 }
 
 func ConfiguredTokenCarrier() TokenCarrierSource {
@@ -75,11 +76,13 @@ func newCookieTokenCarrier(cfg sessionCookieConfig) *cookie.TokenCarrier {
 
 	// 允许 Domain 留空，缺省时作为 Host-only Cookie 自动适配当前访问域名
 	return &cookie.TokenCarrier{
-		MaxAge:   int(sessionExpiration.Seconds()),
-		Name:     cfg.Name,
-		Path:     "/",
-		Secure:   lo.FromPtrOr(cfg.Secure, true),
-		HttpOnly: false,
+		MaxAge: int(sessionExpiration.Seconds()),
+		Name:   cfg.Name,
+		Path:   "/",
+		Secure: lo.FromPtrOr(cfg.Secure, true),
+		// 默认 HttpOnly=true：防止 XSS 直读会话 Cookie 造成会话劫持；
+		// 仅当前端确有读取需求时显式配置 false（优选 token 头模式替代）
+		HttpOnly: lo.FromPtrOr(cfg.HttpOnly, true),
 		Domain:   cfg.Domain,
 	}
 }
