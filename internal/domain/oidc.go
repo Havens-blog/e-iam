@@ -206,4 +206,3 @@ func ResolveScopeDescriptions(scopes []string) []string {
 	}
 	return descriptions
 }
-

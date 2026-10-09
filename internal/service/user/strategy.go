@@ -45,13 +45,13 @@ type IAuthStrategy interface {
 
 // passwordAuthStrategy 本地账号密码验真策略
 type passwordAuthStrategy struct {
-	repo        repository.IUserRepository
+	repo       repository.IUserRepository
 	localCfgFn func(ctx context.Context) (domain.LocalConfig, bool)
 }
 
 func newPasswordAuthStrategy(repo repository.IUserRepository, localCfgFn func(ctx context.Context) (domain.LocalConfig, bool)) IAuthStrategy {
 	return &passwordAuthStrategy{
-		repo:        repo,
+		repo:       repo,
 		localCfgFn: localCfgFn,
 	}
 }

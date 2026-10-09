@@ -36,6 +36,3 @@ func InitTokenService() (discovery.ITokenService, error) {
 	)
 	return nil, nil
 }
-
-
-

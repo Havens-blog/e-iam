@@ -10,4 +10,3 @@ func InitCapabilityRegistry(client *clientv3.Client) capability.Registry {
 	// SDK 的 Registry 默认使用 Etcd 模式，TTL 60s
 	return synceretcd.New(client, 60)
 }
-

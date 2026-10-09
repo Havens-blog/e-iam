@@ -13,6 +13,7 @@ import (
 )
 
 // IPermissionRepository 权限仓库：管理全局能力项及其绑定的物理资产
+//
 //go:generate mockgen -package=repomocks -destination=./mocks/permission.mock.go github.com/Havens-blog/e-iam/internal/repository IPermissionRepository
 type IPermissionRepository interface {
 	// CreatePermission 录入一个新的全局逻辑能力 (如 iam:user:view)

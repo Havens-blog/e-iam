@@ -184,4 +184,3 @@ func TestExtractPermRef(t *testing.T) {
 		})
 	}
 }
-

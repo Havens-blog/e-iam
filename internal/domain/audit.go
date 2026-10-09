@@ -32,7 +32,7 @@ type AuthLog struct {
 type OperationLog struct {
 	ID           int64  `json:"id"`
 	TenantID     int64  `json:"tenant_id"`
-	Service      string `json:"service"`       // 所属服务: eiam, ecmdb, etask 等
+	Service      string `json:"service"` // 所属服务: eiam, ecmdb, etask 等
 	OperatorID   int64  `json:"operator_id"`
 	OperatorName string `json:"operator_name"`
 	Module       string `json:"module"`        // 业务模块: user, role, group, tenant, policy, department 等

@@ -23,6 +23,7 @@ var (
 )
 
 // IResourceCache 物理接口资源缓存
+//
 //go:generate mockgen -package=cachemocks -destination=./mocks/resource.mock.go github.com/Havens-blog/e-iam/internal/repository/cache IResourceCache
 type IResourceCache interface {
 	// GetAPI 获取接口缓存；未命中返回 ErrCacheNotFound

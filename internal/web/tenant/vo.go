@@ -2,7 +2,6 @@ package tenant
 
 import "github.com/Havens-blog/e-iam/internal/domain"
 
-
 type SwitchTenantReq struct {
 	TenantID int64 `json:"tenant_id" binding:"required,gt=0"`
 }

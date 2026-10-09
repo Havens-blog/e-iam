@@ -11,12 +11,12 @@ import (
 )
 
 type PermissionSuiteDeps struct {
-	DB          *gorm.DB
-	Enforcer    *casbin.SyncedEnforcer
-	TenantSvc   tenant.ITenantService
+	DB           *gorm.DB
+	Enforcer     *casbin.SyncedEnforcer
+	TenantSvc    tenant.ITenantService
 	TenantKeySvc tenant.ITenantKeyService
-	RoleSvc     role.IRoleService
-	PolicySvc   policy.IPolicyService
-	ResourceSvc resource.IResourceService
-	PermSvc     permission.IPermissionService
+	RoleSvc      role.IRoleService
+	PolicySvc    policy.IPolicyService
+	ResourceSvc  resource.IResourceService
+	PermSvc      permission.IPermissionService
 }

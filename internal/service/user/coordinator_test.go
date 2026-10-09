@@ -51,10 +51,10 @@ func TestAuthCoordinator_Authenticate(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		mock       func(ctrl *gomock.Controller) (repository.IUserRepository, tenant.ITenantService)
-		authType   string
-		payload    any
+		name     string
+		mock     func(ctrl *gomock.Controller) (repository.IUserRepository, tenant.ITenantService)
+		authType string
+		payload  any
 
 		wantResult domain.LoginResult
 		wantErr    error
@@ -73,8 +73,8 @@ func TestAuthCoordinator_Authenticate(t *testing.T) {
 
 				return repo, tenantSvc
 			},
-			authType:   "local",
-			payload:    PasswordCredential{Username: "alice", Password: "correct_password"},
+			authType: "local",
+			payload:  PasswordCredential{Username: "alice", Password: "correct_password"},
 			wantResult: domain.LoginResult{
 				User:        aliceUser,
 				TenantID:    ctxutil.SystemTenantID,
@@ -533,4 +533,3 @@ func TestAuthCoordinator_AuditLogs(t *testing.T) {
 		})
 	}
 }
-

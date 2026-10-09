@@ -101,14 +101,14 @@ func (dao *userDAO) membershipScope(tid int64) func(db *gorm.DB) *gorm.DB {
 }
 
 type User struct {
-	ID          int64  `gorm:"primaryKey;autoIncrement"`
-	Username    string `gorm:"column:username;uniqueIndex;type:varchar(64)"`
-	Password    string `gorm:"type:varchar(255)"`
-	Email       string `gorm:"type:varchar(128)"`
-	Status      int    `gorm:"type:tinyint"`
-	Source      string `gorm:"type:varchar(32);index;comment:'身份来源: local, ldap等'"`
-	MfaType     string `gorm:"type:varchar(16);comment:'MFA类型: totp等'"`
-	MfaSecret   string `gorm:"type:varchar(255);comment:'MFA密钥'"`
+	ID                 int64  `gorm:"primaryKey;autoIncrement"`
+	Username           string `gorm:"column:username;uniqueIndex;type:varchar(64)"`
+	Password           string `gorm:"type:varchar(255)"`
+	Email              string `gorm:"type:varchar(128)"`
+	Status             int    `gorm:"type:tinyint"`
+	Source             string `gorm:"type:varchar(32);index;comment:'身份来源: local, ldap等'"`
+	MfaType            string `gorm:"type:varchar(16);comment:'MFA类型: totp等'"`
+	MfaSecret          string `gorm:"type:varchar(255);comment:'MFA密钥'"`
 	Ctime              int64  `gorm:"comment:'创建时间'"`
 	Utime              int64  `gorm:"comment:'更新时间'"`
 	LastLoginAt        int64  `gorm:"comment:'最近登录时间'"`
@@ -457,6 +457,7 @@ func (dao *userDAO) BatchUpsertProfilesAndIdentities(ctx context.Context, profil
 		return nil
 	})
 }
+
 // UpdateMfa 更新用户 MFA 绑定信息
 func (dao *userDAO) UpdateMfa(ctx context.Context, id int64, mfaType, mfaSecret string) error {
 	now := time.Now().UnixMilli()

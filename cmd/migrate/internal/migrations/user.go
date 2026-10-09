@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/Havens-blog/e-iam/internal/cryptox"
-	"github.com/Havens-blog/e-iam/pkg/migration"
 	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/migration"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"

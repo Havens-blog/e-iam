@@ -15,11 +15,11 @@ import (
 
 func TestClaimsResolver_Resolve(t *testing.T) {
 	testCases := []struct {
-		name    string
-		ref     IdentityRef
-		opts    []ResolveOption
-		mock    func(ctrl *gomock.Controller) (*repomocks.MockIUserRepository, *permmocks.MockIPermissionService)
-		wantErr bool
+		name     string
+		ref      IdentityRef
+		opts     []ResolveOption
+		mock     func(ctrl *gomock.Controller) (*repomocks.MockIUserRepository, *permmocks.MockIPermissionService)
+		wantErr  bool
 		wantSub  string
 		wantUser string
 		wantName string

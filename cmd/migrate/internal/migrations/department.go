@@ -1,8 +1,8 @@
 package migrations
 
 import (
-	"github.com/Havens-blog/e-iam/pkg/migration"
 	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/migration"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 )
 

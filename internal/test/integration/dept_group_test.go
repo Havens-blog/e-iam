@@ -38,9 +38,9 @@ type DeptGroupSuite struct {
 	resourceSvc resource.IResourceService
 	permSvc     permission.IPermissionService
 
-	userRepo  repository.IUserRepository
-	deptSvc   department.IDepartmentService
-	groupSvc  group.IGroupService
+	userRepo repository.IUserRepository
+	deptSvc  department.IDepartmentService
+	groupSvc group.IGroupService
 }
 
 func (s *DeptGroupSuite) SetupSuite() {

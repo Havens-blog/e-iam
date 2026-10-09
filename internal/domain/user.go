@@ -47,14 +47,14 @@ func (s Source) String() string {
 
 // User 全局主账户
 type User struct {
-	ID          int64
-	Username    string
-	Password    string
-	Email       string
-	Status      Status
-	Source      Source
-	MfaType     string
-	MfaSecret   string
+	ID                 int64
+	Username           string
+	Password           string
+	Email              string
+	Status             Status
+	Source             Source
+	MfaType            string
+	MfaSecret          string
 	Ctime              int64
 	Utime              int64
 	LastLoginAt        int64

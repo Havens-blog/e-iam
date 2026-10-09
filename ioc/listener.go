@@ -23,4 +23,3 @@ func InitListener() net.Listener {
 
 	return l
 }
-

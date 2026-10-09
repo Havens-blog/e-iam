@@ -257,4 +257,3 @@ func escapeQueryString(s string) string {
 	r := strings.NewReplacer(replacerArgs...)
 	return r.Replace(s)
 }
-
