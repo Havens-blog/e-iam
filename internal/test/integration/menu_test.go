@@ -41,9 +41,16 @@ type MenuTreeSuite struct {
 
 func (s *MenuTreeSuite) SetupSuite() {
 	dir, _ := os.Getwd()
-	viper.SetConfigFile(filepath.Join(dir, "../config/config.yaml"))
-	err := viper.ReadInConfig()
-	s.Require().NoError(err)
+	cfgPath := filepath.Join(dir, "../config/config.yaml")
+	if _, err := os.Stat(cfgPath); err != nil {
+		s.T().Skipf("跳过集成测试：缺少 %s（复制 config.example.yaml 并配置真实测试 MySQL/Redis）", cfgPath)
+		return
+	}
+	viper.SetConfigFile(cfgPath)
+	if err := viper.ReadInConfig(); err != nil {
+		s.T().Skipf("跳过集成测试：测试配置解析失败: %v", err)
+		return
+	}
 
 	deps, err := testioc.InitPermissionSuiteDeps()
 	s.Require().NoError(err)
