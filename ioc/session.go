@@ -56,11 +56,17 @@ func InitSession(cmd redis.Cmdable) session.Provider {
 
 	const day = time.Hour * 24 * 30
 	sp := ginRedis.NewSessionProvider(cmd, cfg.SessionEncryptedKey, day)
+	// Secure 标记可配置：本地开发经 nginx 明文 http://localhost:8888 访问时必须为 false，
+	// 否则浏览器拒绝存储会话 cookie，登录后 tenant/switch 等接口全部 401
+	var secure bool
+	if err := viper.UnmarshalKey("session.cookie.secure", &secure); err != nil {
+		panic(err)
+	}
 	cookieC := &cookie.TokenCarrier{
 		MaxAge:   int(day.Seconds()),
 		Name:     cfg.Cookie.Name,
 		Path:     "/",
-		Secure:   true,
+		Secure:   secure,
 		HttpOnly: false,
 		Domain:   cfg.Cookie.Domain,
 	}

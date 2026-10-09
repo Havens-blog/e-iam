@@ -2,11 +2,11 @@ package tenant
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/Duke1616/eiam/internal/domain"
 	"github.com/Duke1616/eiam/internal/service/permission"
 	"github.com/Duke1616/eiam/internal/service/tenant"
+	"github.com/Duke1616/eiam/internal/web/sessionclaims"
 	"github.com/Duke1616/eiam/pkg/ctxutil"
 	"github.com/Duke1616/eiam/pkg/web/capability"
 	"github.com/Duke1616/eiam/pkg/web/middleware"
@@ -221,7 +221,13 @@ func (h *Handler) SwitchTenant(ctx *ginx.Context) (ginx.Result, error) {
 	}
 
 	uid := sess.Claims().Uid
+	// username 双源兜底：优先读会话存储（SetSessData 写入），缺失时回退
+	// JWT claims——否则签发的新会话 username 永久为空，下游（e-cam 证书域
+	// 角色推导、审计归因）拿到空操作者，链式切换时空值还会向下传染
 	username, _ := sess.Get(ctx.Context, "username").AsString()
+	if username == "" {
+		username = sess.Claims().Data["username"]
+	}
 
 	// 1. 安全校验：确认该用户是否真的属于目标租户
 	hasAccess, err := h.svc.CheckUserTenantAccess(ctx, uid)
@@ -233,12 +239,10 @@ func (h *Handler) SwitchTenant(ctx *ginx.Context) (ginx.Result, error) {
 	_ = sess.Destroy(ctx.Context)
 
 	// 3. 【核心录入点】：重新构建 Session 并注入新的租户 ID
-	// 使用 SessionBuilder 签发包含了租户信息的正式 JWT
+	// 使用 SessionBuilder 签发包含了租户信息的正式 JWT；
+	// 授权声明（is_admin/authorized_codes）同样补全，切换租户不丢失权限信号
 	_, err = session.NewSessionBuilder(&gctx.Context{Context: ctx.Context}, uid).
-		SetJwtData(map[string]string{
-			"tenant_id": strconv.FormatInt(tid, 10),
-			"username":  username,
-		}).
+		SetJwtData(sessionclaims.Build(ctx.Request.Context(), h.permSvc, nil, uid, username, tid)).
 		SetSessData(map[string]any{
 			"tenant_id": tid,
 			"username":  username,

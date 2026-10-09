@@ -3,7 +3,6 @@ package user
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/Duke1616/eiam/internal/domain"
 	"github.com/Duke1616/eiam/internal/errs"
@@ -15,6 +14,7 @@ import (
 	"github.com/Duke1616/eiam/internal/service/user/passkey"
 	"github.com/Duke1616/eiam/pkg/ctxutil"
 	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Duke1616/eiam/internal/web/sessionclaims"
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/ecodeclub/ginx"
 	"github.com/ecodeclub/ginx/session"
@@ -398,13 +398,12 @@ func (h *Handler) Logout(ctx *ginx.Context) (ginx.Result, error) {
 	return ginx.Result{Msg: "退出登录成功"}, nil
 }
 
-// issueSession 统一颁发（或刷新）JWT，tenantID=0 代表临时凭证，等待选择
+// issueSession 统一颁发���或刷新）JWT，tenantID=0 代表临时凭证，等待选择。
+// 授权声明（is_admin/authorized_codes）由 sessionclaims.Build 补全，供下游
+// 服务（e-cam-service 等）按 claims 推导操作者角色。
 func (h *Handler) issueSession(ctx *ginx.Context, uid int64, username string, tenantID int64) error {
 	_, err := session.NewSessionBuilder(ctx, uid).
-		SetJwtData(map[string]string{
-			"tenant_id": strconv.FormatInt(tenantID, 10),
-			"username":  username,
-		}).
+		SetJwtData(sessionclaims.Build(ctx.Request.Context(), h.permSvc, h.logger, uid, username, tenantID)).
 		SetSessData(map[string]any{
 			"username":  username,
 			"tenant_id": tenantID,
