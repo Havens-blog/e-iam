@@ -15,9 +15,9 @@ tasks:
     cmds:
       -  EGO_DEBUG=true go run main.go server
   gen:
-    desc: 代码生成
+    desc: 代码生成（本地 protoc 管线，见 scripts/gen-proto.ps1；BSR 可达环境可换回 buf generate api/proto，见 buf.gen.yaml 注释）
     cmds:
-      - buf generate api/proto
+      - powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/gen-proto.ps1
   gen:perm:
     desc: 运行 AST 权限扫描与代码/文档生成
     cmds:
