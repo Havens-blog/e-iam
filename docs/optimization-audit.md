@@ -145,7 +145,7 @@
 - `config/config.yaml`（未入库）含公网 IP `106.52.187.69` MySQL/Redis/etcd 凭证 + 弱 session_encrypted_key/auth_token + secure:false。运维处置：轮换全部凭证、换强随机值、生产强制 secure。
 
 ### ④-P3（4 项）
-- P3-1 LDAP `InsecureSkipVerify`（`pkg/ldapx/client.go:20,133`）可配关闭证书校验；登录路径已 EscapeFilter。
+- P3-1【已修复】LDAP `InsecureSkipVerify`（`pkg/ldapx/client.go`）：保留可配逃生舱（内网自签证书），但 ldaps 连接关闭校验时记 elog Warn 告警，让绕过可见可审计；登录路径已 EscapeFilter 无注入。
 - P3-2 JWT 单密钥无 kid 轮换（`idp/oidc/key.go:107-122`）。
 - P3-3 go-jose v3 v3.0.5 间接依赖停维护（直接用 v4 v4.1.4）。
 - P3-4 审计 AfterState 自由文本日志注入/存储 XSS 拼面（`audit/handler.go:48`、`middleware/audit.go:228-249`）。

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-ldap/ldap/v3"
+	"github.com/gotomicro/ego/core/elog"
 )
 
 // Config 通用 LDAP 客户端配置
@@ -36,12 +37,16 @@ type IClient interface {
 }
 
 type client struct {
-	cfg Config
+	cfg    Config
+	logger *elog.Component
 }
 
 // NewClient 构建通用 LDAP 客户端
 func NewClient(cfg Config) IClient {
-	return &client{cfg: cfg}
+	return &client{
+		cfg:    cfg,
+		logger: elog.DefaultLogger.With(elog.FieldComponent("ldapx")),
+	}
 }
 
 func (c *client) CheckConnect() error {
@@ -130,6 +135,12 @@ func (c *client) connect(bindDN, password string) (*ldap.Conn, error) {
 
 	var conn *ldap.Conn
 	if u.Scheme == "ldaps" {
+		if c.cfg.InsecureSkipVerify {
+			// 安全告警：证书校验被显式关闭，存在 MITM 风险。仅作为内网自签证书的逃生舱，
+			// 生产环境应配置受信 CA 证书而非关闭校验。此处至少让绕过可见、可审计。
+			c.logger.Warn("LDAP ldaps 连接证书校验已关闭(InsecureSkipVerify)，存在中间人攻击风险，生产环境应配置受信 CA",
+				elog.FieldKey("url"), elog.String("url", c.cfg.URL))
+		}
 		conn, err = ldap.DialURL(c.cfg.URL, ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: c.cfg.InsecureSkipVerify}))
 	} else {
 		conn, err = ldap.DialURL(c.cfg.URL)
