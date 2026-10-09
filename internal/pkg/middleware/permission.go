@@ -36,9 +36,14 @@ func CheckPermission(svc permission.IPermissionService) gin.HandlerFunc {
 		ptr := reflect.ValueOf(ctx.Handler()).Pointer()
 		info, ok := capability.GetResourceInfo(ptr)
 		if !ok {
-			// 未通过 h.Capability 注册的私有路由，默认视为“仅需登录”即可访问 (如 /menus)
-			// 如果需要更严格的权限控制，可以在此处改为 Abort
-			ctx.Next()
+			// Fail-Closed：私有路由必须通过 h.Define(...) 显式注册能力元数据。
+			// 未注册即视为工程遗漏，直接拒绝而非“仅需登录”放行——
+			// 历史缺口（如 /menus）均已迁移至 Identity 分组，此处不再存在合法未注册路由
+			log.Printf("路由缺失能力注册被阻断: [method=%s, path=%s, user=%s] 请使用 h.Define(...) 注册", ctx.Request.Method, ctx.FullPath(), username)
+			ctx.AbortWithStatusJSON(http.StatusForbidden, ginx.Result{
+				Code: 403001,
+				Msg:  "路由未注册权限元数据，访问被拒绝",
+			})
 			return
 		}
 

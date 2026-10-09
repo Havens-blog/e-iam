@@ -15,8 +15,10 @@ type ITenantKeyDAO interface {
 	FindByAccessKey(ctx context.Context, ak string) (TenantKey, error)
 	// ListByTenantID 检索指定租户 ID 拥有的所有密钥实体
 	ListByTenantID(ctx context.Context, tenantID int64) ([]TenantKey, error)
-	// UpdateStatus 修改指定 ID 凭证的启用/禁用状态，并同步更新修改时间
-	UpdateStatus(ctx context.Context, id int64, status int) error
+	// UpdateStatus 修改指定 ID 凭证的启用/禁用状态，并同步更新修改时间。
+	// tenant_key 表整体 eiam:"ignore"（全局唯一 AK 查表所需），租户插件不会注入 tenant_id，
+	// 故必须显式传入 tenantID 作为归属过滤，防止跨租户凭据操纵。
+	UpdateStatus(ctx context.Context, id, tenantID int64, status int) error
 }
 
 type TenantKeyDAO struct {
@@ -62,9 +64,11 @@ func (d *TenantKeyDAO) ListByTenantID(ctx context.Context, tenantID int64) ([]Te
 	return tks, err
 }
 
-func (d *TenantKeyDAO) UpdateStatus(ctx context.Context, id int64, status int) error {
-	return d.db.WithContext(ctx).Model(&TenantKey{}).Where("id = ?", id).Updates(map[string]any{
-		"status": status,
-		"utime":  time.Now().UnixMilli(),
-	}).Error
+func (d *TenantKeyDAO) UpdateStatus(ctx context.Context, id, tenantID int64, status int) error {
+	return d.db.WithContext(ctx).Model(&TenantKey{}).
+		Where("id = ? AND tenant_id = ?", id, tenantID).
+		Updates(map[string]any{
+			"status": status,
+			"utime":  time.Now().UnixMilli(),
+		}).Error
 }

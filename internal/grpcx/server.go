@@ -22,7 +22,7 @@ const ComponentName = "grpc.server"
 type ServerConfig struct {
 	Name       string `mapstructure:"name"`        // 必填:服务名
 	ListenAddr string `mapstructure:"listen_addr"` // 必填:绑定地址
-	AuthToken  string `mapstructure:"auth_token"`  // 可选:JWT 鉴权密钥，为空则不启用鉴权
+	AuthToken  string `mapstructure:"auth_token"`  // 必填:JWT 鉴权密钥，为空则启动失败（gRPC 暴露 Verify 等凭证校验端点，禁止裸奔）
 }
 
 // Validate 验证配置
@@ -92,8 +92,13 @@ func (s *Server) Name() string {
 	return s.config.Name
 }
 
-// Init 实现 server.Server 接口
+// Init 实现 server.Server 接口。
+// auth_token 为空时启动失败：gRPC 暴露 TenantService.Verify 等凭证校验端点，
+// 禁止在无鉴权密钥下裸奔（历史行为是静默放行，属配置遗漏导致的攻击面）。
 func (s *Server) Init() error {
+	if s.config.AuthToken == "" {
+		return fmt.Errorf("grpc.server.eiam.auth_token 不能为空：gRPC 暴露凭证校验端点，必须配置 JWT 鉴权密钥")
+	}
 	return nil
 }
 

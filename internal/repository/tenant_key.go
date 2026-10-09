@@ -16,8 +16,8 @@ type ITenantKeyRepository interface {
 	FindByAccessKey(ctx context.Context, ak string) (domain.TenantKey, error)
 	// ListByTenantID 检索指定租户下的所有凭证数据
 	ListByTenantID(ctx context.Context, tenantID int64) ([]domain.TenantKey, error)
-	// UpdateStatus 修改凭证的生效状态
-	UpdateStatus(ctx context.Context, id int64, status int) error
+	// UpdateStatus 修改凭证的生效状态（须带 tenantID 归属过滤防跨租户操纵）
+	UpdateStatus(ctx context.Context, id, tenantID int64, status int) error
 }
 
 type TenantKeyRepository struct {
@@ -56,8 +56,8 @@ func (r *TenantKeyRepository) ListByTenantID(ctx context.Context, tenantID int64
 	}), nil
 }
 
-func (r *TenantKeyRepository) UpdateStatus(ctx context.Context, id int64, status int) error {
-	return r.dao.UpdateStatus(ctx, id, status)
+func (r *TenantKeyRepository) UpdateStatus(ctx context.Context, id, tenantID int64, status int) error {
+	return r.dao.UpdateStatus(ctx, id, tenantID, status)
 }
 
 func (r *TenantKeyRepository) toDomain(tk dao.TenantKey) domain.TenantKey {

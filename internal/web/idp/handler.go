@@ -331,12 +331,33 @@ func (h *Handler) Logout(c *gin.Context) {
 	_ = sessionx.DestroyGin(c)
 
 	if postLogoutRedirectURI != "" {
+		// 防开放重定向：仅允许同源（与当前请求 Host 一致）或相对路径跳转，
+		// 拦截跳向外部钓鱼站点的注入。非同源一律返回 JSON 而非 302。
+		if !isSameOriginRedirect(c, postLogoutRedirectURI) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "post_logout_redirect_uri must be same-origin"})
+			return
+		}
 		target := appendQueryParam(postLogoutRedirectURI, "state", state)
 		c.Redirect(http.StatusFound, target)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "已成功注销登录态"})
+}
+
+// isSameOriginRedirect 判定重定向目标是否同源（相对路径或与请求 Host 一致），
+// 用于拦截 OIDC Logout 的开放重定向注入。
+func isSameOriginRedirect(c *gin.Context, rawURL string) bool {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	// 相对路径（无 Host）：视为站内，放行。
+	if parsed.Host == "" {
+		return true
+	}
+	// 绝对路径：Host 必须与当前请求一致（含端口）。
+	return parsed.Host == c.Request.Host
 }
 
 func appendQueryParam(rawURL, key, val string) string {

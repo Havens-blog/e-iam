@@ -2,6 +2,7 @@ package ioc
 
 import (
 	"net"
+	"net/http"
 
 	auditevt "github.com/Havens-blog/e-iam/internal/event/audit"
 	"github.com/Havens-blog/e-iam/internal/pkg/middleware"
@@ -40,6 +41,9 @@ func InitGinWebServer(sp session.Provider, listener net.Listener, mdls []gin.Han
 	// 这样 ctxutil.GetTenantID(ctx.Context) 无需 ctx.Set 双通道注入即可正确读取
 	server.Engine.ContextWithFallback = true
 	server.Use(func(ctx *gin.Context) {
+		// 强制 SameSite=Lax：上游 cookie.TokenCarrier 未暴露 SameSite 字段，
+		// 借助 gin Context.SetSameSite 在 SetCookie 时统一注入，收敛跨站 CSRF 面。
+		ctx.SetSameSite(http.SameSiteLaxMode)
 		ctx.Header(TokenCarrierHeader, ConfiguredTokenCarrier().String())
 		ctx.Request = ctx.Request.WithContext(
 			ctxutil.WithClientInfo(ctx.Request.Context(), ctx.ClientIP(), ctx.Request.UserAgent()),
