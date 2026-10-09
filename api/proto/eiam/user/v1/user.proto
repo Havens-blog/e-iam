@@ -1,9 +1,8 @@
 syntax = "proto3";
 
 package eiam.user.v1;
-import "google/protobuf/timestamp.proto";
 
-option go_package = "eiam/user/v1;user";
+option go_package = "github.com/Havens-blog/e-iam/api/proto/gen/eiam/user/v1;userv1";
 
 message User {
   // 用户ID

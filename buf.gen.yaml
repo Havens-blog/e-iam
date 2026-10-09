@@ -4,15 +4,25 @@ managed:
   go_package_prefix:
     default: github.com/Havens-blog/e-iam/api/proto/gen
 plugins:
-  # 默认用最新版本
-  - plugin: buf.build/protocolbuffers/go
-    # 指定版本 buf.build/protocolbuffers/go:v1.28.1
-    # protoc-gen-go 插件
+  # protoc-gen-go 插件，版本与 go.mod 中的 protobuf 库版本保持一致，避免生成无关 diff
+  - plugin: buf.build/protocolbuffers/go:v1.36.11
     out: api/proto/gen
     opt: paths=source_relative
 
-  - plugin: buf.build/grpc/go
-    # protoc-gen-go-grpc 插件
+  # protoc-gen-go-grpc 插件
+  - plugin: buf.build/grpc/go:v1.6.2
     out: api/proto/gen
     opt:
       - paths=source_relative
+
+# 若 buf.build 远程插件不可达（国内网络），可用本地 protoc 重新生成，效果等价：
+#   go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+#   go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2
+#   protoc -I api/proto --go_out=api/proto/gen --go-grpc_out=api/proto/gen \
+#     "--go_opt=paths=source_relative,$(MFLAGS)" "--go-grpc_opt=paths=source_relative,$(MFLAGS)" \
+#     api/proto/eiam/user/v1/user.proto api/proto/eiam/tenant/v1/tenant.proto \
+#     api/proto/eiam/department/v1/department.proto
+#   其中 MFLAGS 为以下三项以逗号连接（强制生成代码内 import 使用完整模块路径）：
+#   Meiam/tenant/v1/tenant.proto=github.com/Havens-blog/e-iam/api/proto/gen/eiam/tenant/v1
+#   Meiam/user/v1/user.proto=github.com/Havens-blog/e-iam/api/proto/gen/eiam/user/v1
+#   Meiam/department/v1/department.proto=github.com/Havens-blog/e-iam/api/proto/gen/eiam/department/v1
