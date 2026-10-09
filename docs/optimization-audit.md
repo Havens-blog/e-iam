@@ -67,8 +67,8 @@
 ### ②-P2-4【P2·已修复】DAO 分页样板重复（18 处）
 - 新增 `internal/repository/dao/paginate.go`：`Paginate(offset, limit)` GORM Scope，统一封装 `Offset/Limit` 计算。19 处 DAO 查询（含 1 处 `Limit().Offset()` 反序变体）收敛为 `.Scopes(Paginate(offset, limit))`，消除样板重复。
 
-### ②-P2-5【P2·暂缓】`PermissionProvider` 双处定义
-- `internal/domain/permission.go:164`（返回 domain.Permission）与 `pkg/web/capability/model.go:84`（返回 capability.Permission）同名不同语义。建议文档化边界或 adapter 复用。
+### ②-P2-5【P2·已修复】`PermissionProvider` 双处定义
+- 经 ②-P2-2 重命名后，internal 版 `domain.PermissionProvider → IPermissionProvider`，pkg 版 `capability.PermissionProvider` 保留原名为对外契约，两者不再同名冲突。
 
 ### ②-P2-6【P2】service ~80 处裸 `return err` 未附加上下文
 - 抽样：`internal/service/user/service.go:118,135`、`tenant/tenant.go:167,190`、`permission/permission.go` 13 处（:88,93,440,445,450,786,1110,1142,1170,1321,1327,1333）。转发领域哨兵可豁免；转发不透明 DB/Repo 错误丢失调用点上下文属违规。待 ②-P1-1 翻译哨兵后重评。
