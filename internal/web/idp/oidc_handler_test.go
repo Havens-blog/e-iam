@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	oidcsvc "github.com/Duke1616/eiam/internal/service/idp/oidc"
-	oidcmocks "github.com/Duke1616/eiam/internal/service/idp/oidc/mocks"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	oidcsvc "github.com/Havens-blog/e-iam/internal/service/idp/oidc"
+	oidcmocks "github.com/Havens-blog/e-iam/internal/service/idp/oidc/mocks"
 	"github.com/ecodeclub/ginx/gctx"
 	"github.com/ecodeclub/ginx/session"
 	"github.com/gin-gonic/gin"

@@ -1,7 +1,7 @@
 package ioc
 
 import (
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 )
 
 // InitProviders 注册逻辑权限供应源。

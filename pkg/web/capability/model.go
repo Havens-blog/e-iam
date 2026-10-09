@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/Duke1616/eiam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
 )
 
 // 权限作用域常量

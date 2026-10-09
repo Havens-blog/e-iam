@@ -3,17 +3,17 @@ package resource
 import (
 	"context"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/errs"
-	"github.com/Duke1616/eiam/internal/repository"
-	"github.com/Duke1616/eiam/pkg/sorter"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
+	"github.com/Havens-blog/e-iam/internal/repository"
+	"github.com/Havens-blog/e-iam/pkg/sorter"
 	"github.com/samber/lo"
 )
 
 // IResourceService 物理资源管理服务
 // 负责维护系统中全量物理资产 (API, Menu) 的元数据底数
 //
-//go:generate mockgen -package=resourcemocks -destination=./mocks/resource.mock.go github.com/Duke1616/eiam/internal/service/resource IResourceService
+//go:generate mockgen -package=resourcemocks -destination=./mocks/resource.mock.go github.com/Havens-blog/e-iam/internal/service/resource IResourceService
 type IResourceService interface {
 	// --- 1. 资产发现与检索 (Assets Discovery) ---
 

@@ -8,9 +8,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	auditevt "github.com/Duke1616/eiam/internal/event/audit"
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	auditevt "github.com/Havens-blog/e-iam/internal/event/audit"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/ecodeclub/ginx/gctx"
 	"github.com/ecodeclub/ginx/session"
 	"github.com/gin-gonic/gin"

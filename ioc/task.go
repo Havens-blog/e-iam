@@ -1,8 +1,8 @@
 package ioc
 
 import (
-	auditevt "github.com/Duke1616/eiam/internal/event/audit"
-	"github.com/Duke1616/eiam/internal/service/discovery"
+	auditevt "github.com/Havens-blog/e-iam/internal/event/audit"
+	"github.com/Havens-blog/e-iam/internal/service/discovery"
 )
 
 // InitTasks 汇总系统中所有的后台长任务 (实现 Task 接口)

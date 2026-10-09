@@ -17,7 +17,7 @@ func TestPermGenFullPipeline(t *testing.T) {
 	code := `package mock
 
 import (
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/gin-gonic/gin"
 )
 

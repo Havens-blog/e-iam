@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/errs"
-	"github.com/Duke1616/eiam/internal/repository"
-	"github.com/Duke1616/eiam/internal/repository/dao"
-	"github.com/Duke1616/eiam/internal/service/permission/checker"
-	"github.com/Duke1616/eiam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
+	"github.com/Havens-blog/e-iam/internal/repository"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/internal/service/permission/checker"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
 )
 
 // IPolicyService 策略管理服务：提供权限策略的生命周期管理与授权绑定逻辑

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Duke1616/eiam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"

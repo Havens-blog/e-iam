@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/gotomicro/ego/core/elog"
 	"github.com/spf13/viper"
 )

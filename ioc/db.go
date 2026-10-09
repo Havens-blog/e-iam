@@ -7,14 +7,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
-	"github.com/Duke1616/eiam/pkg/gormx"
+	"github.com/Havens-blog/e-iam/pkg/gormx"
 	"github.com/ecodeclub/ekit/retry"
 )
 

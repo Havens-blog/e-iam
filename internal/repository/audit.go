@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
 	"github.com/samber/lo"
 )
 
 // IAuditRepository 安全审计仓储接口 (专注于认证与操作审计领域对象的持久化与多维检索)
 //
-//go:generate mockgen -package=repomocks -destination=./mocks/audit.mock.go github.com/Duke1616/eiam/internal/repository IAuditRepository
+//go:generate mockgen -package=repomocks -destination=./mocks/audit.mock.go github.com/Havens-blog/e-iam/internal/repository IAuditRepository
 type IAuditRepository interface {
 	// BatchSaveAuthLogs 批量持久化认证审计领域实体
 	BatchSaveAuthLogs(ctx context.Context, logs []domain.AuthLog) error

@@ -5,9 +5,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/errs"
-	"github.com/Duke1616/eiam/internal/repository"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
+	"github.com/Havens-blog/e-iam/internal/repository"
 )
 
 // ITenantKeyService 租户密钥管理服务：提供租户凭证的生命周期管理与有效性校验

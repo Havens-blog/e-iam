@@ -3,8 +3,8 @@ package permission
 import (
 	"context"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
 )
 
 // IPermissionService 权限逻辑中心

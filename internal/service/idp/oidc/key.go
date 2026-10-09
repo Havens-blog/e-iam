@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	"github.com/Duke1616/eiam/pkg/certx"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	"github.com/Havens-blog/e-iam/pkg/certx"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/golang-jwt/jwt/v5"
 )

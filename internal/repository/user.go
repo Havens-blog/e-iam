@@ -5,10 +5,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	"github.com/Duke1616/eiam/internal/repository/dao"
-	"github.com/Duke1616/eiam/pkg/sqlx"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/samber/lo"
 	"golang.org/x/sync/errgroup"
@@ -17,7 +17,7 @@ import (
 
 // IUserRepository 用户仓储接口
 //
-//go:generate mockgen -package=repomocks -destination=./mocks/user.mock.go github.com/Duke1616/eiam/internal/repository IUserRepository
+//go:generate mockgen -package=repomocks -destination=./mocks/user.mock.go github.com/Havens-blog/e-iam/internal/repository IUserRepository
 type IUserRepository interface {
 	// Create 创建新用户
 	Create(ctx context.Context, u domain.User) (int64, error)

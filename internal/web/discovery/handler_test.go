@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"

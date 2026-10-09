@@ -1,4 +1,4 @@
-module github.com/Duke1616/eiam
+module github.com/Havens-blog/e-iam
 
 go 1.25.0
 

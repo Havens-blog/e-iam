@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	domain "github.com/Duke1616/eiam/internal/domain"
-	pbac "github.com/Duke1616/eiam/pkg/pbac"
+	domain "github.com/Havens-blog/e-iam/internal/domain"
+	pbac "github.com/Havens-blog/e-iam/pkg/pbac"
 	gomock "go.uber.org/mock/gomock"
 )
 

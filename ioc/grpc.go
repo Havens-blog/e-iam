@@ -1,10 +1,10 @@
 package ioc
 
 import (
-	departmentv1 "github.com/Duke1616/eiam/api/proto/gen/eiam/department/v1"
-	tenantv1 "github.com/Duke1616/eiam/api/proto/gen/eiam/tenant/v1"
-	userv1 "github.com/Duke1616/eiam/api/proto/gen/eiam/user/v1"
-	"github.com/Duke1616/eiam/internal/grpcx"
+	departmentv1 "github.com/Havens-blog/e-iam/api/proto/gen/eiam/department/v1"
+	tenantv1 "github.com/Havens-blog/e-iam/api/proto/gen/eiam/tenant/v1"
+	userv1 "github.com/Havens-blog/e-iam/api/proto/gen/eiam/user/v1"
+	"github.com/Havens-blog/e-iam/internal/grpcx"
 
 	"github.com/spf13/viper"
 )

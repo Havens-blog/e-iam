@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/Duke1616/eiam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
 )
 
 func TestLegacyUnconditionalStatementJSONRemainsCompatible(t *testing.T) {

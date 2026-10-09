@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Duke1616/eiam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
 )
 
 // ===========================================================================

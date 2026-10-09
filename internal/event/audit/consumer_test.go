@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository"
-	repomocks "github.com/Duke1616/eiam/internal/repository/mocks"
-	"github.com/Duke1616/eiam/pkg/gormx"
-	"github.com/Duke1616/eiam/pkg/redisx"
-	redisxmocks "github.com/Duke1616/eiam/pkg/redisx/mocks"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository"
+	repomocks "github.com/Havens-blog/e-iam/internal/repository/mocks"
+	"github.com/Havens-blog/e-iam/pkg/gormx"
+	"github.com/Havens-blog/e-iam/pkg/redisx"
+	redisxmocks "github.com/Havens-blog/e-iam/pkg/redisx/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

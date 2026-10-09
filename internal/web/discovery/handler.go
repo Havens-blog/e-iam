@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Duke1616/eiam/internal/service/discovery"
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/internal/service/discovery"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/ecodeclub/ginx"
 	"github.com/gin-gonic/gin"
 	"github.com/gotomicro/ego/core/elog"

@@ -2,7 +2,7 @@
 
 package model
 
-import "github.com/Duke1616/eiam/pkg/web/capability"
+import "github.com/Havens-blog/e-iam/pkg/web/capability"
 
 var (
 	// Audit 安全审计 (iam:audit)

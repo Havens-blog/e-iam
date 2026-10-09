@@ -3,7 +3,7 @@ package ioc
 import (
 	"fmt"
 
-	"github.com/Duke1616/eiam/internal/cryptox"
+	"github.com/Havens-blog/e-iam/internal/cryptox"
 	"github.com/spf13/viper"
 )
 

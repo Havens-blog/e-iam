@@ -1,6 +1,6 @@
 package role
 
-import "github.com/Duke1616/eiam/pkg/pbac"
+import "github.com/Havens-blog/e-iam/pkg/pbac"
 
 type CreateRoleRequest struct {
 	Name string `json:"name" binding:"required"`

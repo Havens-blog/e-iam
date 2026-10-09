@@ -1,7 +1,7 @@
 package ioc
 
 import (
-	"github.com/Duke1616/eiam/internal/pkg/middleware"
+	"github.com/Havens-blog/e-iam/internal/pkg/middleware"
 	"github.com/spf13/viper"
 )
 

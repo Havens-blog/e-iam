@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/coreos/go-oidc/v3/oidc"
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	"golang.org/x/oauth2"

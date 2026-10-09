@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/service/idp/claims"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/service/idp/claims"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )

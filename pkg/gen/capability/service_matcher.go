@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Duke1616/eiam/assets"
+	"github.com/Havens-blog/e-iam/assets"
 	"gopkg.in/yaml.v3"
 )
 

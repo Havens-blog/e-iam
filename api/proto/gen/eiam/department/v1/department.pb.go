@@ -7,7 +7,7 @@
 package departmentv1
 
 import (
-	v1 "github.com/Duke1616/eiam/api/proto/gen/eiam/user/v1"
+	v1 "github.com/Havens-blog/e-iam/api/proto/gen/eiam/user/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

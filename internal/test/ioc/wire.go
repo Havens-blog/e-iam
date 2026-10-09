@@ -3,17 +3,17 @@
 package testioc
 
 import (
-	"github.com/Duke1616/eiam/internal/pkg/searcher"
-	"github.com/Duke1616/eiam/internal/repository"
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	"github.com/Duke1616/eiam/internal/repository/dao"
-	"github.com/Duke1616/eiam/internal/service/permission"
-	"github.com/Duke1616/eiam/internal/service/permission/checker"
-	policysvc "github.com/Duke1616/eiam/internal/service/policy"
-	"github.com/Duke1616/eiam/internal/service/resource"
-	"github.com/Duke1616/eiam/internal/service/role"
-	"github.com/Duke1616/eiam/internal/service/tenant"
-	mainioc "github.com/Duke1616/eiam/ioc"
+	"github.com/Havens-blog/e-iam/internal/pkg/searcher"
+	"github.com/Havens-blog/e-iam/internal/repository"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/internal/service/permission"
+	"github.com/Havens-blog/e-iam/internal/service/permission/checker"
+	policysvc "github.com/Havens-blog/e-iam/internal/service/policy"
+	"github.com/Havens-blog/e-iam/internal/service/resource"
+	"github.com/Havens-blog/e-iam/internal/service/role"
+	"github.com/Havens-blog/e-iam/internal/service/tenant"
+	mainioc "github.com/Havens-blog/e-iam/ioc"
 	"github.com/google/wire"
 )
 

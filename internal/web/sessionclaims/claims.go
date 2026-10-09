@@ -19,8 +19,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/service/permission"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/service/permission"
 	"github.com/gotomicro/ego/core/elog"
 )
 

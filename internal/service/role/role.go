@@ -3,12 +3,12 @@ package role
 import (
 	"context"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/errs"
-	"github.com/Duke1616/eiam/internal/repository"
-	"github.com/Duke1616/eiam/internal/service/permission/checker"
-	"github.com/Duke1616/eiam/internal/service/policy"
-	"github.com/Duke1616/eiam/pkg/ctxutil"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
+	"github.com/Havens-blog/e-iam/internal/repository"
+	"github.com/Havens-blog/e-iam/internal/service/permission/checker"
+	"github.com/Havens-blog/e-iam/internal/service/policy"
+	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/casbin/casbin/v2"
 	"golang.org/x/sync/errgroup"
 )

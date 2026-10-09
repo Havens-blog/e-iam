@@ -3,10 +3,10 @@ package department
 import (
 	"errors"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	depts_vc "github.com/Duke1616/eiam/internal/service/department"
-	"github.com/Duke1616/eiam/pkg/contract/permission"
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	depts_vc "github.com/Havens-blog/e-iam/internal/service/department"
+	"github.com/Havens-blog/e-iam/pkg/contract/permission"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/ecodeclub/ginx"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"

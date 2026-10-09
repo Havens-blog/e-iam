@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	claims "github.com/Duke1616/eiam/internal/service/idp/claims"
+	claims "github.com/Havens-blog/e-iam/internal/service/idp/claims"
 	gomock "go.uber.org/mock/gomock"
 )
 

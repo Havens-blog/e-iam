@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Duke1616/eiam/pkg/pbac"
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/ecodeclub/ginx"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

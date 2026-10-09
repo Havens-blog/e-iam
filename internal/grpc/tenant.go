@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 
-	tenantv1 "github.com/Duke1616/eiam/api/proto/gen/eiam/tenant/v1"
-	"github.com/Duke1616/eiam/internal/service/tenant"
+	tenantv1 "github.com/Havens-blog/e-iam/api/proto/gen/eiam/tenant/v1"
+	"github.com/Havens-blog/e-iam/internal/service/tenant"
 )
 
 type TenantServiceServer struct {

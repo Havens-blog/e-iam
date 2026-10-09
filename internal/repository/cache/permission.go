@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -22,7 +22,7 @@ var (
 
 // IPermissionCache 权限与物理资源绑定映射缓存接口
 //
-//go:generate mockgen -package=cachemocks -destination=./mocks/permission.mock.go github.com/Duke1616/eiam/internal/repository/cache IPermissionCache
+//go:generate mockgen -package=cachemocks -destination=./mocks/permission.mock.go github.com/Havens-blog/e-iam/internal/repository/cache IPermissionCache
 type IPermissionCache interface {
 	// GetCodesByResource 根据物理资源 URN 获取绑定的功能权限码列表；未命中返回 ErrCacheNotFound
 	GetCodesByResource(ctx context.Context, resURN string) ([]string, error)

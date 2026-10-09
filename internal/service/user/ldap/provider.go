@@ -5,9 +5,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	idsource "github.com/Duke1616/eiam/internal/service/identity_source"
-	"github.com/Duke1616/eiam/pkg/ldapx"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	idsource "github.com/Havens-blog/e-iam/internal/service/identity_source"
+	"github.com/Havens-blog/e-iam/pkg/ldapx"
 	"github.com/go-ldap/ldap/v3"
 )
 

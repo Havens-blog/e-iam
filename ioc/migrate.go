@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/Duke1616/eiam/migrations"
+	"github.com/Havens-blog/e-iam/migrations"
 	"github.com/pressly/goose/v3"
 	"gorm.io/gorm"
 )

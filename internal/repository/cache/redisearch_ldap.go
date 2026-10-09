@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/RediSearch/redisearch-go/v2/redisearch"
 	"github.com/gotomicro/ego/core/elog"
 )

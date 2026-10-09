@@ -3,9 +3,9 @@ package ingestion
 import (
 	"testing"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/pkg/pbac"
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 )
 
 func TestFromSyncRequestPreservesSource(t *testing.T) {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	repomocks "github.com/Duke1616/eiam/internal/repository/mocks"
-	resourcemocks "github.com/Duke1616/eiam/internal/service/resource/mocks"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	repomocks "github.com/Havens-blog/e-iam/internal/repository/mocks"
+	resourcemocks "github.com/Havens-blog/e-iam/internal/service/resource/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

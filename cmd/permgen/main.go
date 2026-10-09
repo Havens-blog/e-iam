@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Duke1616/eiam/pkg/gen/capability"
+	"github.com/Havens-blog/e-iam/pkg/gen/capability"
 	"github.com/spf13/cobra"
 )
 

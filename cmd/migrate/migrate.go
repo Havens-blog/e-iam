@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/Duke1616/eiam/cmd/migrate/internal/config"
-	"github.com/Duke1616/eiam/cmd/migrate/internal/migrations"
-	"github.com/Duke1616/eiam/internal/repository/dao"
-	"github.com/Duke1616/eiam/pkg/migration"
+	"github.com/Havens-blog/e-iam/cmd/migrate/internal/config"
+	"github.com/Havens-blog/e-iam/cmd/migrate/internal/migrations"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/migration"
 	"github.com/spf13/cobra"
 )
 

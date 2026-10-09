@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Duke1616/eiam/pkg/pbac"
-	"github.com/Duke1616/eiam/pkg/sorter"
-	"github.com/Duke1616/eiam/pkg/urn"
-	"github.com/Duke1616/eiam/pkg/utils"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/pkg/sorter"
+	"github.com/Havens-blog/e-iam/pkg/urn"
+	"github.com/Havens-blog/e-iam/pkg/utils"
 )
 
 // MenuTree 定义菜单树类型，代表具有层级嵌套关系的菜单集合

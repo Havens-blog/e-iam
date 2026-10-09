@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Duke1616/eiam/pkg/certx"
+	"github.com/Havens-blog/e-iam/pkg/certx"
 	"github.com/spf13/cobra"
 )
 

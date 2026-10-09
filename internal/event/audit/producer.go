@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/pkg/redisx"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/pkg/redisx"
 	"github.com/gotomicro/ego/core/elog"
 	"github.com/redis/go-redis/v9"
 )
 
-//go:generate mockgen -package=auditmocks -destination=./mocks/producer.mock.go github.com/Duke1616/eiam/internal/event/audit IAuditProducer
+//go:generate mockgen -package=auditmocks -destination=./mocks/producer.mock.go github.com/Havens-blog/e-iam/internal/event/audit IAuditProducer
 
 // IAuditProducer 审计日志生产者接口契约
 type IAuditProducer interface {

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/pkg/redisx"
-	redisxmocks "github.com/Duke1616/eiam/pkg/redisx/mocks"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/pkg/redisx"
+	redisxmocks "github.com/Havens-blog/e-iam/pkg/redisx/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

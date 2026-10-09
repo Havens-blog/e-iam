@@ -5,11 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	cachemocks "github.com/Duke1616/eiam/internal/repository/cache/mocks"
-	"github.com/Duke1616/eiam/internal/repository/dao"
-	daomocks "github.com/Duke1616/eiam/internal/repository/dao/mocks"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	cachemocks "github.com/Havens-blog/e-iam/internal/repository/cache/mocks"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	daomocks "github.com/Havens-blog/e-iam/internal/repository/dao/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

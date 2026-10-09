@@ -3,7 +3,7 @@ package user
 import (
 	"errors"
 
-	"github.com/Duke1616/eiam/internal/errs"
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/ecodeclub/ginx"
 )
 

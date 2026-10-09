@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Duke1616/eiam/internal/authz"
+	"github.com/Havens-blog/e-iam/internal/authz"
 )
 
 // InitOPA 初始化 OPA 鉴权引擎

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Duke1616/eiam/pkg/gen/swagger"
+	"github.com/Havens-blog/e-iam/pkg/gen/swagger"
 	"github.com/spf13/cobra"
 )
 

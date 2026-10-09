@@ -1,12 +1,12 @@
 package group
 
 import (
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/service/group"
-	"github.com/Duke1616/eiam/internal/service/role"
-	"github.com/Duke1616/eiam/pkg/contract/model"
-	"github.com/Duke1616/eiam/pkg/contract/permission"
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/service/group"
+	"github.com/Havens-blog/e-iam/internal/service/role"
+	"github.com/Havens-blog/e-iam/pkg/contract/model"
+	"github.com/Havens-blog/e-iam/pkg/contract/permission"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/ecodeclub/ginx"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"

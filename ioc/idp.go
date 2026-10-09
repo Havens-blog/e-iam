@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	oidcsvc "github.com/Duke1616/eiam/internal/service/idp/oidc"
-	samlsvc "github.com/Duke1616/eiam/internal/service/idp/saml"
-	"github.com/Duke1616/eiam/pkg/certx"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	oidcsvc "github.com/Havens-blog/e-iam/internal/service/idp/oidc"
+	samlsvc "github.com/Havens-blog/e-iam/internal/service/idp/saml"
+	"github.com/Havens-blog/e-iam/pkg/certx"
 	"github.com/samber/lo"
 	"github.com/spf13/viper"
 )

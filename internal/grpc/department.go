@@ -3,10 +3,10 @@ package grpc
 import (
 	"context"
 
-	departmentv1 "github.com/Duke1616/eiam/api/proto/gen/eiam/department/v1"
-	userv1 "github.com/Duke1616/eiam/api/proto/gen/eiam/user/v1"
-	"github.com/Duke1616/eiam/internal/domain"
-	departmentsvc "github.com/Duke1616/eiam/internal/service/department"
+	departmentv1 "github.com/Havens-blog/e-iam/api/proto/gen/eiam/department/v1"
+	userv1 "github.com/Havens-blog/e-iam/api/proto/gen/eiam/user/v1"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	departmentsvc "github.com/Havens-blog/e-iam/internal/service/department"
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gotomicro/ego/core/elog"
 	"google.golang.org/grpc/codes"

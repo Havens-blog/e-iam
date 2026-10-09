@@ -3,7 +3,7 @@ package dao
 import (
 	"context"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 	"gorm.io/gorm"
 )
 
@@ -54,7 +54,7 @@ func (AuditOperationLog) TableName() string {
 
 // IAuditDAO 审计日志数据访问接口
 //
-//go:generate mockgen -package=daomocks -destination=./mocks/audit.mock.go github.com/Duke1616/eiam/internal/repository/dao IAuditDAO
+//go:generate mockgen -package=daomocks -destination=./mocks/audit.mock.go github.com/Havens-blog/e-iam/internal/repository/dao IAuditDAO
 type IAuditDAO interface {
 	// BatchInsertAuthLogs 批量写入认证审计日志
 	BatchInsertAuthLogs(ctx context.Context, logs []AuditAuthLog) error

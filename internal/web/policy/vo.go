@@ -1,6 +1,6 @@
 package policy
 
-import "github.com/Duke1616/eiam/pkg/pbac"
+import "github.com/Havens-blog/e-iam/pkg/pbac"
 
 type CreatePolicyReq struct {
 	Name      string      `json:"name"`

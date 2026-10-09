@@ -7,9 +7,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/errs"
-	casmocks "github.com/Duke1616/eiam/internal/service/idp/cas/mocks"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
+	casmocks "github.com/Havens-blog/e-iam/internal/service/idp/cas/mocks"
 	"github.com/ecodeclub/ginx/session"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

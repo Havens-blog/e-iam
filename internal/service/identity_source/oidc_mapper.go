@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 )
 
 // mapper 根据 ProviderType 返回相应的 mapper 实现

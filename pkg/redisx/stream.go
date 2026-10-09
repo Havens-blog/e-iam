@@ -87,7 +87,7 @@ func WithExtraValues(kvs map[string]any) PublishOption {
 
 // IStreamQueue 泛型 Redis Stream 消息队列契约
 //
-//go:generate mockgen -package=redisxmocks -destination=./mocks/stream.mock.go github.com/Duke1616/eiam/pkg/redisx IStreamQueue
+//go:generate mockgen -package=redisxmocks -destination=./mocks/stream.mock.go github.com/Havens-blog/e-iam/pkg/redisx IStreamQueue
 type IStreamQueue[T any] interface {
 	// Publish 发布强类型消息至指定 Stream (自动序列化，返回生成的消息ID)
 	Publish(ctx context.Context, stream string, payload T, opts ...PublishOption) (string, error)

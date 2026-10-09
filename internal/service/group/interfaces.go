@@ -3,7 +3,7 @@ package group
 import (
 	"context"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 )
 
 // IGroupService 用户组服务接口

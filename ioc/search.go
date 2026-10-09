@@ -3,12 +3,12 @@ package ioc
 import (
 	"context"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/pkg/searcher"
-	"github.com/Duke1616/eiam/internal/service/group"
-	"github.com/Duke1616/eiam/internal/service/role"
-	"github.com/Duke1616/eiam/internal/service/user"
-	"github.com/Duke1616/eiam/pkg/ctxutil"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/pkg/searcher"
+	"github.com/Havens-blog/e-iam/internal/service/group"
+	"github.com/Havens-blog/e-iam/internal/service/role"
+	"github.com/Havens-blog/e-iam/internal/service/user"
+	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 )
 
 // InitSearchSubjectProviders 深度编排提供者

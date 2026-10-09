@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/service/resource"
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/internal/service/resource"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/gotomicro/ego/core/elog"
 	"github.com/meoying/dlock-go"
 	"github.com/samber/lo"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/Duke1616/eiam/pkg/gormx"
-	"github.com/Duke1616/eiam/pkg/sqlx"
+	"github.com/Havens-blog/e-iam/pkg/gormx"
+	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"gorm.io/gorm"
 )
 

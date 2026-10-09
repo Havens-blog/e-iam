@@ -3,12 +3,12 @@ package invitation
 import (
 	"context"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/errs"
-	"github.com/Duke1616/eiam/internal/repository"
-	"github.com/Duke1616/eiam/internal/service/permission"
-	"github.com/Duke1616/eiam/internal/service/user"
-	"github.com/Duke1616/eiam/pkg/ctxutil"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
+	"github.com/Havens-blog/e-iam/internal/repository"
+	"github.com/Havens-blog/e-iam/internal/service/permission"
+	"github.com/Havens-blog/e-iam/internal/service/user"
+	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/google/uuid"
 )

@@ -3,7 +3,7 @@ package idp
 import (
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 )
 
 // CreateApplicationReq 创建应用请求

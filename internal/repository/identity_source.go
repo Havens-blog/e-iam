@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	"github.com/Duke1616/eiam/internal/repository/dao"
-	"github.com/Duke1616/eiam/pkg/sqlx"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"github.com/samber/lo"
 )
 

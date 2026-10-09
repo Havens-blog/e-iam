@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
 )
 
 // BenchmarkOPA_Decide_Simple 基础策略准入判定性能（单核/串行）

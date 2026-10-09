@@ -1,9 +1,9 @@
 package migrations
 
 import (
-	"github.com/Duke1616/eiam/pkg/migration"
-	"github.com/Duke1616/eiam/internal/repository/dao"
-	"github.com/Duke1616/eiam/pkg/sqlx"
+	"github.com/Havens-blog/e-iam/pkg/migration"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/sqlx"
 )
 
 const (

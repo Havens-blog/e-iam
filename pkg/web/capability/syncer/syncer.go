@@ -3,7 +3,7 @@ package syncer
 import (
 	"context"
 
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 )
 
 // Reporter 资产上报契约

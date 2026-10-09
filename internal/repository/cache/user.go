@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/redis/go-redis/v9"
 )

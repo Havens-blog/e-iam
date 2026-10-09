@@ -5,18 +5,18 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	"github.com/Duke1616/eiam/internal/repository/dao"
-	"github.com/Duke1616/eiam/pkg/pbac"
-	"github.com/Duke1616/eiam/pkg/sqlx"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"github.com/samber/lo"
 	"gorm.io/gorm"
 )
 
 // IResourceRepository 物理资源仓库，负责全量 Menu 和 API 资产的底数管理
 //
-//go:generate mockgen -package=repomocks -destination=./mocks/resource.mock.go github.com/Duke1616/eiam/internal/repository IResourceRepository
+//go:generate mockgen -package=repomocks -destination=./mocks/resource.mock.go github.com/Havens-blog/e-iam/internal/repository IResourceRepository
 type IResourceRepository interface {
 	// CreateAPI 录入一个新的物理接口资产
 	CreateAPI(ctx context.Context, a domain.API) (int64, error)

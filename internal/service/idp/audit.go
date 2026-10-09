@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	auditevt "github.com/Duke1616/eiam/internal/event/audit"
-	"github.com/Duke1616/eiam/pkg/ctxutil"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	auditevt "github.com/Havens-blog/e-iam/internal/event/audit"
+	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 )
 
 // RecordAudit 异步记录 IDP 域操作审计日志

@@ -1,6 +1,6 @@
 package tenant
 
-import "github.com/Duke1616/eiam/internal/domain"
+import "github.com/Havens-blog/e-iam/internal/domain"
 
 
 type SwitchTenantReq struct {

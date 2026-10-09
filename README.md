@@ -180,10 +180,10 @@ EIAM 提供的权限契约生成器与 API 文档生成器已解耦为标准 CLI
 
 ```bash
 # 1. 安装权限 AST 扫描与强类型契约生成器 (permgen)
-go install github.com/Duke1616/eiam/cmd/permgen@latest
+go install github.com/Havens-blog/e-iam/cmd/permgen@latest
 
 # 2. 安装零注释 OpenAPI 3.0 与交互式预览生成器 (swaggergen)
-go install github.com/Duke1616/eiam/cmd/swaggergen@latest
+go install github.com/Havens-blog/e-iam/cmd/swaggergen@latest
 
 # 3. (可选) 安装 Taskfile 自动化任务调度工具
 go install github.com/go-task/task/v3/cmd/task@latest

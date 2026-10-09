@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Duke1616/eiam/pkg/ctxutil"
+	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )

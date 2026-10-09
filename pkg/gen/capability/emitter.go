@@ -38,7 +38,7 @@ func (e *Emitter) EmitGoContract(g *Graph, outPath string) error {
 // EmitContractModels 生成业务领域模型元数据 (pkg/contract/model/zz_generated_models.go)
 func (e *Emitter) EmitContractModels(g *Graph, outPath string, capabilityPkg string) error {
 	if capabilityPkg == "" {
-		capabilityPkg = "github.com/Duke1616/eiam/pkg/web/capability"
+		capabilityPkg = "github.com/Havens-blog/e-iam/pkg/web/capability"
 	}
 	data := map[string]any{
 		"Modules":       g.SortedModules(),

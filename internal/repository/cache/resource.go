@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -23,7 +23,7 @@ var (
 )
 
 // IResourceCache 物理接口资源缓存
-//go:generate mockgen -package=cachemocks -destination=./mocks/resource.mock.go github.com/Duke1616/eiam/internal/repository/cache IResourceCache
+//go:generate mockgen -package=cachemocks -destination=./mocks/resource.mock.go github.com/Havens-blog/e-iam/internal/repository/cache IResourceCache
 type IResourceCache interface {
 	// GetAPI 获取接口缓存；未命中返回 ErrCacheNotFound
 	GetAPI(ctx context.Context, service, method, path string) (domain.API, error)

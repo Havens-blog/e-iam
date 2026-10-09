@@ -1,7 +1,7 @@
 package policy
 
 import (
-	"github.com/Duke1616/eiam/internal/web/user"
+	"github.com/Havens-blog/e-iam/internal/web/user"
 	"github.com/ecodeclub/ginx"
 )
 

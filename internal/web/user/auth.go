@@ -3,10 +3,10 @@ package user
 import (
 	"fmt"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	usersvc "github.com/Duke1616/eiam/internal/service/user"
-	"github.com/Duke1616/eiam/internal/web/sessionclaims"
-	"github.com/Duke1616/eiam/pkg/sessionx"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	usersvc "github.com/Havens-blog/e-iam/internal/service/user"
+	"github.com/Havens-blog/e-iam/internal/web/sessionclaims"
+	"github.com/Havens-blog/e-iam/pkg/sessionx"
 	"github.com/ecodeclub/ginx"
 	"github.com/ecodeclub/ginx/session"
 	"github.com/gotomicro/ego/core/elog"

@@ -4,9 +4,9 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository"
-	"github.com/Duke1616/eiam/pkg/ctxutil"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository"
+	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/casbin/casbin/v2"
 )
 

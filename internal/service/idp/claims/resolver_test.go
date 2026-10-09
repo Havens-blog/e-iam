@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	repomocks "github.com/Duke1616/eiam/internal/repository/mocks"
-	permmocks "github.com/Duke1616/eiam/internal/service/permission/mocks"
-	"github.com/Duke1616/eiam/pkg/ctxutil"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	repomocks "github.com/Havens-blog/e-iam/internal/repository/mocks"
+	permmocks "github.com/Havens-blog/e-iam/internal/service/permission/mocks"
+	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

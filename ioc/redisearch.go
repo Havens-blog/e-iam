@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Duke1616/eiam/internal/repository/cache"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
 	"github.com/RediSearch/redisearch-go/v2/redisearch"
 	"github.com/gomodule/redigo/redis"
 	"github.com/spf13/viper"

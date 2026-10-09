@@ -1,9 +1,9 @@
 package identity_source
 
 import (
-	"github.com/Duke1616/eiam/internal/domain"
-	idsvc "github.com/Duke1616/eiam/internal/service/identity_source"
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	idsvc "github.com/Havens-blog/e-iam/internal/service/identity_source"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/ecodeclub/ginx"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"

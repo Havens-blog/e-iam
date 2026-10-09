@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Duke1616/eiam/internal/errs"
-	"github.com/Duke1616/eiam/internal/service/tenant"
-	testioc "github.com/Duke1616/eiam/internal/test/ioc"
+	"github.com/Havens-blog/e-iam/internal/errs"
+	"github.com/Havens-blog/e-iam/internal/service/tenant"
+	testioc "github.com/Havens-blog/e-iam/internal/test/ioc"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"

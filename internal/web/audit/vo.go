@@ -1,6 +1,6 @@
 package audit
 
-import "github.com/Duke1616/eiam/internal/domain"
+import "github.com/Havens-blog/e-iam/internal/domain"
 
 // ListAuthLogReq 认证审计日志查询入参
 type ListAuthLogReq struct {

@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	saml "github.com/Duke1616/eiam/internal/service/idp/saml"
+	saml "github.com/Havens-blog/e-iam/internal/service/idp/saml"
 	saml0 "github.com/crewjam/saml"
 	gomock "go.uber.org/mock/gomock"
 )

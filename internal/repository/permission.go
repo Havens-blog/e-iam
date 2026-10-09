@@ -4,16 +4,16 @@ import (
 	"context"
 	"slices"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	"github.com/Duke1616/eiam/internal/repository/dao"
-	"github.com/Duke1616/eiam/pkg/ctxutil"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/samber/lo"
 )
 
 // IPermissionRepository 权限仓库：管理全局能力项及其绑定的物理资产
-//go:generate mockgen -package=repomocks -destination=./mocks/permission.mock.go github.com/Duke1616/eiam/internal/repository IPermissionRepository
+//go:generate mockgen -package=repomocks -destination=./mocks/permission.mock.go github.com/Havens-blog/e-iam/internal/repository IPermissionRepository
 type IPermissionRepository interface {
 	// CreatePermission 录入一个新的全局逻辑能力 (如 iam:user:view)
 	CreatePermission(ctx context.Context, p domain.Permission) (int64, error)

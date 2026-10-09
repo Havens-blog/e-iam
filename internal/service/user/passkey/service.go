@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository"
-	idsource "github.com/Duke1616/eiam/internal/service/identity_source"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository"
+	idsource "github.com/Havens-blog/e-iam/internal/service/identity_source"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"

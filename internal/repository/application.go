@@ -5,16 +5,16 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	"github.com/Duke1616/eiam/internal/repository/dao"
-	"github.com/Duke1616/eiam/pkg/sqlx"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"github.com/samber/lo"
 )
 
 // IApplicationRepository 下游接入应用仓储接口
 //
-//go:generate mockgen -package=repomocks -destination=./mocks/application.mock.go github.com/Duke1616/eiam/internal/repository IApplicationRepository
+//go:generate mockgen -package=repomocks -destination=./mocks/application.mock.go github.com/Havens-blog/e-iam/internal/repository IApplicationRepository
 type IApplicationRepository interface {
 	// Create 创建接入应用
 	Create(ctx context.Context, app domain.Application) (int64, error)

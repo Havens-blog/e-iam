@@ -7,9 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	auditevt "github.com/Duke1616/eiam/internal/event/audit"
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	auditevt "github.com/Havens-blog/e-iam/internal/event/audit"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

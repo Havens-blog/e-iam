@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Duke1616/eiam/pkg/migration"
+	"github.com/Havens-blog/e-iam/pkg/migration"
 	"github.com/spf13/viper"
 )
 

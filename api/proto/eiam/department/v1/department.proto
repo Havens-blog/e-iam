@@ -4,7 +4,7 @@ package eiam.department.v1;
 
 import "eiam/user/v1/user.proto";
 
-option go_package = "github.com/Duke1616/eiam/api/proto/gen/eiam/department/v1;departmentv1";
+option go_package = "github.com/Havens-blog/e-iam/api/proto/gen/eiam/department/v1;departmentv1";
 
 message Department {
   // 部门ID

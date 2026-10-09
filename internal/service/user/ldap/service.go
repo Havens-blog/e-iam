@@ -5,11 +5,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
-	"github.com/Duke1616/eiam/internal/repository"
-	"github.com/Duke1616/eiam/internal/repository/cache"
-	idsource "github.com/Duke1616/eiam/internal/service/identity_source"
-	"github.com/Duke1616/eiam/internal/service/tenant"
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/repository"
+	"github.com/Havens-blog/e-iam/internal/repository/cache"
+	idsource "github.com/Havens-blog/e-iam/internal/service/identity_source"
+	"github.com/Havens-blog/e-iam/internal/service/tenant"
 )
 
 // ILdapService LDAP 业务逻辑接口

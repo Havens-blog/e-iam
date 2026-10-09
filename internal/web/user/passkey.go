@@ -3,7 +3,7 @@ package user
 import (
 	"fmt"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/ecodeclub/ginx"
 	"github.com/ecodeclub/ginx/session"
 	"github.com/go-webauthn/webauthn/protocol"

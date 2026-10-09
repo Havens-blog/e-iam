@@ -1,6 +1,6 @@
 package migrations
 
-import "github.com/Duke1616/eiam/pkg/migration"
+import "github.com/Havens-blog/e-iam/pkg/migration"
 
 // All 按外键和业务依赖顺序返回所有迁移任务。
 func All(encryptionKey, encryptionVersion string) []migration.Migrator {

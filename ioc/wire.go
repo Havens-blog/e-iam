@@ -3,7 +3,7 @@
 package ioc
 
 import (
-	"github.com/Duke1616/eiam/internal/service/discovery"
+	"github.com/Havens-blog/e-iam/internal/service/discovery"
 	"github.com/google/wire"
 )
 

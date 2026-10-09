@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Duke1616/eiam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -60,7 +60,7 @@ func (CasbinRule) TableName() string {
 }
 
 // IPermissionDAO 定义了逻辑权限能力项与物理资产绑定的底层持久化接口。
-//go:generate mockgen -package=daomocks -destination=./mocks/permission.mock.go github.com/Duke1616/eiam/internal/repository/dao IPermissionDAO
+//go:generate mockgen -package=daomocks -destination=./mocks/permission.mock.go github.com/Havens-blog/e-iam/internal/repository/dao IPermissionDAO
 type IPermissionDAO interface {
 	// Insert 录入单个逻辑权限定义，返回自增 ID
 	Insert(ctx context.Context, p Permission) (int64, error)

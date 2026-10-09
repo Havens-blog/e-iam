@@ -3,7 +3,7 @@ package audit
 import (
 	"time"
 
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 )
 
 const (

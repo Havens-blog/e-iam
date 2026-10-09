@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Duke1616/eiam/pkg/web/capability"
+	"github.com/Havens-blog/e-iam/pkg/web/capability"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

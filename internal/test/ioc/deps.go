@@ -1,11 +1,11 @@
 package testioc
 
 import (
-	"github.com/Duke1616/eiam/internal/service/permission"
-	"github.com/Duke1616/eiam/internal/service/policy"
-	"github.com/Duke1616/eiam/internal/service/resource"
-	"github.com/Duke1616/eiam/internal/service/role"
-	"github.com/Duke1616/eiam/internal/service/tenant"
+	"github.com/Havens-blog/e-iam/internal/service/permission"
+	"github.com/Havens-blog/e-iam/internal/service/policy"
+	"github.com/Havens-blog/e-iam/internal/service/resource"
+	"github.com/Havens-blog/e-iam/internal/service/role"
+	"github.com/Havens-blog/e-iam/internal/service/tenant"
 	"github.com/casbin/casbin/v2"
 	"gorm.io/gorm"
 )

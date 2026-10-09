@@ -135,7 +135,7 @@ func (m *Module) SortedActions() []*Action {
 
 // Graph 全局聚合后的权限拓扑图
 type Graph struct {
-	CapabilityPkg string             // 从源码 import 中提取的 SDK 路径 (如 "github.com/Duke1616/eiam/pkg/web/capability")
+	CapabilityPkg string             // 从源码 import 中提取的 SDK 路径 (如 "github.com/Havens-blog/e-iam/pkg/web/capability")
 	ProjectName   string             // 当前工程名称 (如 "EIAM", "ETASK")
 	Modules       map[string]*Module // ID -> Module
 	Actions       map[string]*Action // Code -> Action

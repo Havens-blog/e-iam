@@ -3,7 +3,7 @@ package capability
 import (
 	"strings"
 
-	"github.com/Duke1616/eiam/pkg/pbac"
+	"github.com/Havens-blog/e-iam/pkg/pbac"
 	"github.com/gin-gonic/gin"
 )
 

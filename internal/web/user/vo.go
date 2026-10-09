@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/Duke1616/eiam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/go-webauthn/webauthn/protocol"
 )
 
