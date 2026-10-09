@@ -3,6 +3,7 @@ package tenant
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
@@ -81,7 +82,8 @@ func (s *tenantKeyService) VerifyKey(ctx context.Context, ak, sk string) (int64,
 	if tk.Status != 1 {
 		return 0, errs.ErrTenantKeyDisabled
 	}
-	if tk.SecretKey != sk {
+	// 恒定时间比较：防止时序侧信道逐字节探测出 secret_key
+	if subtle.ConstantTimeCompare([]byte(tk.SecretKey), []byte(sk)) != 1 {
 		return 0, errs.ErrInvalidTenantKey
 	}
 	return tk.TenantID, nil

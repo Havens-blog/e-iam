@@ -78,12 +78,21 @@ func TestAuditMatcher_TableDriven(t *testing.T) {
 			ignoredAct:   false,
 		},
 		{
-			name:         "系统免审前缀接口",
+			name:         "审计回流端点精确豁免",
+			method:       http.MethodPost,
+			path:         "/api/audit/batch",
+			action:       "iam:audit:batch",
+			shouldMethod: true,
+			ignoredPath:  true,
+			ignoredAct:   false,
+		},
+		{
+			name:         "权限管理写接口不再前缀宽免_需留痕",
 			method:       http.MethodPost,
 			path:         "/api/permission/sync",
 			action:       "iam:permission:sync",
 			shouldMethod: true,
-			ignoredPath:  true,
+			ignoredPath:  false,
 			ignoredAct:   false,
 		},
 	}

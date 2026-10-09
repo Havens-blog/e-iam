@@ -90,11 +90,15 @@ func (m *auditMatcher) ShouldAuditMethod(method string) bool {
 	return ok
 }
 
+// auditIgnoredExactPaths 审计防死循环豁免清单：仅精确豁免审计回流端点，
+// 不再用前缀宽免 /api/permission、/api/discovery 的全部子路径（权限与资产变更同样需要留痕）
+var auditIgnoredExactPaths = map[string]struct{}{
+	"/api/audit/batch": {},
+}
+
 func (m *auditMatcher) IsIgnoredPath(path string) bool {
-	// 系统保留免审接口 (自发现与审计回流防死循环)
-	return strings.HasPrefix(path, "/api/permission") ||
-		strings.HasPrefix(path, "/api/audit") ||
-		strings.HasPrefix(path, "/api/discovery")
+	_, ok := auditIgnoredExactPaths[path]
+	return ok
 }
 
 func (m *auditMatcher) IsIgnoredAction(action string) bool {

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"slices"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -9,21 +10,23 @@ import (
 
 // CorsBuilder 运用建造者模式 (Builder Pattern) 动态装配 CORS 中间件，彻底解耦业务特定 Header
 type CorsBuilder struct {
-	allowOrigins  []string
-	allowMethods  []string
-	allowHeaders  []string
-	exposeHeaders []string
-	maxAge        time.Duration
+	allowOrigins     []string
+	allowMethods     []string
+	allowHeaders     []string
+	exposeHeaders    []string
+	allowCredentials bool
+	maxAge           time.Duration
 }
 
 // NewCorsBuilder 初始化跨域建造者，注入符合云原生标准的默认值
 func NewCorsBuilder() *CorsBuilder {
 	return &CorsBuilder{
-		allowOrigins:  []string{"*"},
-		allowMethods:  []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
-		allowHeaders:  []string{ActiveTenantHeaderKey, "Content-Type", "Authorization"},
-		exposeHeaders: []string{"X-Access-Token", "X-Token-Carrier"},
-		maxAge:        12 * time.Hour,
+		allowOrigins:     []string{"*"},
+		allowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		allowHeaders:     []string{ActiveTenantHeaderKey, "Content-Type", "Authorization"},
+		exposeHeaders:    []string{"X-Access-Token", "X-Token-Carrier"},
+		allowCredentials: true,
+		maxAge:           12 * time.Hour,
 	}
 }
 
@@ -63,6 +66,12 @@ func (b *CorsBuilder) ExposeHeaders(headers ...string) *CorsBuilder {
 	return b
 }
 
+// AllowCredentials 设置是否允许跨域请求携带凭证（Cookie/Authorization）
+func (b *CorsBuilder) AllowCredentials(v bool) *CorsBuilder {
+	b.allowCredentials = v
+	return b
+}
+
 // MaxAge 设置跨域预检请求缓存时间
 func (b *CorsBuilder) MaxAge(duration time.Duration) *CorsBuilder {
 	b.maxAge = duration
@@ -71,12 +80,18 @@ func (b *CorsBuilder) MaxAge(duration time.Duration) *CorsBuilder {
 
 // Build 最终构建出符合 Gin 规范的 HandlerFunc
 func (b *CorsBuilder) Build() gin.HandlerFunc {
+	allowCredentials := b.allowCredentials
+	// 安全约束：浏览器规范禁止“通配源 + 携带凭证”组合（凭证附带的 ACAO 必须精确反射源）。
+	// 通配符模式下强制关闭凭证，需跨域携带会话时调用 AllowOrigins(具体源列表)
+	if allowCredentials && slices.Contains(b.allowOrigins, "*") {
+		allowCredentials = false
+	}
 	return cors.New(cors.Config{
 		AllowOrigins:     b.allowOrigins,
 		AllowMethods:     b.allowMethods,
 		AllowHeaders:     b.allowHeaders,
 		ExposeHeaders:    b.exposeHeaders,
-		AllowCredentials: true,
+		AllowCredentials: allowCredentials,
 		MaxAge:           b.maxAge,
 	})
 }

@@ -30,11 +30,11 @@ func NewHandler(svc discovery.IDiscoveryService, tokenSvc discovery.ITokenServic
 }
 
 // AuthMiddleware 微服务资产上报鉴权中间件：
-// 1. 若 discovery.auth_enabled 为 false (默认)，零配置直接放行；
-// 2. 若开启认证，严格校验统一专属令牌 (eiam_sct_...)。
+// 1. 默认开启（fail-closed）：仅当显式配置 discovery.auth_enabled=false 才放行，防部署遗漏导致匿名伪造资产；
+// 2. 开启时严格校验统一专属令牌 (eiam_sct_...)。
 func (h *Handler) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !viper.GetBool("discovery.auth_enabled") {
+		if viper.IsSet("discovery.auth_enabled") && !viper.GetBool("discovery.auth_enabled") {
 			c.Next()
 			return
 		}
