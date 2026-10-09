@@ -331,10 +331,11 @@ func (h *Handler) Logout(c *gin.Context) {
 	_ = sessionx.DestroyGin(c)
 
 	if postLogoutRedirectURI != "" {
-		// 防开放重定向：仅允许同源（与当前请求 Host 一致）或相对路径跳转，
-		// 拦截跳向外部钓鱼站点的注入。非同源一律返回 JSON 而非 302。
-		if !isSameOriginRedirect(c, postLogoutRedirectURI) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "post_logout_redirect_uri must be same-origin"})
+		// 防开放重定向：post_logout_redirect_uri 须命中白名单或同源。
+		// 运维通过 oidc.post_logout_redirect_uris 配置已登记的客户端注销回跳地址（精确比对，遵循 OIDC RP-Initiated Logout 规范）；
+		// 未配置白名单时退化为同源校验（相对路径或与请求 Host 一致），保证缺省安全。
+		if !isAllowedLogoutRedirect(c, postLogoutRedirectURI) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "post_logout_redirect_uri 未登记或非同源"})
 			return
 		}
 		target := appendQueryParam(postLogoutRedirectURI, "state", state)
@@ -345,18 +346,25 @@ func (h *Handler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "已成功注销登录态"})
 }
 
-// isSameOriginRedirect 判定重定向目标是否同源（相对路径或与请求 Host 一致），
-// 用于拦截 OIDC Logout 的开放重定向注入。
-func isSameOriginRedirect(c *gin.Context, rawURL string) bool {
+// isAllowedLogoutRedirect 判定 OIDC Logout 重定向目标是否合法，用于拦截开放重定向注入。
+// 1) 若配置了 oidc.post_logout_redirect_uris 白名单，目标须精确命中其一（OIDC 规范要求精确比对）；
+// 2) 否则退化为同源校验：相对路径（无 Host）或与当前请求 Host 一致。
+func isAllowedLogoutRedirect(c *gin.Context, rawURL string) bool {
+	if allowed := viper.GetStringSlice("oidc.post_logout_redirect_uris"); len(allowed) > 0 {
+		for _, a := range allowed {
+			if a == rawURL {
+				return true
+			}
+		}
+		return false
+	}
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
 		return false
 	}
-	// 相对路径（无 Host）：视为站内，放行。
 	if parsed.Host == "" {
 		return true
 	}
-	// 绝对路径：Host 必须与当前请求一致（含端口）。
 	return parsed.Host == c.Request.Host
 }
 

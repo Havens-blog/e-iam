@@ -12,9 +12,9 @@
 | 维度 | P0 | P1 | P2 | P3 | 宏观结论 |
 |------|----|----|----|----|----------|
 | ①工程/工具链 | 0 | 0 | — | — | gofmt/vet/test 全绿基线已建立；生成链存在跨平台路径漂移与 CI 缺失，**已修复** |
-| ②架构/代码质量 | 0 | 1 | 6 | 5 | 宏观分层健康，Domain/Transport/Service/pkg 依赖方向全部通过；问题集中在错误哨兵泄漏与命名一致性 |
-| ③性能 | 1 | 3 | 3 | 2 | 缓存/批处理基础设施成熟；PBAC 求值热路径重复校验是确定性浪费 |
-| ④安全 | 0 | 3 | 4 | 4 | 近期硬化项（Fail-Closed/AK-SK 恒定时间/JWT 锁定/CORS 互斥/permission fail-closed）均有效；残留明文凭证、审计端点未鉴权、跨租户密钥操纵 |
+| ②架构/代码质量 | 0 | 1 | 6 | 5 | 宏观分层健康，Domain/Transport/Service/pkg 依赖方向全部通过；问题集中在错误哨兵泄漏与命名一致性。②-P1-1/②-P2-1 **已修复**；I 前缀/分页助手 P2 延后独立 PR |
+| ③性能 | 1 | 3 | 3 | 2 | 缓存/批处理基础设施成熟；PBAC 求值热路径重复校验是确定性浪费。③-P0-1/P1-2/P1-3/P2-1/P2-2/P2-3 **已修复**；③-P1-1 延后独立 PR |
+| ④安全 | 0 | 3 | 4 | 4 | 近期硬化项（Fail-Closed/AK-SK 恒定时间/JWT 锁定/CORS 互斥/permission fail-closed）均有效；残留明文凭证、审计端点未鉴权、跨租户密钥操纵。④-P1-1/P1-2/P1-3/P2-1/P2-2/P2-3 **已修复**；P2-4 运维处置 |
 
 **依赖漏洞**：`govulncheck` 调用链 0 可利用；5 个间接依赖漏洞均未被调用，可低风险升级（见 ④依赖小节）。
 
@@ -86,25 +86,25 @@
 
 基准：`BenchmarkOPA_Decide_Simple` 73812 ns/op 470 allocs/op；`BenchmarkOPA_Decide_ComplexPBAC` 124117 ns/op 613 allocs/op。OPA Rego 引擎固有成本不纳入低风险优化。
 
-### ③-P0-1【P0·最高优先】PBAC 求值热路径重复全树校验
+### ③-P0-1【P0·最高优先·已修复】PBAC 求值热路径重复全树校验
 - `pkg/pbac/condition.go:286 EvaluateCondition→ValidateCondition(:159)`；`:307 PartialEvaluateAccessScope→ValidateAccessScope(:176)`；`pkg/pbac/gormx/filter.go:55-60 Compile` 再两次校验。策略写入 `policy.go:109 ValidatePolicyExpressions` 已强校验，求值路径可删校验直接走 `evaluateNode`。零行为变更，预计复杂 PBAC allocs/op ↓10-20%。
 
 ### ③-P1-1【P1·暂缓独立 PR】CheckAPIDecision 串行 5+ 次 DB/Redis 往返
 - `internal/service/permission/permission.go:112`；`getEffectivePolicies`（:391 `GetAttachedBySubjects` 双 DB + `ListByIncludeCodes` DB）每请求无缓存。建议按 `(tenant_id,username)` Redis 短缓存 + 变更点失效。中等改动，建议独立 PR。
 
-### ③-P1-2【P1】ListAllMenus 全表扫描无缓存
+### ③-P1-2【P1·已修复】ListAllMenus 全表扫描无缓存
 - `internal/service/resource/resource.go:68→dao:155`；`GetAuthorizedMenus`(:249)/`GetMenusByURNs`(:491) 每次全表+内存过滤，菜单元数据极低频变更。`resourceCache` 缺菜单全量缓存。建议加 `Get/Set/InvalidateAllMenus`，`SyncMenus` 失效。
 
-### ③-P1-3【P1】PhysicalClearService 全表扫描后内存过滤
+### ③-P1-3【P1·已修复】PhysicalClearService 全表扫描后内存过滤
 - `internal/repository/permission.go:403` `ListAll` 后 `if p.Service==service && p.Source==source`。建议 DAO 加 `ListByServiceAndSource` 走索引。
 
-### ③-P2-1【P2】sortActions 每次重编译 4 正则
+### ③-P2-1【P2·已修复】sortActions 每次重编译 4 正则
 - `internal/service/permission/permission.go:646,:654-657`，`toGroupNodes`(:616) 每节点调一次。提为包级 var。
 
-### ③-P2-2【P2】GetMenu 走 ListAllMenus 全表+线性
+### ③-P2-2【P2·已修复】GetMenu 走 ListAllMenus 全表+线性
 - `internal/repository/resource.go:270` 单条主键却全表+O(n)。建议 DAO `FindMenuByID` 主键点查。
 
-### ③-P2-3【P2】pkg/pbac 无 Benchmark
+### ③-P2-3【P2·已修复】pkg/pbac 无 Benchmark
 - 求值核心缺基线，无法量化 P0-1 收益。建议补 `EvaluateCondition`/`PartialEvaluateAccessScope`/`Compile` bench。
 
 ### ③-P3（2 项）
@@ -117,28 +117,28 @@
 
 **已确认硬化有效（不重复报告）**：租户插件四路 Fail-Closed + 双通道提权；业务 DAO 无 Raw/Exec（仅 migration/Redis pipe）；IgnoreTenantContext 调用点正当；origin_tenant_id 超管覆写正确拦截；invitation Accept 注入 tenant_id 后 IncrUsedCount；SQL 全参数化、Order 全静态、quoteIdentifier 正确；无 os/exec；Rego embed 编译期固定无注入；JWT 算法锁定（OIDC RSA/gRPC HS256）；OIDC redirect_uri/state/nonce 严格；CORS 通配+凭证互斥；permission 中间件 fail-closed 正确；discovery 端点默认鉴权；审计豁免仅 `/api/audit/batch`；SAML 签名+ACS 白名单+解压炸弹防护。
 
-### ④-P1-1【P1·最高优先】租户 SecretKey 与资产发现令牌明文落库
+### ④-P1-1【P1·最高优先·已修复】租户 SecretKey 与资产发现令牌明文落库
 - `internal/repository/dao/tenant_key.go:34` `SecretKey string` 明文；`tenant_key.go:32-38` Create 直拷；`internal/service/tenant/tenant_key.go:86` 与明文 ConstantTimeCompare；`internal/service/discovery/token.go:67-75,83-104` `AccessKey==SecretKey==token` 单值明文且 VerifyToken 不校验密钥。对照 `application.go:18 ClientSecretHash` 已正确存哈希。
 - 攻击：DB 只读泄露→全量租户 AK/SK + 全部资产发现令牌。
 - 修复：SK 存 KDF 哈希（argon2id/pbkdf2/sha256+salt），VerifyKey 比哈希；令牌存 `HMAC(server_key, token)`；一次性迁移回写哈希。
 
-### ④-P1-2【P1】审计批量上报端点完全未鉴权（审计投毒）
+### ④-P1-2【P1·已修复】审计批量上报端点完全未鉴权（审计投毒）
 - `internal/web/audit/handler.go:30-32` `POST /api/audit/batch` 注册在 PublicRoutes，`ioc/web.go:51-60` 在 CheckLoginMiddleware(:63) 之前，无 Token/签名；`:35-57` Records 全攻击者可控；消费端 `consumer.go:158` IgnoreTenantContext 跨租户落库。
 - 攻击：审计投毒/栽赃/DoS/潜在存储 XSS。
 - 修复：复用 discovery `eiam_sct_` Token 或 mTLS/内网签名，校验 `req.Service` 与 Token 绑定；AfterState 字段长度上限+净化；前端转义。
 
-### ④-P1-3【P1】租户密钥状态变更缺归属校验（跨租户密钥操纵）
+### ④-P1-3【P1·已修复】租户密钥状态变更缺归属校验（跨租户密钥操纵）
 - `internal/repository/dao/tenant_key.go:32` 整表 `eiam:"ignore"`；`:65-69` `UpdateStatus` 仅 `Where("id = ?", id)` 无 tenant_id 过滤。
 - 攻击：租户 A 枚举 key ID 禁用/启用租户 B 密钥（DoS/配合社工）。
 - 修复：DAO `UpdateStatus`/`ListByTenantID` 补 `AND tenant_id = ?`，或 service 先 FindByID 校验归属。
 
-### ④-P2-1【P2】会话 Cookie 未设 SameSite
+### ④-P2-1【P2·已修复】会话 Cookie 未设 SameSite
 - `ioc/session.go:78-87` `cookie.TokenCarrier` 无 SameSite；`:50-55` 结构体无字段。CSRF 拼留面。修复：加 SameSite 配置（默认 Lax）。
 
-### ④-P2-2【P2】OIDC Logout 开放重定向
+### ④-P2-2【P2·已修复】OIDC Logout 开放重定向
 - `internal/web/idp/handler.go:326-340` `post_logout_redirect_uri` 直接 302 无白名单。修复：维护白名单或要求 id_token_hint。
 
-### ④-P2-3【P2】gRPC Verify 凭证预言机（鉴权默认可选）
+### ④-P2-3【P2·已修复】gRPC Verify 凭证预言机（鉴权默认可选）
 - `internal/grpcx/server.go:25,73-78` AuthToken 为空不挂拦截器；`internal/grpc/tenant.go:20-28` Verify 暴露 VerifyKey。修复：`auth_token` 为空时启动失败；Verify 加调用方校验/限流。
 
 ### ④-P2-4【P2·运维】本地 config/config.yaml 泄露真实基础设施凭证
@@ -158,6 +158,8 @@
 ## 本批落地范围（修复→验证→提交闭环）
 
 - **批次① 已提交**：①-1~①-5 全部（gofmt、生成链本地化、CI 护栏）。
-- **批次②**：②-P1-1（gRPC gorm 剥离 + errs.ErrUserNotFound）、②-P2-1（Repo gorm 剥离）、②-P2-2（9 internal 接口 I 前缀 + mock 重生成）、②-P2-4（DAO 分页助手）。暂缓 P2-3/P2-5/P2-6/P3。
-- **批次③**：③-P0-1（PBAC 移除重复校验，先补 ③-P2-3 bench 基线）、③-P2-1（正则包级 var）、③-P1-3（PhysicalClearService DB 过滤）、③-P1-2（ListAllMenus 缓存）、③-P2-2（GetMenu 点查）。暂缓 ③-P1-1 独立 PR、P3。
-- **批次④**：permission.go fail-closed 提交、④-P1-1（凭证哈希存储）、④-P1-2（审计端点鉴权）、④-P1-3（tenant_id 过滤）、④-P2-1/P2-2（SameSite/Logout 白名单）、④-P2-3（gRPC 鉴权强制）、间接依赖升级。P2-4 运维处置、P3 择期。
+- **批次② 已提交**：②-P1-1（gRPC gorm 剥离 + errs.ErrUserNotFound）、②-P2-1（Repo gorm 剥离）。②-P2-2（9 internal 接口 I 前缀，`Engine` 与 `gin.Engine` 冲突风险）与 ②-P2-4（DAO 分页助手 18 处）延后独立 PR。暂缓 P2-3/P2-5/P2-6/P3。
+- **批次③ 已提交**：③-P0-1（PBAC 移除重复校验，bench 基线 EvaluateCondition_Complex 977→622 ns/op ↓36%、PartialEvaluateAccessScope 208→154 ↓26%）、③-P2-1（正则包级 var）、③-P1-3（PhysicalClearService DB 过滤）、③-P1-2（ListAllMenus Redis 缓存 + 变更失效）、③-P2-2（GetMenu 主键点查）、③-P2-3（pbac bench 基线）。③-P1-1（CheckAPIDecision 串行往返，中等改动）延后独立 PR、P3 择期。
+- **批次④ 已提交**：permission.go fail-closed、④-P1-1（凭证 SHA-256 哈希存储 + 双轨兼容迁移）、④-P1-2（审计端点 fail-closed 令牌鉴权 + 自由文本长度收敛）、④-P1-3（UpdateStatus tenant_id 归属过滤）、④-P2-1（SameSite=Lax）、④-P2-2（Logout 同源校验）、④-P2-3（gRPC auth_token 强制非空）。间接依赖升级（govulncheck 调用链 0 可利用）择期。P2-4 运维处置、P3 择期。
+
+**验证闭环**：`gofmt -l` 0；`go build ./...` ✅；`go vet ./...` ✅；`go test ./...` ✅；生成链一致性 `go generate ./...` 零 diff。`go test -race ./...` 由 CI（Linux，gcc 可用）在 PR 时执行；本机 Windows 无 C 编译器，无法本地构建 cgo/race。
