@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/internal/repository/cache"
 	"github.com/Havens-blog/e-iam/internal/repository/dao"
 	"github.com/Havens-blog/e-iam/pkg/pbac"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"github.com/samber/lo"
-	"gorm.io/gorm"
 )
 
 // IResourceRepository 物理资源仓库，负责全量 Menu 和 API 资产的底数管理
@@ -173,7 +173,7 @@ func (r *ResourceRepository) FindAPIByPath(ctx context.Context, service, method,
 
 	a, err := r.dao.FindAPIByPath(ctx, service, method, path)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, errs.ErrRecordNotFound) {
 			_ = r.cache.SetEmptyAPI(ctx, service, method, path)
 			return domain.API{}, nil
 		}

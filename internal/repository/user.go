@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/internal/repository/cache"
 	"github.com/Havens-blog/e-iam/internal/repository/dao"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/samber/lo"
 	"golang.org/x/sync/errgroup"
-	"gorm.io/gorm"
 )
 
 // IUserRepository 用户仓储接口
@@ -173,7 +173,7 @@ func (repo *userRepository) fullHydration(ctx context.Context, u dao.User) (doma
 	eg.Go(func() error {
 		var err error
 		up, err = repo.dao.FindProfileByUserId(ctx, u.ID)
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, errs.ErrRecordNotFound) {
 			return nil
 		}
 		return err
@@ -182,7 +182,7 @@ func (repo *userRepository) fullHydration(ctx context.Context, u dao.User) (doma
 	eg.Go(func() error {
 		var err error
 		identities, err = repo.dao.FindIdentitiesByUserId(ctx, u.ID)
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, errs.ErrRecordNotFound) {
 			return nil
 		}
 		return err

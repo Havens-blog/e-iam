@@ -2,8 +2,10 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -258,6 +260,10 @@ func (d *ResourceDAO) FindAPIByPath(ctx context.Context, service, method, path s
 	var a API
 	err := d.getDB(ctx).Where("service = ? AND method = ? AND path = ? AND status = ?",
 		service, method, path, APIStatusActive).First(&a).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// 翻译为通用哨兵 errs.ErrRecordNotFound，避免 gorm 错误类型穿透到 Repository/Service 层。
+		return a, errs.ErrRecordNotFound
+	}
 	return a, err
 }
 

@@ -19,6 +19,12 @@ var (
 	// 多租户隔离相关错误
 	ErrMissingTenantContext = errors.New("多租户安全拦截：未显式声明 IgnoreTenant 且缺失有效租户上下文")
 
+	// 通用持久化哨兵：DAO 层把 gorm.ErrRecordNotFound 统一翻译为此错误，
+	// 使 Repository/Service/Transport 不再依赖 gorm 持久化框架即可识别“记录不存在”。
+	ErrRecordNotFound = errors.New("记录不存在")
+	// ErrUserNotFound 用户记录不存在（ErrRecordNotFound 的领域特化）。
+	ErrUserNotFound = errors.New("用户不存在")
+
 	ErrUserExist          = errors.New("用户名已存在")
 	ErrUsernameConflict   = errors.New("用户名已被本地账号占用，请先以本地凭证登录后显式绑定外部身份")
 	ErrInvalidUser        = errors.New("账号或密码错误")
