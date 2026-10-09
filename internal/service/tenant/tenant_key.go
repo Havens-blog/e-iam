@@ -49,8 +49,8 @@ func (s *tenantKeyService) GenerateKey(ctx context.Context, tenantID int64, desc
 	}
 
 	tk := domain.TenantKey{
-		TenantID:    tenantID,
-		AccessKey:   accessKey,
+		TenantID:  tenantID,
+		AccessKey: accessKey,
 		// SecretKey 落库前做 SHA-256 哈希：DB 只读泄露时无法逆推 192 位随机原值，
 		// 明文 SK 仅在生成时返回一次（domain.SecretKey 已 json:"-" 隐藏于后续响应）。
 		SecretKey:   cryptox.HashSecret(sk),

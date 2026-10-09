@@ -78,10 +78,10 @@ func (s *TenantKeySuite) TestTenantKey_Lifecycle() {
 	}
 	s.Equal(tenantID, stored.TenantID)
 	s.True(strings.HasPrefix(stored.AccessKey, "AK"))
-	s.Len(stored.AccessKey, 26)             // "AK" (2字节) + 24字节十六进制 = 26 长度
-	s.Len(stored.SecretKey, 64)             // 落库为 SHA-256 哈希（64 十六进制），非明文
+	s.Len(stored.AccessKey, 26)                    // "AK" (2字节) + 24字节十六进制 = 26 长度
+	s.Len(stored.SecretKey, 64)                    // 落库为 SHA-256 哈希（64 十六进制），非明文
 	s.NotEqual(stored.SecretKey, genKey.SecretKey) // 落库哈希 ≠ 明文
-	s.Equal(1, stored.Status)               // 默认是启用状态
+	s.Equal(1, stored.Status)                      // 默认是启用状态
 
 	// 3. 校验能够通过 AccessKey 正确解析出 TenantID
 	tid, err := s.keySvc.GetTenantIDByAccessKey(ctx, genKey.AccessKey)

@@ -66,20 +66,20 @@ func (h *Handler) ReportBatchOperations(ctx *ginx.Context, req BatchOperationReq
 			TenantID:     r.TenantID,
 			Service:      r.Service,
 			OperatorID:   r.OperatorID,
-			OperatorName:  sanitizeAuditText(r.OperatorName),
-			Module:        sanitizeAuditText(r.Module),
-			Action:        sanitizeAuditText(r.Action),
+			OperatorName: sanitizeAuditText(r.OperatorName),
+			Module:       sanitizeAuditText(r.Module),
+			Action:       sanitizeAuditText(r.Action),
 			ResourceID:   sanitizeAuditText(r.ResourceID),
 			ResourceName: sanitizeAuditText(r.ResourceName),
 			ResourceURN:  sanitizeAuditText(r.ResourceURN),
 			// AfterState 为自由文本，前端审计查看页若未转义可触发存储型 XSS；
 			// 此处截断长度上限，后续渲染须强制转义。
-			AfterState:   sanitizeAuditText(r.AfterState),
-			Status:        r.Status,
-			FailReason:   sanitizeAuditText(r.FailReason),
-			ClientIP:     r.ClientIP,
-			UserAgent:    r.UserAgent,
-			Ctime:         r.Ctime,
+			AfterState: sanitizeAuditText(r.AfterState),
+			Status:     r.Status,
+			FailReason: sanitizeAuditText(r.FailReason),
+			ClientIP:   r.ClientIP,
+			UserAgent:  r.UserAgent,
+			Ctime:      r.Ctime,
 		})
 	})
 	return ginx.Result{Msg: "ok"}, nil

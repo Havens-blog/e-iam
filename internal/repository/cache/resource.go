@@ -45,19 +45,19 @@ type IResourceCache interface {
 }
 
 type resourceCache struct {
-	client    redis.Cmdable
-	apiTTL    time.Duration
-	emptyTTL  time.Duration
-	menuTTL   time.Duration
+	client   redis.Cmdable
+	apiTTL   time.Duration
+	emptyTTL time.Duration
+	menuTTL  time.Duration
 }
 
 // NewResourceCache 创建资源缓存实例
 func NewResourceCache(client redis.Cmdable) IResourceCache {
 	return &resourceCache{
-		client:    client,
-		apiTTL:    2 * time.Hour,
-		emptyTTL:  2 * time.Minute,
-		menuTTL:   2 * time.Hour,
+		client:   client,
+		apiTTL:   2 * time.Hour,
+		emptyTTL: 2 * time.Minute,
+		menuTTL:  2 * time.Hour,
 	}
 }
 
