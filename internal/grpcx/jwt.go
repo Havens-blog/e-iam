@@ -1,0 +1,155 @@
+package grpcx
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+)
+
+const (
+	// AuthorizationKey metadata 中授权头的键名
+	AuthorizationKey = "Authorization"
+	// BearerPrefix Bearer token 前缀
+	BearerPrefix = "Bearer "
+	// DefaultIssuer 默认签发者
+	DefaultIssuer = "ework-runner"
+	// DefaultExpiration 默认过期时长
+	DefaultExpiration = 24 * time.Hour
+)
+
+// InterceptorBuilder 构建并校验 HS256 JWT，并产出 gRPC 一元服务端拦截器。
+// 行为逐字移植自 etask pkg/grpc/interceptors/jwt。
+type InterceptorBuilder struct {
+	key    string
+	issuer string
+	exp    time.Duration
+}
+
+// Decode 解析并校验 token 字符串，返回受信 MapClaims。
+//
+// 兼容带/不带 "Bearer " 前缀的客户端实现；签名算法必须是 HMAC（HS256），
+// 否则拒绝；最终要求 token.Valid。
+func (b *InterceptorBuilder) Decode(tokenString string) (jwt.MapClaims, error) {
+	// 去除可能的 Bearer 前缀（兼容不同客户端实现）
+	tokenString = strings.TrimPrefix(tokenString, BearerPrefix)
+
+	// 解析 Token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("不支持的签名算法: %v", token.Header["alg"])
+		}
+		return []byte(b.key), nil
+	})
+	// 错误处理
+	if err != nil {
+		return nil, fmt.Errorf("令牌解析失败: %w", err)
+	}
+
+	// 验证 Token 有效性
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	}
+	return nil, fmt.Errorf("无效的令牌")
+}
+
+// Encode 生成 JWT Token，支持自定义声明和自动添加标准声明
+func (b *InterceptorBuilder) Encode(customClaims jwt.MapClaims) (string, error) {
+	// 合并自定义声明和默认声明
+	claims := jwt.MapClaims{
+		"iat": time.Now().Unix(),
+		"iss": b.issuer,
+	}
+
+	// 合并用户自定义声明（覆盖默认声明）
+	for k, v := range customClaims {
+		claims[k] = v
+	}
+
+	// 自动处理过期时间
+	if _, ok := claims["exp"]; !ok {
+		claims["exp"] = time.Now().Add(b.exp).Unix()
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString([]byte(b.key))
+}
+
+// JwtAuthInterceptor 返回 JWT 鉴权一元服务端拦截器。
+//
+// 流程：取 metadata → 取 Authorization → Decode 校验 → 注入 claims → 放行。
+// 任何环节失败均返回 codes.Unauthenticated。
+func (b *InterceptorBuilder) JwtAuthInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		// 提取metadata
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			return nil, status.Error(codes.Unauthenticated, "请求缺少元数据 metadata")
+		}
+
+		// 获取Authorization头
+		authHeaders := md.Get(AuthorizationKey)
+		if len(authHeaders) == 0 {
+			return nil, status.Error(codes.Unauthenticated, "请求缺少授权令牌 Authorization")
+		}
+
+		// 处理Bearer Token格式
+		tokenStr := authHeaders[0]
+
+		// 使用现有JwtAuth解码验证
+		claims, err := b.Decode(tokenStr)
+		if err != nil {
+			if errors.Is(err, jwt.ErrTokenExpired) {
+				return nil, status.Error(codes.Unauthenticated, "授权令牌已过期")
+			}
+			if errors.Is(err, jwt.ErrTokenSignatureInvalid) {
+				return nil, status.Error(codes.Unauthenticated, "授权令牌签名无效")
+			}
+			return nil, status.Error(codes.Unauthenticated, "无效的授权令牌: "+err.Error())
+		}
+
+		// 将解密出的受信 Claims 提取并注入 Context
+		ctx = Set(ctx, claims)
+
+		// 认证通过，继续处理
+		return handler(ctx, req)
+	}
+}
+
+// JwtOption 拦截器配置选项
+type JwtOption func(*InterceptorBuilder)
+
+// WithIssuer 设置签发者
+func WithIssuer(issuer string) JwtOption {
+	return func(b *InterceptorBuilder) {
+		b.issuer = issuer
+	}
+}
+
+// WithExpiration 设置过期时间
+func WithExpiration(exp time.Duration) JwtOption {
+	return func(b *InterceptorBuilder) {
+		b.exp = exp
+	}
+}
+
+// NewJwtAuth 创建 JWT 认证拦截器
+func NewJwtAuth(key string, opts ...JwtOption) *InterceptorBuilder {
+	b := &InterceptorBuilder{
+		key:    key,
+		issuer: DefaultIssuer,
+		exp:    DefaultExpiration,
+	}
+	for _, opt := range opts {
+		opt(b)
+	}
+	return b
+}
