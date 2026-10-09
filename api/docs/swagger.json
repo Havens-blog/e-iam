@@ -11,6 +11,100 @@
     }
   ],
   "paths": {
+    "/.well-known/openid-configuration": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "openid-configuration",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/audit/auth/list": {
+      "post": {
+        "tags": [
+          "安全审计"
+        ],
+        "summary": "查看认证审计",
+        "description": "权限标识: view_auth",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListAuthLogReq"
+              },
+              "example": {
+                "auth_type": "string",
+                "end_time": 0,
+                "limit": 10,
+                "offset": 0,
+                "start_time": 0,
+                "status": "string",
+                "username": "示例名称"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/audit/batch": {
+      "post": {
+        "tags": [
+          "安全审计"
+        ],
+        "summary": "batch",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/audit/operation/list": {
+      "post": {
+        "tags": [
+          "安全审计"
+        ],
+        "summary": "查看操作审计",
+        "description": "权限标识: view_operation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListOperationLogReq"
+              },
+              "example": {
+                "action": "string",
+                "end_time": 0,
+                "limit": 10,
+                "module": "string",
+                "offset": 0,
+                "operator_name": "示例名称",
+                "service": "string",
+                "start_time": 0,
+                "status": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
     "/api/department/assign": {
       "post": {
         "tags": [
@@ -778,6 +872,273 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/idp/application/create": {
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "创建接入应用",
+        "description": "权限标识: create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApplicationReq"
+              },
+              "example": {
+                "auto_consent": true,
+                "client_id": "string",
+                "grant_types": [
+                  "item1",
+                  "item2"
+                ],
+                "is_public": true,
+                "logo": "string",
+                "name": "示例名称",
+                "protocol": "string",
+                "redirect_uris": [
+                  "item1",
+                  "item2"
+                ],
+                "response_types": [
+                  "item1",
+                  "item2"
+                ],
+                "scopes": [
+                  "item1",
+                  "item2"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/idp/application/delete/{id}": {
+      "delete": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "删除接入应用",
+        "description": "权限标识: delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "唯一数字标识 ID",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/idp/application/detail/{id}": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "接入应用详情",
+        "description": "权限标识: detail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "唯一数字标识 ID",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/idp/application/list": {
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "接入应用列表",
+        "description": "权限标识: list",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListApplicationReq"
+              },
+              "example": {
+                "limit": 10,
+                "offset": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/idp/application/reset_secret/{id}": {
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "重置应用密钥",
+        "description": "权限标识: reset_secret",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "唯一数字标识 ID",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/idp/application/update": {
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "更新接入应用",
+        "description": "权限标识: update",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationReq"
+              },
+              "example": {
+                "auto_consent": true,
+                "grant_types": [
+                  "item1",
+                  "item2"
+                ],
+                "id": 1,
+                "is_public": true,
+                "logo": "string",
+                "name": "示例名称",
+                "protocol": "string",
+                "redirect_uris": [
+                  "item1",
+                  "item2"
+                ],
+                "response_types": [
+                  "item1",
+                  "item2"
+                ],
+                "scopes": [
+                  "item1",
+                  "item2"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/idp/consent": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "consent",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "consent",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/idp/saml/certificate/rotate": {
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "轮换SAML证书",
+        "description": "权限标识: saml_rotate_cert",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RotateCertificateReq"
+              },
+              "example": {
+                "validity_years": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/idp/saml/descriptor": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "获取SAML接入描述符",
+        "description": "权限标识: saml_descriptor",
         "responses": {
           "200": {
             "description": "请求成功"
@@ -1916,7 +2277,21 @@
         "tags": [
           "租户管理"
         ],
-        "summary": "assign",
+        "summary": "分配租户成员",
+        "description": "权限标识: assign",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignUserReq"
+              },
+              "example": {
+                "user_id": 1
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "请求成功"
@@ -1929,7 +2304,30 @@
         "tags": [
           "租户管理"
         ],
-        "summary": "batch_assign",
+        "summary": "批量分配租户成员",
+        "description": "权限标识: batch_assign",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchAssignTenantsReq"
+              },
+              "example": {
+                "tenant_ids": [
+                  1,
+                  2,
+                  3
+                ],
+                "user_ids": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "请求成功"
@@ -1973,7 +2371,30 @@
         "tags": [
           "租户管理"
         ],
-        "summary": "batch_unassign",
+        "summary": "批量移除租户成员",
+        "description": "权限标识: batch_unassign",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchUnassignTenantsReq"
+              },
+              "example": {
+                "tenant_ids": [
+                  1,
+                  2,
+                  3
+                ],
+                "user_ids": [
+                  1,
+                  2,
+                  3
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "请求成功"
@@ -2095,7 +2516,24 @@
         "tags": [
           "租户管理"
         ],
-        "summary": "user",
+        "summary": "查询用户所属租户",
+        "description": "权限标识: view_user_tenants",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListUserTenantsReq"
+              },
+              "example": {
+                "keyword": "search_key",
+                "limit": 10,
+                "offset": 0,
+                "user_id": 1
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "请求成功"
@@ -2153,7 +2591,23 @@
         "tags": [
           "租户管理"
         ],
-        "summary": "members",
+        "summary": "查看租户成员",
+        "description": "权限标识: view_members",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListMembersReq"
+              },
+              "example": {
+                "keyword": "search_key",
+                "limit": 10,
+                "offset": 0
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "请求成功"
@@ -2168,6 +2622,19 @@
         ],
         "summary": "切换租户空间",
         "description": "权限标识: switch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchTenantReq"
+              },
+              "example": {
+                "tenant_id": 1
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "请求成功"
@@ -2180,7 +2647,21 @@
         "tags": [
           "租户管理"
         ],
-        "summary": "unassign",
+        "summary": "移除租户成员",
+        "description": "权限标识: unassign",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveMemberReq"
+              },
+              "example": {
+                "user_id": 1
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "请求成功"
@@ -2569,7 +3050,8 @@
         "tags": [
           "用户管理"
         ],
-        "summary": "logout",
+        "summary": "退出登录",
+        "description": "权限标识: logout",
         "responses": {
           "200": {
             "description": "请求成功"
@@ -2712,7 +3194,8 @@
         "tags": [
           "用户管理"
         ],
-        "summary": "profile",
+        "summary": "个人信息",
+        "description": "权限标识: profile",
         "responses": {
           "200": {
             "description": "请求成功"
@@ -2785,11 +3268,278 @@
           }
         }
       }
+    },
+    "/cas/login": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "login",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/cas/logout": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "logout",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/cas/p3/serviceValidate": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "serviceValidate",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/cas/serviceValidate": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "serviceValidate",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/cas/validate": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "validate",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/oauth/token": {
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "token",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/oauth/v2/authorize": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "authorize",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "authorize",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/oauth/v2/jwks": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "jwks",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/oauth/v2/logout": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "logout",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "logout",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/oauth/v2/revoke": {
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "revoke",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/oauth/v2/token": {
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "token",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/saml/certificate": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "certificate",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/saml/login/{id}": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": ":id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "唯一数字标识 ID",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/saml/metadata": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "metadata",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/saml/sso": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "sso",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "sso",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/userinfo": {
+      "get": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "userinfo",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "统一身份提供商"
+        ],
+        "summary": "userinfo",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
     }
   },
   "tags": [
     {
       "name": "discovery"
+    },
+    {
+      "name": "安全审计"
     },
     {
       "name": "成员治理"
@@ -2808,6 +3558,9 @@
     },
     {
       "name": "策略管理"
+    },
+    {
+      "name": "统一身份提供商"
     },
     {
       "name": "角色管理"
@@ -2864,6 +3617,21 @@
         ],
         "example": {
           "role_code": "admin"
+        }
+      },
+      "AssignUserReq": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "example": {
+          "user_id": 1
         }
       },
       "AssignUsersRequest": {
@@ -2990,6 +3758,49 @@
           "usernames": [
             "admin",
             "guest"
+          ]
+        }
+      },
+      "BatchAssignTenantsReq": {
+        "type": "object",
+        "properties": {
+          "tenant_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              1,
+              2,
+              3
+            ]
+          },
+          "user_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        "required": [
+          "user_ids",
+          "tenant_ids"
+        ],
+        "example": {
+          "tenant_ids": [
+            1,
+            2,
+            3
+          ],
+          "user_ids": [
+            1,
+            2,
+            3
           ]
         }
       },
@@ -3187,6 +3998,150 @@
           "usernames": [
             "admin",
             "guest"
+          ]
+        }
+      },
+      "BatchUnassignTenantsReq": {
+        "type": "object",
+        "properties": {
+          "tenant_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              1,
+              2,
+              3
+            ]
+          },
+          "user_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        "required": [
+          "user_ids",
+          "tenant_ids"
+        ],
+        "example": {
+          "tenant_ids": [
+            1,
+            2,
+            3
+          ],
+          "user_ids": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "CreateApplicationReq": {
+        "type": "object",
+        "properties": {
+          "auto_consent": {
+            "type": "boolean",
+            "description": "是否跳过用户授权确认 (第一方应用建议设为 true)",
+            "example": true
+          },
+          "client_id": {
+            "type": "string",
+            "description": "可选，留空由服务端自动生成",
+            "example": "string"
+          },
+          "grant_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "item1",
+              "item2"
+            ]
+          },
+          "is_public": {
+            "type": "boolean",
+            "example": true
+          },
+          "logo": {
+            "type": "string",
+            "example": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "示例名称"
+          },
+          "protocol": {
+            "type": "string",
+            "description": "接入协议类型: oidc / cas / saml (默认 oidc)",
+            "example": "string"
+          },
+          "redirect_uris": {
+            "type": "array",
+            "description": "至少一个合法回调地址",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "item1",
+              "item2"
+            ]
+          },
+          "response_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "item1",
+              "item2"
+            ]
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "item1",
+              "item2"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "redirect_uris"
+        ],
+        "example": {
+          "auto_consent": true,
+          "client_id": "string",
+          "grant_types": [
+            "item1",
+            "item2"
+          ],
+          "is_public": true,
+          "logo": "string",
+          "name": "示例名称",
+          "protocol": "string",
+          "redirect_uris": [
+            "item1",
+            "item2"
+          ],
+          "response_types": [
+            "item1",
+            "item2"
+          ],
+          "scopes": [
+            "item1",
+            "item2"
           ]
         }
       },
@@ -3420,6 +4375,23 @@
           "id": 1
         }
       },
+      "ListApplicationReq": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "offset": {
+            "type": "integer",
+            "example": 0
+          }
+        },
+        "example": {
+          "limit": 10,
+          "offset": 0
+        }
+      },
       "ListAttachedRoleGroupsRequest": {
         "type": "object",
         "properties": {
@@ -3482,6 +4454,48 @@
           "username": "示例名称"
         }
       },
+      "ListAuthLogReq": {
+        "type": "object",
+        "properties": {
+          "auth_type": {
+            "type": "string",
+            "example": "string"
+          },
+          "end_time": {
+            "type": "integer",
+            "example": 0
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "offset": {
+            "type": "integer",
+            "example": 0
+          },
+          "start_time": {
+            "type": "integer",
+            "example": 0
+          },
+          "status": {
+            "type": "string",
+            "example": "string"
+          },
+          "username": {
+            "type": "string",
+            "example": "示例名称"
+          }
+        },
+        "example": {
+          "auth_type": "string",
+          "end_time": 0,
+          "limit": 10,
+          "offset": 0,
+          "start_time": 0,
+          "status": "string",
+          "username": "示例名称"
+        }
+      },
       "ListGroupRequest": {
         "type": "object",
         "properties": {
@@ -3495,6 +4509,28 @@
           }
         },
         "example": {
+          "limit": 10,
+          "offset": 0
+        }
+      },
+      "ListMembersReq": {
+        "type": "object",
+        "properties": {
+          "keyword": {
+            "type": "string",
+            "example": "search_key"
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "offset": {
+            "type": "integer",
+            "example": 0
+          }
+        },
+        "example": {
+          "keyword": "search_key",
           "limit": 10,
           "offset": 0
         }
@@ -3527,6 +4563,58 @@
           "keyword": "search_key",
           "limit": 10,
           "offset": 0
+        }
+      },
+      "ListOperationLogReq": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "example": "string"
+          },
+          "end_time": {
+            "type": "integer",
+            "example": 0
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "module": {
+            "type": "string",
+            "example": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "example": 0
+          },
+          "operator_name": {
+            "type": "string",
+            "example": "示例名称"
+          },
+          "service": {
+            "type": "string",
+            "example": "string"
+          },
+          "start_time": {
+            "type": "integer",
+            "example": 0
+          },
+          "status": {
+            "type": "string",
+            "example": "string"
+          }
+        },
+        "example": {
+          "action": "string",
+          "end_time": 0,
+          "limit": 10,
+          "module": "string",
+          "offset": 0,
+          "operator_name": "示例名称",
+          "service": "string",
+          "start_time": 0,
+          "status": "string"
         }
       },
       "ListPolicyReq": {
@@ -3766,6 +4854,33 @@
           "user_id": 1
         }
       },
+      "ListUserTenantsReq": {
+        "type": "object",
+        "properties": {
+          "keyword": {
+            "type": "string",
+            "example": "search_key"
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "offset": {
+            "type": "integer",
+            "example": 0
+          },
+          "user_id": {
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "example": {
+          "keyword": "search_key",
+          "limit": 10,
+          "offset": 0,
+          "user_id": 1
+        }
+      },
       "ManageIdentitiesRequest": {
         "type": "object",
         "properties": {
@@ -3842,6 +4957,21 @@
             "item1",
             "item2"
           ]
+        }
+      },
+      "RemoveMemberReq": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "example": {
+          "user_id": 1
         }
       },
       "RemoveMembersRequest": {
@@ -3963,6 +5093,18 @@
           "role_code": "admin"
         }
       },
+      "RotateCertificateReq": {
+        "type": "object",
+        "properties": {
+          "validity_years": {
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "example": {
+          "validity_years": 1
+        }
+      },
       "SaveIdentitySourceReq": {
         "type": "object",
         "properties": {
@@ -4081,6 +5223,21 @@
           "password": "Password123!"
         }
       },
+      "SwitchTenantReq": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "required": [
+          "tenant_id"
+        ],
+        "example": {
+          "tenant_id": 1
+        }
+      },
       "SyncLdapUserReq": {
         "type": "object",
         "properties": {
@@ -4143,6 +5300,104 @@
           "identity_id": "string",
           "provider": "string",
           "user_id": 1
+        }
+      },
+      "UpdateApplicationReq": {
+        "type": "object",
+        "properties": {
+          "auto_consent": {
+            "type": "boolean",
+            "example": true
+          },
+          "grant_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "item1",
+              "item2"
+            ]
+          },
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "is_public": {
+            "type": "boolean",
+            "example": true
+          },
+          "logo": {
+            "type": "string",
+            "example": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "示例名称"
+          },
+          "protocol": {
+            "type": "string",
+            "example": "string"
+          },
+          "redirect_uris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "item1",
+              "item2"
+            ]
+          },
+          "response_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "item1",
+              "item2"
+            ]
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "item1",
+              "item2"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "redirect_uris"
+        ],
+        "example": {
+          "auto_consent": true,
+          "grant_types": [
+            "item1",
+            "item2"
+          ],
+          "id": 1,
+          "is_public": true,
+          "logo": "string",
+          "name": "示例名称",
+          "protocol": "string",
+          "redirect_uris": [
+            "item1",
+            "item2"
+          ],
+          "response_types": [
+            "item1",
+            "item2"
+          ],
+          "scopes": [
+            "item1",
+            "item2"
+          ]
         }
       },
       "UpdateDeptRequest": {

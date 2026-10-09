@@ -86,14 +86,14 @@
 
 | 操作名称 | 完整权限码 | 作用域 | 归属类型 | 暴露状态 | 联动包含权限 | 宿主源码位置 |
 |:---|:---|:---|:---|:---|:---|:---|
-| 创建接入应用 | `iam:idp:create` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 96 |
-| 删除接入应用 | `iam:idp:delete` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 108 |
-| 接入应用详情 | `iam:idp:detail` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 111 |
-| 接入应用列表 | `iam:idp:list` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 105 |
-| 重置应用密钥 | `iam:idp:reset_secret` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 102 |
-| 获取SAML接入描述符 | `iam:idp:saml_descriptor` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 116 |
-| 轮换SAML证书 | `iam:idp:saml_rotate_cert` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 119 |
-| 更新接入应用 | `iam:idp:update` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 99 |
+| 创建接入应用 | `iam:idp:create` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 115 |
+| 删除接入应用 | `iam:idp:delete` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 127 |
+| 接入应用详情 | `iam:idp:detail` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 130 |
+| 接入应用列表 | `iam:idp:list` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 124 |
+| 重置应用密钥 | `iam:idp:reset_secret` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 121 |
+| 获取SAML接入描述符 | `iam:idp:saml_descriptor` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 135 |
+| 轮换SAML证书 | `iam:idp:saml_rotate_cert` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 138 |
+| 更新接入应用 | `iam:idp:update` | 租户级 | 本级 | 正常 | - | `internal/web/idp/handler.go` 行 118 |
 
 ---
 

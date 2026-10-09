@@ -1,0 +1,105 @@
+# EIAM Go CI：工程体检护栏
+# 目标：保证 gofmt / go vet / go test / go build 全绿，并守护生成链与提交产物一致（wire/mock/proto/perm/swagger 再生成无 diff）。
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 同分支后续推送取消前序运行，节省 CI 资源
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: '1.26.9'
+  # go install X@v 在空 go.mod 环境下会回落到基础工具链；
+  # 显式锁死 go1.26.9，确保 mockgen 等生成器与项目 go 1.26.0 指令匹配，
+  # 避免“application built with go1.24”导致生成链在 CI 误判。
+  GOTOOLCHAIN: 'go1.26.9'
+
+jobs:
+  # 格式化与静态检查
+  lint:
+    name: gofmt & vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: gofmt 检查（须零违规）
+        run: |
+          # gofmt -l 输出非空即代表存在格式违规，直接失败
+          files=$(gofmt -l .)
+          if [ -n "$files" ]; then
+            echo "::error::gofmt 发现未格式化文件:"
+            echo "$files"
+            exit 1
+          fi
+      - name: go vet
+        run: go vet ./...
+
+  # 编译与单元测试（含竞态检测）
+  test:
+    name: build & test (-race)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: 依赖下载
+        run: go mod download
+      - name: 编译
+        run: go build ./...
+      - name: 单元测试（竞态检测）
+        # -race 覆盖 AGENTS.md 强约束：代码变更必须确保 go test -race ./... 通过
+        run: go test -race -count=1 ./...
+
+  # 生成链一致性守护：本地化生成（protoc/wire/mock/permgen/swaggergen）须与提交产物零 diff
+  generate-check:
+    name: 生成链一致性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: 安装 protoc
+        uses: extractions/setup-protoc@v3
+        with:
+          version: '29.5'
+      - name: 安装生成器插件
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2
+          go install go.uber.org/mock/mockgen@v0.6.0
+          go install github.com/google/wire/cmd/wire@v0.7.0
+      - name: 重新生成 proto（本地 protoc 管线，等价 buf generate）
+        run: |
+          protoc -I api/proto \
+            --go_out=api/proto/gen --go-grpc_out=api/proto/gen \
+            "--go_opt=paths=source_relative,Meiam/user/v1/user.proto=github.com/Havens-blog/e-iam/api/proto/gen/eiam/user/v1,Meiam/tenant/v1/tenant.proto=github.com/Havens-blog/e-iam/api/proto/gen/eiam/tenant/v1,Meiam/department/v1/department.proto=github.com/Havens-blog/e-iam/api/proto/gen/eiam/department/v1" \
+            "--go-grpc_opt=paths=source_relative,Meiam/user/v1/user.proto=github.com/Havens-blog/e-iam/api/proto/gen/eiam/user/v1,Meiam/tenant/v1/tenant.proto=github.com/Havens-blog/e-iam/api/proto/gen/eiam/tenant/v1,Meiam/department/v1/department.proto=github.com/Havens-blog/e-iam/api/proto/gen/eiam/department/v1" \
+            api/proto/eiam/user/v1/user.proto \
+            api/proto/eiam/tenant/v1/tenant.proto \
+            api/proto/eiam/department/v1/department.proto
+      - name: 重新生成 wire + mock（go generate）
+        run: go generate ./...
+      - name: 重新生成权限契约
+        run: go run ./cmd/permgen
+      - name: 重新生成 OpenAPI 文档
+        run: go run ./cmd/swaggergen
+      - name: 生成产物须与提交零 diff
+        run: |
+          if ! git diff --exit-code; then
+            echo "::error::生成链产物与提交不一致，请本地执行 task gen / task mock / task gen:perm / task gen:swagger 后提交"
+            git diff --stat
+            exit 1
+          fi
