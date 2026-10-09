@@ -1,0 +1,16 @@
+# Go 项目标准行尾：统一 LF，避免 Windows CRLF 导致 gofmt -l 失真与 git 换行警告
+* text=auto
+*.go       text eol=lf
+*.mod      text eol=lf
+*.sum      text eol=lf
+*.proto    text eol=lf
+*.yml      text eol=lf
+*.yaml     text eol=lf
+*.md       text eol=lf
+*.sh       text eol=lf
+*.sql      text eol=lf
+*.bat      text eol=crlf
+*.png binary
+*.jpg binary
+*.svg binary
+*.pem binary
