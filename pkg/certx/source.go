@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-// Source 约束可作为证书或密钥数据源的合法输入类型
-type Source interface {
+// ISource 约束可作为证书或密钥数据源的合法输入类型
+type ISource interface {
 	~string | ~[]byte
 }
 
@@ -17,7 +17,7 @@ type Source interface {
 // 1. 若内容包含 "-----BEGIN"，判定为直接内联的 PEM 字符串，直接返回字节；
 // 2. 若内容不含换行符且长度符合文件路径规范，判定为本地磁盘文件路径；若文件不存在或读取失败，明确返回文件读取错误；
 // 3. 兜底返回原始字节切片 (兼容原始 DER 二进制编码)。
-func ResolveSource[T Source](input T) ([]byte, error) {
+func ResolveSource[T ISource](input T) ([]byte, error) {
 	bytes := []byte(input)
 	trimmed := strings.TrimSpace(string(bytes))
 	if trimmed == "" {

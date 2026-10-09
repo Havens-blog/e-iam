@@ -80,13 +80,13 @@ type MenuMeta struct {
 	Platforms   []string `json:"platforms"`
 }
 
-// PermissionProvider 逻辑权限提供者契约
-type PermissionProvider interface {
+// IPermissionProvider 逻辑权限提供者契约
+type IPermissionProvider interface {
 	ProvidePermissions() []Permission
 }
 
-// MenuProvider 菜单资产提供者契约
-type MenuProvider interface {
+// IMenuProvider 菜单资产提供者契约
+type IMenuProvider interface {
 	ProvideMenus() []Menu
 }
 
@@ -125,10 +125,10 @@ func (r *SyncRequest) normalize() {
 	slices.SortFunc(r.Menus, func(a, b Menu) int { return cmp.Compare(a.Name, b.Name) })
 }
 
-// Reporter 资产上报的传输契约 (端口抽象)
-type Reporter interface {
+// IReporter 资产上报的传输契约 (端口抽象)
+type IReporter interface {
 	Sync(ctx context.Context, req SyncRequest) error
 }
 
 // Registry 兼容历史命名
-type Registry = Reporter
+type Registry = IReporter

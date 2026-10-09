@@ -11,8 +11,8 @@ import (
 
 // Collector 资产扫描器
 type Collector struct {
-	providers     []PermissionProvider
-	menuProviders []MenuProvider
+	providers     []IPermissionProvider
+	menuProviders []IMenuProvider
 	engine        *gin.Engine
 	service       string
 	source        string
@@ -25,11 +25,11 @@ func NewCollector() *Collector {
 
 type SyncOption func(*Collector)
 
-func WithPermissions(p ...PermissionProvider) SyncOption {
+func WithPermissions(p ...IPermissionProvider) SyncOption {
 	return func(c *Collector) { c.providers = append(c.providers, p...) }
 }
 
-func WithMenus(m ...MenuProvider) SyncOption {
+func WithMenus(m ...IMenuProvider) SyncOption {
 	return func(c *Collector) { c.menuProviders = append(c.menuProviders, m...) }
 }
 
@@ -79,14 +79,14 @@ func (c *Collector) collectPermissions() []Permission {
 	globalRegistriesMu.RUnlock()
 
 	// 统一汇聚所有显式与全局 Provider
-	providers := make([]PermissionProvider, 0, len(c.providers)+len(regs))
+	providers := make([]IPermissionProvider, 0, len(c.providers)+len(regs))
 	providers = append(providers, c.providers...)
 	for _, reg := range regs {
 		providers = append(providers, reg)
 	}
 
 	// 提取全部权限 -> 过滤 NoSync -> 按 Code 唯一去重
-	allPerms := lo.FlatMap(providers, func(p PermissionProvider, _ int) []Permission {
+	allPerms := lo.FlatMap(providers, func(p IPermissionProvider, _ int) []Permission {
 		return p.ProvidePermissions()
 	})
 
@@ -127,7 +127,7 @@ func (c *Collector) collectAPIs() []ResourceInfo {
 }
 
 func (c *Collector) collectMenus() []Menu {
-	return lo.FlatMap(c.menuProviders, func(p MenuProvider, _ int) []Menu {
+	return lo.FlatMap(c.menuProviders, func(p IMenuProvider, _ int) []Menu {
 		return p.ProvideMenus()
 	})
 }

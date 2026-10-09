@@ -128,7 +128,7 @@ func (s *mysqlAutoIncrementSyncer) SyncAutoIncrement(ctx context.Context, env Mi
 }
 
 // NewMySQLMigrator 通过 MySQL 规约创建通用迁移器
-func NewMySQLMigrator[T any](spec MySQLMigration[T]) Migrator {
+func NewMySQLMigrator[T any](spec MySQLMigration[T]) IMigrator {
 	return &genericMigrator[T, T]{
 		name:          spec.Name(),
 		reader:        &mysqlReader[T]{model: spec.Source()},

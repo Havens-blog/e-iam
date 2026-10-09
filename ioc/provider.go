@@ -11,7 +11,7 @@ import (
 // 开发者无需再手动将 Handler 注入到此列表中。
 //
 // 仅当存在“纯逻辑权限”（如：不直接关联任何 Web 路由的后台 Job 权限）时，
-// 才需在此处手动构建并返回自定义的 PermissionProvider。
-func InitProviders() []capability.PermissionProvider {
+// 才需在此处手动构建并返回自定义的 IPermissionProvider。
+func InitProviders() []capability.IPermissionProvider {
 	return nil
 }

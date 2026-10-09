@@ -7,24 +7,24 @@ import (
 )
 
 // Reporter 资产上报契约
-type Reporter = capability.Reporter
+type Reporter = capability.IReporter
 
 // Registry 兼容历史别名
 type Registry = capability.Registry
 
-// Syncer 资产同步调度引擎接口
-type Syncer interface {
-	WithOption(opts ...capability.SyncOption) Syncer
+// ISyncer 资产同步调度引擎接口
+type ISyncer interface {
+	WithOption(opts ...capability.SyncOption) ISyncer
 	Sync(ctx context.Context) error
 }
 
 type defaultSyncer struct {
-	reporter  capability.Reporter
+	reporter  capability.IReporter
 	collector *capability.Collector
 }
 
 // New 构造函数，调度 Collector 收集资产并上报
-func New(reporter capability.Reporter, opts ...capability.SyncOption) Syncer {
+func New(reporter capability.IReporter, opts ...capability.SyncOption) ISyncer {
 	s := &defaultSyncer{
 		reporter:  reporter,
 		collector: capability.NewCollector(),
@@ -35,7 +35,7 @@ func New(reporter capability.Reporter, opts ...capability.SyncOption) Syncer {
 	return s
 }
 
-func (s *defaultSyncer) WithOption(opts ...capability.SyncOption) Syncer {
+func (s *defaultSyncer) WithOption(opts ...capability.SyncOption) ISyncer {
 	for _, opt := range opts {
 		opt(s.collector)
 	}

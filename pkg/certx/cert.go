@@ -81,7 +81,7 @@ type CertConfig struct {
 }
 
 // New 从证书与私钥数据源（文件路径、PEM 文本或原始字节）直接解析并装配 Certificate 对象
-func New[S Source](certSource, keySource S) (*Certificate, error) {
+func New[S ISource](certSource, keySource S) (*Certificate, error) {
 	cert, err := ParseCert(certSource)
 	if err != nil {
 		return nil, fmt.Errorf("解析证书失败: %w", err)
@@ -163,7 +163,7 @@ func GenerateSelfSigned(cfg CertConfig) (*Certificate, error) {
 }
 
 // ParseCert 解析任意数据源（路径、PEM 或字节）的单个 X.509 证书
-func ParseCert[S Source](source S) (*x509.Certificate, error) {
+func ParseCert[S ISource](source S) (*x509.Certificate, error) {
 	rawBytes, err := ResolveSource(source)
 	if err != nil {
 		return nil, err

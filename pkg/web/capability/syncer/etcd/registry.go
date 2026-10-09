@@ -32,7 +32,7 @@ type registrationController struct {
 }
 
 // New 构建一个基于 Etcd 的资产注册器
-func New(client *clientv3.Client, ttl int) capability.Reporter {
+func New(client *clientv3.Client, ttl int) capability.IReporter {
 	if ttl <= 0 {
 		ttl = 60
 	}

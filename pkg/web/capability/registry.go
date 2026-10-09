@@ -34,7 +34,7 @@ func ResetGlobalRegistries() {
 
 // IRegistry 是 capability 权限注册表的统一契约
 type IRegistry interface {
-	PermissionProvider
+	IPermissionProvider
 
 	// Define 声明一个业务逻辑能力包 (推荐的纯正新设计：Define + Bind)
 	Define(name, code string) *Capability

@@ -12,7 +12,7 @@
 | 维度 | P0 | P1 | P2 | P3 | 宏观结论 |
 |------|----|----|----|----|----------|
 | ①工程/工具链 | 0 | 0 | — | — | gofmt/vet/test 全绿基线已建立；生成链存在跨平台路径漂移与 CI 缺失，**已修复** |
-| ②架构/代码质量 | 0 | 1 | 6 | 5 | 宏观分层健康，Domain/Transport/Service/pkg 依赖方向全部通过；问题集中在错误哨兵泄漏与命名一致性。②-P1-1/②-P2-1/②-P2-2/②-P2-4/②-P2-5/②-P2-6 **已修复**；I 前缀(pkg 对外契约) P2-3 延后 |
+| ②架构/代码质量 | 0 | 1 | 6 | 5 | 宏观分层健康，Domain/Transport/Service/pkg 依赖方向全部通过；问题集中在错误哨兵泄漏与命名一致性。②-P1-1/②-P2-1/②-P2-2/②-P2-3/②-P2-4/②-P2-5/②-P2-6 **全部已修复**；pkg PrivateKey/PublicKey 类型约束保留为例外 |
 | ③性能 | 1 | 3 | 3 | 2 | 缓存/批处理基础设施成熟；PBAC 求值热路径重复校验是确定性浪费。③-P0-1/P1-1/P1-2/P1-3/P2-1/P2-2/P2-3 **全部已修复**；P3 择期 |
 | ④安全 | 0 | 3 | 4 | 4 | 近期硬化项（Fail-Closed/AK-SK 恒定时间/JWT 锁定/CORS 互斥/permission fail-closed）均有效；残留明文凭证、审计端点未鉴权、跨租户密钥操纵。④-P1-1/P1-2/P1-3/P2-1/P2-2/P2-3 **已修复**；间接依赖已升级；P2-4 运维处置 |
 
@@ -61,8 +61,8 @@
 ### ②-P2-2【P2·已修复】internal/ 9 个导出接口缺 `I` 前缀
 - 已补 I 前缀：`Crypto→ICrypto`、`CredentialProvider→ICredentialProvider`、`PermissionProvider→IPermissionProvider`（仅 internal）、`SubjectProvider→ISubjectProvider`、`RedisearchLdapUserCache→IRedisearchLdapUserCache`、`OidcService→IOidcService`、`AuthStrategy→IAuthStrategy`、`AuthorizationProvider→IAuthorizationProvider`、`Engine→IEngine`（同时消除与 `gin.Engine` 同名混淆）。mock/wire 已重生成。
 
-### ②-P2-3【P2·暂缓】pkg/ 9 个导出接口缺 `I` 前缀
-- `pkg/certx/source.go:11 Source`、`pkg/sorter/sorter.go:15 Sortable`、`pkg/migration/types.go:44 Migrator`、`pkg/web/capability/model.go:84 PermissionProvider,:89 MenuProvider,:129 Reporter`、`pkg/web/capability/syncer/syncer.go:16 Syncer`。pkg 为对外契约，重命名影响下游，需评估兼容窗口。`PrivateKey/PublicKey`（类型约束接口）建议保留为例外。
+### ②-P2-3【P2·已修复】pkg/ 导出接口补 `I` 前缀
+- 已补 I 前缀：`certx.Source→ISource`（类型约束）、`sorter.Sortable→ISortable`（类型约束）、`migration.Migrator→IMigrator`（规避 `*gorm.DB.Migrator()` 方法同名，仅改接口声明与类型引用）、`capability.PermissionProvider→IPermissionProvider`、`capability.MenuProvider→IMenuProvider`、`capability.Reporter→IReporter`、`syncer.Syncer→ISyncer`。别名 `Registry`/`syncer.Reporter` 名保留、底层类型更新。协调修复下游 `e-cam-service`（ioc/policy.go、ioc/gin.go）；go.work 补 `./eiam` 并升 go 1.26.0 使 workspace 联调一致。`PrivateKey/PublicKey`（私有类型约束）保留为例外。
 
 ### ②-P2-4【P2·已修复】DAO 分页样板重复（18 处）
 - 新增 `internal/repository/dao/paginate.go`：`Paginate(offset, limit)` GORM Scope，统一封装 `Offset/Limit` 计算。19 处 DAO 查询（含 1 处 `Limit().Offset()` 反序变体）收敛为 `.Scopes(Paginate(offset, limit))`，消除样板重复。
@@ -158,7 +158,7 @@
 ## 本批落地范围（修复→验证→提交闭环）
 
 - **批次① 已提交**：①-1~①-5 全部（gofmt、生成链本地化、CI 护栏）。
-- **批次② 已提交**：②-P1-1（gRPC gorm 剥离 + errs.ErrUserNotFound）、②-P2-1（Repo gorm 剥离）、②-P2-2（9 internal 接口 I 前缀 + mock/wire 重生成）、②-P2-4（DAO 分页助手 Paginate Scope，19 处样板收敛）。暂缓 P2-3(pkg 对外契约)/P2-5/P2-6/P3。
+- **批次② 已提交**：②-P1-1（gRPC gorm 剥离 + errs.ErrUserNotFound）、②-P2-1（Repo gorm 剥离）、②-P2-2（9 internal 接口 I 前缀 + mock/wire 重生成）、②-P2-3（pkg 对外接口 I 前缀 + 协调下游 e-cam-service + go.work 联调）、②-P2-4（DAO 分页助手 Paginate Scope，19 处样板收敛）、②-P2-5（双定义消解）、②-P2-6（service 裸 return err 63 处补 fmt.Errorf 上下文）。暂缓 P2-5/P2-6/P3 中的 pkg PrivateKey/PublicKey 类型约束例外。
 - **批次③ 已提交**：③-P0-1（PBAC 移除重复校验，bench 基线 EvaluateCondition_Complex 977→622 ns/op ↓36%、PartialEvaluateAccessScope 208→154 ↓26%）、③-P2-1（正则包级 var）、③-P1-3（PhysicalClearService DB 过滤）、③-P1-2（ListAllMenus Redis 缓存 + 变更失效）、③-P2-2（GetMenu 主键点查）、③-P2-3（pbac bench 基线）、③-P1-1（getEffectivePolicies Redis 短缓存 30s+jitter，AssignRolesToUser/RemoveRolesFromUser 即时失效；跨服务变更走 TTL 兜底）。P3 择期。
 - **批次④ 已提交**：permission.go fail-closed、④-P1-1（凭证 SHA-256 哈希存储 + 双轨兼容迁移）、④-P1-2（审计端点 fail-closed 令牌鉴权 + 自由文本长度收敛）、④-P1-3（UpdateStatus tenant_id 归属过滤）、④-P2-1（SameSite=Lax）、④-P2-2（Logout 同源校验 + 白名单精确比对）、④-P2-3（gRPC auth_token 强制非空）、间接依赖升级（etcd v3.6.14、klauspost v1.18.7、go-ntlmssp v0.1.1、fasthttp v1.70.0）。P2-4 运维处置、P3 择期。
 
