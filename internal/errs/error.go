@@ -20,6 +20,7 @@ var (
 	ErrMissingTenantContext = errors.New("多租户安全拦截：未显式声明 IgnoreTenant 且缺失有效租户上下文")
 
 	ErrUserExist          = errors.New("用户名已存在")
+	ErrUsernameConflict   = errors.New("用户名已被本地账号占用，请先以本地凭证登录后显式绑定外部身份")
 	ErrInvalidUser        = errors.New("账号或密码错误")
 	ErrProviderNotFound   = errors.New("未找到指定的身份源适配器")
 	ErrTenantAccessDenied = errors.New("无权访问该租户空间")

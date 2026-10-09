@@ -18,11 +18,11 @@ VALUES
                          `inline_policies` = VALUES(`inline_policies`),
                          `utime`           = VALUES(`utime`);
 
--- 初始化超级管理员账户：admin / 12345678
+-- 初始化超级管理员账户 (仅首次插入时写入初始口令，重复执行不重置密码，防运维变更被回滚)
 INSERT INTO `user` (`id`, `username`, `password`, `email`, `status`, `source`, `ctime`, `utime`)
 VALUES (1, 'admin', '$2a$10$6ocvB6VX93BKFT4HruyWEOFy1ePGbXbd37uBvtnZ7CHovY9N3WotK', 'admin@example.com', 1, 'local',
         FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000), FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000))
-ON DUPLICATE KEY UPDATE `password` = VALUES(`password`), `utime` = VALUES(`utime`);
+ON DUPLICATE KEY UPDATE `utime` = VALUES(`utime`);
 
 -- 授予 admin 用户 super_admin 角色 (Domain 使用 '1'，v3 记录授权时间)
 INSERT INTO `casbin_rule` (`ptype`, `v0`, `v1`, `v2`, `v3`)

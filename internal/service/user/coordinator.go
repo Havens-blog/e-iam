@@ -342,7 +342,7 @@ func (c *authCoordinator) provisionOrLinkIdentity(ctx context.Context, provider 
 
 // provisionUserByIdentity 统一的外部身份 JIT 预供逻辑
 func (c *authCoordinator) provisionUserByIdentity(ctx context.Context, extUser domain.User, identity domain.UserIdentity) (domain.User, error) {
-	u, err := c.repo.FindByUsername(ctx, extUser.Username)
+	_, err := c.repo.FindByUsername(ctx, extUser.Username)
 	var uid int64
 	if err != nil {
 		if extUser.Source == "" {
@@ -356,7 +356,10 @@ func (c *authCoordinator) provisionUserByIdentity(ctx context.Context, extUser d
 			return domain.User{}, fmt.Errorf("JIT 创建用户失败: %w", err)
 		}
 	} else {
-		uid = u.ID
+		// P1-7 防跨源账号接管：用户名已被本地账号占用时，禁止将外部身份静默挂接到既有账号。
+		// 攻击者可伪造目标用户名且可控的外部目录字段（如钉钉/飞书昵称）触发碰撞；
+		// 确属本人的需先以本地凭证登录，再走显式绑定流程（带凭证的确认路径）
+		return domain.User{}, fmt.Errorf("%w: username=%s", errs.ErrUsernameConflict, extUser.Username)
 	}
 
 	identity.UserID = uid
@@ -370,7 +373,7 @@ func (c *authCoordinator) provisionUserByIdentity(ctx context.Context, extUser d
 	}
 
 	newCtx := ctxutil.WithTenantID(ctx, personalTenantID)
-	u, err = c.repo.FindById(newCtx, uid)
+	u, err := c.repo.FindById(newCtx, uid)
 	if err == nil {
 		u.Profile.Nickname = extUser.Profile.Nickname
 		u.Profile.JobTitle = extUser.Profile.JobTitle

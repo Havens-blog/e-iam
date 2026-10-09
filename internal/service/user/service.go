@@ -245,15 +245,42 @@ func (s *userService) CountSearch(ctx context.Context, keyword string) (int64, e
 	return s.repo.CountSearch(ctx, keyword)
 }
 
+// requireTenantMembership 写操作防跨租户接管：目标用户必须是当前上下文租户的成员。
+// 与 gormx 租户插件形成纵深防御：插件负责数据行过滤，本校验负责显式业务语义拒绝。
+func (s *userService) requireTenantMembership(ctx context.Context, uid int64) error {
+	if ctxutil.GetTenantID(ctx) <= 0 {
+		return errs.ErrMissingTenantContext
+	}
+	hasAccess, err := s.tenantSvc.CheckUserTenantAccess(ctx, uid)
+	if err != nil {
+		return err
+	}
+	if !hasAccess {
+		return errs.ErrTenantAccessDenied
+	}
+	return nil
+}
+
 func (s *userService) Update(ctx context.Context, u domain.User) (int64, error) {
+	if err := s.requireTenantMembership(ctx, u.ID); err != nil {
+		return 0, err
+	}
 	return s.repo.Update(ctx, u)
 }
 
 func (s *userService) Delete(ctx context.Context, id int64) error {
+	if err := s.requireTenantMembership(ctx, id); err != nil {
+		return err
+	}
 	return s.repo.Delete(ctx, id)
 }
 
 func (s *userService) BatchDelete(ctx context.Context, ids []int64) (int64, error) {
+	for _, id := range ids {
+		if err := s.requireTenantMembership(ctx, id); err != nil {
+			return 0, err
+		}
+	}
 	return s.repo.BatchDelete(ctx, ids)
 }
 
@@ -266,15 +293,25 @@ func (s *userService) GetAttachedUsersWithFilter(ctx context.Context, roleCode s
 }
 
 func (s *userService) BindIdentity(ctx context.Context, uid int64, identity domain.UserIdentity) error {
+	// P1-5 防跨租户身份接管：绑定目标必须是当前租户成员
+	if err := s.requireTenantMembership(ctx, uid); err != nil {
+		return err
+	}
 	identity.UserID = uid
 	return s.repo.SaveIdentity(ctx, identity)
 }
 
 func (s *userService) UnbindIdentity(ctx context.Context, userID int64, provider, identityID string) error {
+	if err := s.requireTenantMembership(ctx, userID); err != nil {
+		return err
+	}
 	return s.repo.DeleteIdentity(ctx, userID, provider, identityID)
 }
 
 func (s *userService) ManageIdentities(ctx context.Context, uid int64, identities []domain.UserIdentity) error {
+	if err := s.requireTenantMembership(ctx, uid); err != nil {
+		return err
+	}
 	for _, id := range identities {
 		id.UserID = uid
 		// 策略：如果标识为空，则解绑；否则绑定/更新
@@ -360,8 +397,12 @@ func (s *userService) ConsumeBindToken(ctx context.Context, uid int64, token str
 		return err
 	}
 
-	return s.BindIdentity(ctx, uid, domain.UserIdentity{
+	// 登录期绑定是“已通过本地口令认证”的显式确认路径：此时会话尚未颁发、
+	// 上下文无租户信息，故不经 BindIdentity 的成员校验，直接落库（uid 服务端可信）
+	identity := domain.UserIdentity{
 		Provider:   ident.Provider,
 		IdentityID: ident.ExternalID,
-	})
+	}
+	identity.UserID = uid
+	return s.repo.SaveIdentity(ctx, identity)
 }
