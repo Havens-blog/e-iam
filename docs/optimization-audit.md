@@ -74,10 +74,10 @@
 - 已为 8 个 service 文件（user/tenant/permission/policy/role/department/group/idp-application）中 63 处转发不透明 repo/DAO 错误的裸 `return err` 补 `fmt.Errorf("...: %w", err)` 上下文；errgroup 闭包重构为 `if err != nil { return fmt.Errorf(...) }; return nil` 区分失败 goroutine。豁免 70 处转发领域哨兵/service 方法的点。`%w` 保留错误链，`errors.Is` 断言不受影响。
 
 ### ②-P3（5 项，极低风险，可选）
-- P3-1 错误双重表达：`internal/errs` 与各 web 包 `errs.go` 并存（如 `ErrRoleCycleInheritance`），建议集中映射表。【择期：跨包重构，影响面大】
+- P3-1【已修复】错误双重表达收敛：新增 `internal/web/weberrx` 统一映射原语（`Mapping{Sentinel,Result}` + `Map`），将 user（`MapLoginError` 由 switch 收敛为映射表）、role（`MapDeleteError/MapInheritanceError/MapUnassignError`）、policy（`MapCreateError/MapDeleteError`）、invitation（`MapVerifyError/MapAcceptError/MapJoinHandleError`）四包 handler 中重复的 `if errors.Is(err, errs.ErrX) { return ErrX }` 链收敛为单次 `MapXxxError(err)` 调用。idp CAS/SAML 走原始 `c.String` HTTP 直写、department 仅单检查不收敛（控制流不匹配/收益小）。`internal/errs`（领域哨兵）与 web 包 `ginx.Result`（HTTP 响应码）的分层分工是正确的，本项收敛的是二者间的映射样板而非分层本身。
 - P3-2【已修复】fire-and-forget 审计协程静默吞错：`idp/audit.go`、`user/coordinator.go`（logout/login/login-fail 三处）失败改记 elog Warn，审计链路断裂可见。
 - P3-3【已修复】discovery 主同步路径 `context.Background()`（`service.go:66`）改透传调用方 ctx，客户端断连可中止长任务。
-- P3-4 per-web-package `errs.go` 样板，可生成器化。【择期：生成器工程，独立迭代】
+- P3-4【已修复·同 P3-1】per-web-package `errs.go` 样板：经 `weberrx` 原语收敛，无需独立生成器（映射表即声明式配置，codegen 边际收益低）。未收敛的 errs.go 保留为各包 HTTP 响应码声明。
 - P3-5【已修复】`permission.go` 构造期 panic 改返回 error（`NewPermissionService` 签名 `(IPermissionService, error)`，wire 重生成聚合到 InitApp）。
 
 ---

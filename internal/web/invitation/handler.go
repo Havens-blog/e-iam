@@ -1,11 +1,9 @@
 package invitation
 
 import (
-	"errors"
 	"time"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
-	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/internal/service/invitation"
 	"github.com/Havens-blog/e-iam/pkg/contract/permission"
 	"github.com/Havens-blog/e-iam/pkg/web/capability"
@@ -103,13 +101,7 @@ func (h *Handler) VerifyInvitation(ctx *ginx.Context) (ginx.Result, error) {
 
 	inv, isMember, err := h.svc.VerifyInvitation(ctx.Request.Context(), code, uid)
 	if err != nil {
-		if errors.Is(err, errs.ErrInvitationNotFound) {
-			return ErrInvitationNotFound, err
-		}
-		if errors.Is(err, errs.ErrInvitationFull) {
-			return ErrInvitationFull, err
-		}
-		return ErrInvitationVerifyFailed, err
+		return MapVerifyError(err), err
 	}
 
 	return ginx.Result{
@@ -139,16 +131,7 @@ func (h *Handler) AcceptInvitation(ctx *ginx.Context, req AcceptInvitationReq) (
 
 	requireApproval, targetTid, err := h.svc.AcceptInvitation(ctx.Request.Context(), req.Code, uid, username)
 	if err != nil {
-		if errors.Is(err, errs.ErrInvitationNotFound) {
-			return ErrInvitationNotFound, err
-		}
-		if errors.Is(err, errs.ErrInvitationFull) {
-			return ErrInvitationFull, err
-		}
-		if errors.Is(err, errs.ErrAlreadyMember) {
-			return ErrAlreadyMember, err
-		}
-		return ErrInvitationAcceptFailed, err
+		return MapAcceptError(err), err
 	}
 
 	msg := "成功加入租户"
@@ -243,13 +226,7 @@ func (h *Handler) ListJoinRequests(ctx *ginx.Context, req Page) (ginx.Result, er
 
 func (h *Handler) HandleJoinRequest(ctx *ginx.Context, req HandleJoinRequestReq) (ginx.Result, error) {
 	if err := h.svc.HandleJoinRequest(ctx.Request.Context(), req.ID, req.Approve); err != nil {
-		if errors.Is(err, errs.ErrUnauthorizedHandle) {
-			return ErrUnauthorized, err
-		}
-		if errors.Is(err, errs.ErrJoinRequestHandled) {
-			return ErrJoinRequestHandled, err
-		}
-		return ErrJoinRequestHandleFailed, err
+		return MapJoinHandleError(err), err
 	}
 
 	return ginx.Result{

@@ -1,9 +1,8 @@
 package user
 
 import (
-	"errors"
-
 	"github.com/Havens-blog/e-iam/internal/errs"
+	"github.com/Havens-blog/e-iam/internal/web/weberrx"
 	"github.com/ecodeclub/ginx"
 )
 
@@ -52,27 +51,23 @@ var (
 	ErrLdapRefreshFailed = ginx.Result{Code: 4010909, Msg: "刷新 LDAP 缓存失败"}
 )
 
+// loginErrorMappings 登录场景领域哨兵→富语义 Result 映射。
+// 既有 MapLoginError 已用 switch 硬编码，此处收敛为 weberrx.Mapping 表复用统一原语。
+var loginErrorMappings = []weberrx.Mapping{
+	{Sentinel: errs.ErrUserLocked, Result: ErrUserLocked},
+	{Sentinel: errs.ErrInvalidUser, Result: ErrUnauthorized},
+	{Sentinel: errs.ErrUserNotLinked, Result: ErrUserNotLinked},
+	{Sentinel: errs.ErrMfaAttemptsExhausted, Result: ErrMfaExhausted},
+	{Sentinel: errs.ErrMfaTokenNotFound, Result: ErrMfaTokenInvalid},
+	{Sentinel: errs.ErrPasswordWeak, Result: ErrPasswordWeak},
+	{Sentinel: errs.ErrTenantAccessDenied, Result: ErrTenantAccessDenied},
+}
+
 // MapLoginError 将底层 Service/Coordinator 抛出的领域哨兵错误转换为富语义的 ginx.Result
 func MapLoginError(err error) ginx.Result {
 	if err == nil {
 		return ginx.Result{}
 	}
-	switch {
-	case errors.Is(err, errs.ErrUserLocked):
-		return ErrUserLocked
-	case errors.Is(err, errs.ErrInvalidUser):
-		return ErrUnauthorized
-	case errors.Is(err, errs.ErrUserNotLinked):
-		return ErrUserNotLinked
-	case errors.Is(err, errs.ErrMfaAttemptsExhausted):
-		return ErrMfaExhausted
-	case errors.Is(err, errs.ErrMfaTokenNotFound):
-		return ErrMfaTokenInvalid
-	case errors.Is(err, errs.ErrPasswordWeak):
-		return ErrPasswordWeak
-	case errors.Is(err, errs.ErrTenantAccessDenied):
-		return ErrTenantAccessDenied
-	default:
-		return ErrUnauthorized
-	}
+	// 未命中领域哨兵的登录错误统一回退为通用认证失败
+	return weberrx.Map(err, ErrUnauthorized, loginErrorMappings...)
 }

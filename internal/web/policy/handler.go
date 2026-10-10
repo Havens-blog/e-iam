@@ -2,12 +2,10 @@ package policy
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
-	"github.com/Havens-blog/e-iam/internal/errs"
 	permsvc "github.com/Havens-blog/e-iam/internal/service/permission"
 	policysvc "github.com/Havens-blog/e-iam/internal/service/policy"
 	usersvc "github.com/Havens-blog/e-iam/internal/service/user"
@@ -191,10 +189,7 @@ func (h *Handler) CreatePolicy(ctx *ginx.Context, req CreatePolicyReq) (ginx.Res
 		}),
 	})
 	if err != nil {
-		if errors.Is(err, errs.ErrDuplicatePolicyCode) {
-			return ErrDuplicatePolicyCode, err
-		}
-		return ErrCreatePolicyFailed, err
+		return MapCreateError(err), err
 	}
 	return ginx.Result{Msg: "创建成功"}, nil
 }
@@ -367,13 +362,7 @@ func (h *Handler) DeletePolicy(ctx *ginx.Context) (ginx.Result, error) {
 	}
 
 	if err = h.svc.DeletePolicy(ctx.Request.Context(), code); err != nil {
-		if errors.Is(err, errs.ErrDeleteSystemPolicy) {
-			return ErrDeleteSystemPolicy, nil
-		}
-		if errors.Is(err, errs.ErrPolicyInUse) {
-			return ErrPolicyInUse, nil
-		}
-		return ErrDeletePolicyFailed, err
+		return MapDeleteError(err), err
 	}
 
 	return ginx.Result{
@@ -383,13 +372,7 @@ func (h *Handler) DeletePolicy(ctx *ginx.Context) (ginx.Result, error) {
 
 func (h *Handler) BatchDeletePolicies(ctx *ginx.Context, req BatchDeletePolicyReq) (ginx.Result, error) {
 	if err := h.svc.BatchDeletePolicies(ctx.Request.Context(), req.Codes); err != nil {
-		if errors.Is(err, errs.ErrDeleteSystemPolicy) {
-			return ErrDeleteSystemPolicy, nil
-		}
-		if errors.Is(err, errs.ErrPolicyInUse) {
-			return ErrPolicyInUse, nil
-		}
-		return ErrDeletePolicyFailed, err
+		return MapDeleteError(err), err
 	}
 
 	return ginx.Result{
