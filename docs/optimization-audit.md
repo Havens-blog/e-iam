@@ -74,11 +74,11 @@
 - 已为 8 个 service 文件（user/tenant/permission/policy/role/department/group/idp-application）中 63 处转发不透明 repo/DAO 错误的裸 `return err` 补 `fmt.Errorf("...: %w", err)` 上下文；errgroup 闭包重构为 `if err != nil { return fmt.Errorf(...) }; return nil` 区分失败 goroutine。豁免 70 处转发领域哨兵/service 方法的点。`%w` 保留错误链，`errors.Is` 断言不受影响。
 
 ### ②-P3（5 项，极低风险，可选）
-- P3-1 错误双重表达：`internal/errs` 与各 web 包 `errs.go` 并存（如 `ErrRoleCycleInheritance`），建议集中映射表。
-- P3-2 fire-and-forget 审计协程静默吞错（`idp/audit.go:27`、`user/coordinator.go:206,237`），实现质量高（recover+timeout+提前提取 clientIP/UA），建议失败至少 elog Warn。
-- P3-3 discovery 主同步路径 `context.Background()`（`service.go:66`），复核是否应透传调用方 ctx。
-- P3-4 per-web-package `errs.go` 样板，可生成器化。
-- P3-5 `permission.go:58` 构造期 panic 可改返回 error。
+- P3-1 错误双重表达：`internal/errs` 与各 web 包 `errs.go` 并存（如 `ErrRoleCycleInheritance`），建议集中映射表。【择期：跨包重构，影响面大】
+- P3-2【已修复】fire-and-forget 审计协程静默吞错：`idp/audit.go`、`user/coordinator.go`（logout/login/login-fail 三处）失败改记 elog Warn，审计链路断裂可见。
+- P3-3【已修复】discovery 主同步路径 `context.Background()`（`service.go:66`）改透传调用方 ctx，客户端断连可中止长任务。
+- P3-4 per-web-package `errs.go` 样板，可生成器化。【择期：生成器工程，独立迭代】
+- P3-5【已修复】`permission.go` 构造期 panic 改返回 error（`NewPermissionService` 签名 `(IPermissionService, error)`，wire 重生成聚合到 InitApp）。
 
 ---
 

@@ -7,6 +7,7 @@ import (
 	"github.com/Havens-blog/e-iam/internal/domain"
 	auditevt "github.com/Havens-blog/e-iam/internal/event/audit"
 	"github.com/Havens-blog/e-iam/pkg/ctxutil"
+	"github.com/gotomicro/ego/core/elog"
 )
 
 // RecordAudit 异步记录 IDP 域操作审计日志
@@ -24,7 +25,7 @@ func RecordAudit(ctx context.Context, p auditevt.IAuditProducer, tenantID int64,
 		asyncCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 
-		_ = p.RecordOperation(asyncCtx, domain.OperationLog{
+		if err := p.RecordOperation(asyncCtx, domain.OperationLog{
 			TenantID:     tenantID,
 			Service:      "iam",
 			Module:       "idp",
@@ -36,6 +37,9 @@ func RecordAudit(ctx context.Context, p auditevt.IAuditProducer, tenantID int64,
 			ClientIP:     clientIP,
 			UserAgent:    userAgent,
 			Ctime:        time.Now().UnixMilli(),
-		})
+		}); err != nil {
+			// 审计是 fire-and-forget，但失败应可见：静默吞错会让审计链路断裂长期无感
+			elog.DefaultLogger.Warn("IDP 审计异步记录失败", elog.FieldErr(err), elog.String("action", action))
+		}
 	}()
 }

@@ -72,9 +72,11 @@ func NewPermissionService(
 	auth authz.IAuthorizer,
 	boundary checker.IBoundaryChecker,
 	tenantRepo repository.ITenantRepository,
-	cmd redis.Cmdable) IPermissionService {
+	cmd redis.Cmdable) (IPermissionService, error) {
 	if en == nil {
-		panic("权限服务初始化失败: Casbin Enforcer 为空，请检查数据库与配置文件")
+		// 构造期返回 error 而非 panic：让启动失败经 wire 聚合到 InitApp，
+		// 调用方统一以 error 处理，避免 panic 在依赖注入链中难以定位根因
+		return nil, fmt.Errorf("权限服务初始化失败: Casbin Enforcer 为空，请检查数据库与配置文件")
 	}
 
 	return &permissionService{
@@ -88,7 +90,7 @@ func NewPermissionService(
 		boundary:    boundary,
 		tenantRepo:  tenantRepo,
 		cmd:         cmd,
-	}
+	}, nil
 }
 
 func (s *permissionService) SearchSubjects(ctx context.Context, keyword string, subType string, offset, limit int64) ([]domain.Subject, int64, error) {

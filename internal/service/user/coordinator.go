@@ -16,6 +16,7 @@ import (
 	"github.com/Havens-blog/e-iam/internal/service/tenant"
 	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/google/uuid"
+	"github.com/gotomicro/ego/core/elog"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	"github.com/samber/lo"
@@ -203,7 +204,7 @@ func (c *authCoordinator) RecordLogout(ctx context.Context, uid, tid int64, user
 		defer func() { _ = recover() }()
 		asyncCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		_ = c.auditProducer.RecordAuth(asyncCtx, domain.AuthLog{
+		if err := c.auditProducer.RecordAuth(asyncCtx, domain.AuthLog{
 			TenantID:  tid,
 			UserID:    uid,
 			Username:  username,
@@ -212,7 +213,9 @@ func (c *authCoordinator) RecordLogout(ctx context.Context, uid, tid int64, user
 			ClientIP:  clientIP,
 			UserAgent: userAgent,
 			Ctime:     time.Now().UnixMilli(),
-		})
+		}); err != nil {
+			elog.DefaultLogger.Warn("用户认证审计异步记录失败(logout)", elog.FieldErr(err), elog.String("username", username))
+		}
 	}()
 }
 
@@ -234,7 +237,7 @@ func (c *authCoordinator) recordAuthSuccess(ctx context.Context, uid, tid int64,
 		defer func() { _ = recover() }()
 		asyncCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		_ = c.auditProducer.RecordAuth(asyncCtx, domain.AuthLog{
+		if err := c.auditProducer.RecordAuth(asyncCtx, domain.AuthLog{
 			TenantID:  tid,
 			UserID:    uid,
 			Username:  username,
@@ -243,7 +246,9 @@ func (c *authCoordinator) recordAuthSuccess(ctx context.Context, uid, tid int64,
 			ClientIP:  clientIP,
 			UserAgent: userAgent,
 			Ctime:     time.Now().UnixMilli(),
-		})
+		}); err != nil {
+			elog.DefaultLogger.Warn("用户认证审计异步记录失败(login)", elog.FieldErr(err), elog.String("username", username), elog.String("auth_type", authType))
+		}
 	}()
 }
 
@@ -257,7 +262,7 @@ func (c *authCoordinator) recordAuthFailure(ctx context.Context, authType string
 	clientIP := ctxutil.GetClientIP(ctx)
 	userAgent := ctxutil.GetUserAgent(ctx)
 
-	_ = c.auditProducer.RecordAuth(ctx, domain.AuthLog{
+	if err := c.auditProducer.RecordAuth(ctx, domain.AuthLog{
 		TenantID:   ctxutil.SystemTenantID, // 登录错误统一归属系统根租户
 		UserID:     0,
 		Username:   username,
@@ -267,7 +272,9 @@ func (c *authCoordinator) recordAuthFailure(ctx context.Context, authType string
 		ClientIP:   clientIP,
 		UserAgent:  userAgent,
 		Ctime:      time.Now().UnixMilli(),
-	})
+	}); err != nil {
+		elog.DefaultLogger.Warn("用户认证审计记录失败(login-fail)", elog.FieldErr(err), elog.String("username", username))
+	}
 }
 
 // extractUsernameFromPayload 从强类型入参中提取登录账号名
