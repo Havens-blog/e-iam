@@ -172,7 +172,7 @@ func (s *PermissionSuite) TestCheckAPI() {
 				pid, _ := s.permSvc.CreatePermission(ctx, domain.Permission{Code: "iam:user:view"})
 				_ = s.permSvc.BindResourcesToPermission(ctx, pid, "iam:user:view", []string{api.URN()})
 
-				otherTid, _ := s.tenantSvc.CreateTenant(context.Background(), "黑客空间", "hacker", "hacker_user", 999)
+				otherTid, _ := s.tenantSvc.CreateTenant(context.Background(), domain.Tenant{Name: "黑客空间", Code: "hacker"}, "hacker_user", 999)
 				otherCtx := ctxutil.WithTenantID(context.Background(), otherTid)
 				_, _ = s.roleSvc.Create(otherCtx, domain.Role{Code: "DEV_HACKER"})
 				_, _ = s.permSvc.AssignRoleToUser(otherCtx, "hacker_user", "DEV_HACKER")
@@ -202,7 +202,7 @@ func (s *PermissionSuite) TestCheckAPI() {
 			// 在调用 CreateTenant 之前，必须确保物理层存在 ADMIN/SUPER_ADMIN 角色条目
 			s.ensureAdminRole(context.Background())
 
-			tid, err := s.tenantSvc.CreateTenant(context.Background(), "测试用例", "test", "super_user", 8888)
+			tid, err := s.tenantSvc.CreateTenant(context.Background(), domain.Tenant{Name: "测试用例", Code: "test"}, "super_user", 8888)
 			require.NoError(s.T(), err)
 			ctx := ctxutil.WithTenantID(context.Background(), tid)
 
@@ -220,7 +220,7 @@ func (s *PermissionSuite) TestRoleCycleDetection() {
 	s.clearAll()
 	s.ensureAdminRole(context.Background())
 
-	tid, err := s.tenantSvc.CreateTenant(context.Background(), "循环测试", "cycle", "admin", 1)
+	tid, err := s.tenantSvc.CreateTenant(context.Background(), domain.Tenant{Name: "循环测试", Code: "cycle"}, "admin", 1)
 	require.NoError(s.T(), err)
 	ctx := ctxutil.WithTenantID(context.Background(), tid)
 

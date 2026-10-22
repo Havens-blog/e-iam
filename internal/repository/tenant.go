@@ -63,12 +63,7 @@ func NewTenantRepository(d dao.ITenantDAO) ITenantRepository {
 }
 
 func (r *TenantRepository) Create(ctx context.Context, t domain.Tenant) (int64, error) {
-	return r.dao.Create(ctx, dao.Tenant{
-		Name:   t.Name,
-		Code:   t.Code,
-		Domain: t.Domain,
-		Status: t.Status,
-	})
+	return r.dao.Create(ctx, r.toEntity(t))
 }
 
 func (r *TenantRepository) CreateBind(ctx context.Context, userID int64) error {
@@ -142,13 +137,7 @@ func (r *TenantRepository) Count(ctx context.Context, keyword string) (int64, er
 }
 
 func (r *TenantRepository) Update(ctx context.Context, t domain.Tenant) error {
-	return r.dao.Update(ctx, dao.Tenant{
-		ID:     t.ID,
-		Name:   t.Name,
-		Code:   t.Code,
-		Domain: t.Domain,
-		Status: t.Status,
-	})
+	return r.dao.Update(ctx, r.toEntity(t))
 }
 
 func (r *TenantRepository) Delete(ctx context.Context, id int64) error {
@@ -195,18 +184,29 @@ func (r *TenantRepository) toDomain(t dao.Tenant) domain.Tenant {
 		Code:   t.Code,
 		Domain: t.Domain,
 		Status: t.Status,
-		Ctime:  t.Ctime,
-		Utime:  t.Utime,
+		// 三类治理配置双向透传：转换丢字段会让配置"能写不能读"，在转换层集中维护
+		MaxAccounts:    t.MaxAccounts,
+		MaxUsers:       t.MaxUsers,
+		MaxUserGroups:  t.MaxUserGroups,
+		FeatureSwitch:  t.FeatureSwitch,
+		AllowedVendors: t.AllowedVendors,
+		Ctime:          t.Ctime,
+		Utime:          t.Utime,
 	}
 }
 
 func (r *TenantRepository) toEntity(t domain.Tenant) dao.Tenant {
 	return dao.Tenant{
-		ID:     t.ID,
-		Name:   t.Name,
-		Code:   t.Code,
-		Domain: t.Domain,
-		Status: t.Status,
+		ID:             t.ID,
+		Name:           t.Name,
+		Code:           t.Code,
+		Domain:         t.Domain,
+		Status:         t.Status,
+		MaxAccounts:    t.MaxAccounts,
+		MaxUsers:       t.MaxUsers,
+		MaxUserGroups:  t.MaxUserGroups,
+		FeatureSwitch:  t.FeatureSwitch,
+		AllowedVendors: t.AllowedVendors,
 	}
 }
 

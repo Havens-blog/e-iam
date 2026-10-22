@@ -99,7 +99,7 @@ func (s *PolicyTestSuite) TestManagedPolicyAuthorization() {
 
 	ctx := context.Background()
 	s.ensureAdminRole(ctx)
-	tid, err := s.tenantSvc.CreateTenant(ctx, "策略测试租户", "policy-test", "admin_tester", 1001)
+	tid, err := s.tenantSvc.CreateTenant(ctx, domain.Tenant{Name: "策略测试租户", Code: "policy-test"}, "admin_tester", 1001)
 	s.Require().NoError(err)
 	ctx = ctxutil.WithTenantID(ctx, tid)
 

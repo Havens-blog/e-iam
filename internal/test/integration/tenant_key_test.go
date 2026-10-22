@@ -54,7 +54,7 @@ func (s *TenantKeySuite) TestTenantKey_Lifecycle() {
 	ctx := context.Background()
 
 	// 1. 创建租户并验证是否自动生成了 API Key
-	tenantID, err := s.tenantSvc.CreateTenant(ctx, "测试租户", "test-tenant", "owner_user", 1001)
+	tenantID, err := s.tenantSvc.CreateTenant(ctx, domain.Tenant{Name: "测试租户", Code: "test-tenant"}, "owner_user", 1001)
 	s.NoError(err)
 	s.True(tenantID > 0)
 

@@ -119,7 +119,7 @@ func (s *MultiTenancySuite) TestCheckAPI_TenancyMatrix() {
 			name: "业务租户管理员继承系统角色：应获得全量授权",
 			setup: func(ctx context.Context) context.Context {
 				// 创建租户 A (tid=2)
-				tid, _ := s.tenantSvc.CreateTenant(ctx, "租户A", "t-a", "admin_a", 1)
+				tid, _ := s.tenantSvc.CreateTenant(ctx, domain.Tenant{Name: "租户A", Code: "t-a"}, "admin_a", 1)
 				tCtx := ctxutil.WithTenantID(ctx, tid)
 
 				// 1. 准备私有 API
@@ -140,8 +140,8 @@ func (s *MultiTenancySuite) TestCheckAPI_TenancyMatrix() {
 		{
 			name: "租户隔离校验：租户 B 用户无法访问租户 A 的私有资源",
 			setup: func(ctx context.Context) context.Context {
-				tidA, _ := s.tenantSvc.CreateTenant(ctx, "租户A", "t-a", "user_a", 1)
-				tidB, _ := s.tenantSvc.CreateTenant(ctx, "租户B", "t-b", "user_b", 2)
+				tidA, _ := s.tenantSvc.CreateTenant(ctx, domain.Tenant{Name: "租户A", Code: "t-a"}, "user_a", 1)
+				tidB, _ := s.tenantSvc.CreateTenant(ctx, domain.Tenant{Name: "租户B", Code: "t-b"}, "user_b", 2)
 				ctxA := ctxutil.WithTenantID(ctx, tidA)
 				ctxB := ctxutil.WithTenantID(ctx, tidB)
 
@@ -164,7 +164,7 @@ func (s *MultiTenancySuite) TestCheckAPI_TenancyMatrix() {
 			name: "全局策略应用：业务租户绑定系统策略后应获得授权",
 			setup: func(ctx context.Context) context.Context {
 				sysCtx := ctxutil.WithTenantID(ctx, ctxutil.SystemTenantID)
-				tidA, _ := s.tenantSvc.CreateTenant(ctx, "租户A", "t-a", "user_a", 1)
+				tidA, _ := s.tenantSvc.CreateTenant(ctx, domain.Tenant{Name: "租户A", Code: "t-a"}, "user_a", 1)
 				tCtx := ctxutil.WithTenantID(ctx, tidA)
 
 				// 系统租户定义 API 和 权限项

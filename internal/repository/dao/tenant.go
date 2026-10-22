@@ -71,8 +71,15 @@ type Tenant struct {
 	Code   string `gorm:"uniqueIndex;type:varchar(64)"`
 	Domain string `gorm:"type:varchar(255)"`
 	Status int    `gorm:"type:tinyint"`
-	Ctime  int64  `gorm:"comment:'创建时间'"`
-	Utime  int64  `gorm:"comment:'更新时间'"`
+	// 三类治理配置（规格 R2/R6/R7）：开关与白名单以 JSON 列整体存储，避免拆表；
+	// 列允许 NULL，NULL 与空集合读取后归一为 nil 零值，保证存量行升级语义正确
+	MaxAccounts    int64           `gorm:"default:0;comment:'最大云账号数,0或负=无限制'"`
+	MaxUsers       int64           `gorm:"default:0;comment:'最大用户数,0或负=无限制'"`
+	MaxUserGroups  int64           `gorm:"default:0;comment:'最大用户组数,0或负=无限制'"`
+	FeatureSwitch  map[string]bool `gorm:"serializer:json;type:json;comment:'功能开关'"`
+	AllowedVendors []string        `gorm:"serializer:json;type:json;comment:'云厂商白名单,空=全部允许'"`
+	Ctime          int64           `gorm:"comment:'创建时间'"`
+	Utime          int64           `gorm:"comment:'更新时间'"`
 }
 
 // Membership 映射表：仅代表入驻契约，不存储动态授权。
@@ -219,13 +226,14 @@ func (d *TenantDAO) tenantQuery(ctx context.Context, keyword string) *gorm.DB {
 }
 
 func (d *TenantDAO) Update(ctx context.Context, t Tenant) error {
-	return d.db.WithContext(ctx).Model(&t).Where("id = ?", t.ID).Updates(map[string]any{
-		"name":   t.Name,
-		"code":   t.Code,
-		"domain": t.Domain,
-		"status": t.Status,
-		"utime":  time.Now().UnixMilli(),
-	}).Error
+	t.Utime = time.Now().UnixMilli()
+	// 走结构体 + 显式 Select 而非 Updates(map)：serializer 字段（JSON 列）仅在
+	// 结构体赋值路径生效，map 路径会绕过序列化把 map/slice 原样下发导致 SQL 报错
+	return d.db.WithContext(ctx).Where("id = ?", t.ID).Select(
+		"name", "code", "domain", "status",
+		"max_accounts", "max_users", "max_user_groups",
+		"feature_switch", "allowed_vendors", "utime",
+	).Updates(&t).Error
 }
 
 func (d *TenantDAO) Delete(ctx context.Context, id int64) error {

@@ -173,7 +173,7 @@ func (s *DeptGroupSuite) TestDepartment_CRUD() {
 func (s *DeptGroupSuite) TestGroup_CasbinInheritance() {
 	ctx := context.Background()
 	// 创建租户 B (tid=3)
-	tid, err := s.tenantSvc.CreateTenant(ctx, "租户B", "t-b", "admin_b", 3)
+	tid, err := s.tenantSvc.CreateTenant(ctx, domain.Tenant{Name: "租户B", Code: "t-b"}, "admin_b", 3)
 	s.NoError(err)
 	tCtx := ctxutil.WithTenantID(ctx, tid)
 

@@ -207,7 +207,7 @@ func (s *HandlerAuthTestSuite) TestAPIAuthorization() {
 			defer s.clearAll()
 
 			s.ensureAdminRole(context.Background())
-			tid, err := s.tenantSvc.CreateTenant(context.Background(), "测试用例", "test888", "creator_user", 9999)
+			tid, err := s.tenantSvc.CreateTenant(context.Background(), domain.Tenant{Name: "测试用例", Code: "test888"}, "creator_user", 9999)
 			require.NoError(s.T(), err)
 			s.testTid = tid
 			ctx := ctxutil.WithTenantID(context.Background(), tid)

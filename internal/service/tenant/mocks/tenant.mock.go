@@ -348,18 +348,18 @@ func (c *MockITenantServiceCheckUsersInTenantCall) DoAndReturn(f func(context.Co
 }
 
 // CreateTenant mocks base method.
-func (m *MockITenantService) CreateTenant(ctx context.Context, name, code, username string, userID int64) (int64, error) {
+func (m *MockITenantService) CreateTenant(ctx context.Context, t domain.Tenant, username string, userID int64) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateTenant", ctx, name, code, username, userID)
+	ret := m.ctrl.Call(m, "CreateTenant", ctx, t, username, userID)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateTenant indicates an expected call of CreateTenant.
-func (mr *MockITenantServiceMockRecorder) CreateTenant(ctx, name, code, username, userID any) *MockITenantServiceCreateTenantCall {
+func (mr *MockITenantServiceMockRecorder) CreateTenant(ctx, t, username, userID any) *MockITenantServiceCreateTenantCall {
 	mr.mock.ctrl.T.Helper()
-	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTenant", reflect.TypeOf((*MockITenantService)(nil).CreateTenant), ctx, name, code, username, userID)
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTenant", reflect.TypeOf((*MockITenantService)(nil).CreateTenant), ctx, t, username, userID)
 	return &MockITenantServiceCreateTenantCall{Call: call}
 }
 
@@ -375,13 +375,13 @@ func (c *MockITenantServiceCreateTenantCall) Return(arg0 int64, arg1 error) *Moc
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockITenantServiceCreateTenantCall) Do(f func(context.Context, string, string, string, int64) (int64, error)) *MockITenantServiceCreateTenantCall {
+func (c *MockITenantServiceCreateTenantCall) Do(f func(context.Context, domain.Tenant, string, int64) (int64, error)) *MockITenantServiceCreateTenantCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockITenantServiceCreateTenantCall) DoAndReturn(f func(context.Context, string, string, string, int64) (int64, error)) *MockITenantServiceCreateTenantCall {
+func (c *MockITenantServiceCreateTenantCall) DoAndReturn(f func(context.Context, domain.Tenant, string, int64) (int64, error)) *MockITenantServiceCreateTenantCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }
