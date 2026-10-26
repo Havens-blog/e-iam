@@ -7,9 +7,11 @@ import (
 	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
+	"github.com/casbin/casbin/v2/persist"
 	defaultrolemanager "github.com/casbin/casbin/v2/rbac/default-role-manager"
 	gormAdapter "github.com/casbin/gorm-adapter/v3"
 	redisWatcher "github.com/casbin/redis-watcher/v2"
+	"github.com/ecodeclub/ekit/retry"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
@@ -58,13 +60,7 @@ func InitCasbin(casbinDB *gorm.DB) *casbin.SyncedEnforcer {
 		fmt.Printf("警告: 无法读取 Redis 配置: %v\n", err)
 	}
 
-	w, err := redisWatcher.NewWatcher(cfg.Addr, redisWatcher.WatcherOptions{
-		Options: redis.Options{
-			DB:       cfg.DB,
-			Password: cfg.Password,
-		},
-		Channel: "/casbin",
-	})
+	w, err := newRedisWatcherWithRetry(cfg.Addr, cfg.DB, cfg.Password)
 	if err != nil {
 		panic(err)
 	}
@@ -97,4 +93,38 @@ func InitCasbin(casbinDB *gorm.DB) *casbin.SyncedEnforcer {
 
 func updateCallback(rev string) {
 	// 可选打印 rev
+}
+
+// newRedisWatcherWithRetry 建立 Casbin Redis watcher，带指数退避重试。
+// 远程共享 Redis（106.52.187.69:6379）偶发瞬时 i/o timeout：NewWatcher 内部对
+// sub/pub 两个 client 各 Ping 一次，任一 dial 失败即返回 error。若首连失败直接 panic，
+// 一次瞬时抖动就会阻断整个服务启动。故与 InitDB 的 WaitForDBSetup 同款指数退避策略，
+// 瞬断时自动重连而非崩溃；DialTimeout 收紧到 3s 以界定单次尝试耗时。
+func newRedisWatcherWithRetry(addr string, db int, password string) (persist.Watcher, error) {
+	const (
+		maxInterval = 10 * time.Second
+		maxRetries  = 10
+	)
+	strategy, err := retry.NewExponentialBackoffRetryStrategy(time.Second, maxInterval, maxRetries)
+	if err != nil {
+		return nil, err
+	}
+	for {
+		w, werr := redisWatcher.NewWatcher(addr, redisWatcher.WatcherOptions{
+			Options: redis.Options{
+				DB:          db,
+				Password:    password,
+				DialTimeout: 3 * time.Second,
+			},
+			Channel: "/casbin",
+		})
+		if werr == nil {
+			return w, nil
+		}
+		next, ok := strategy.Next()
+		if !ok {
+			return nil, werr
+		}
+		time.Sleep(next)
+	}
 }
