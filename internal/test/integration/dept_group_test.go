@@ -75,7 +75,7 @@ func (s *DeptGroupSuite) SetupSuite() {
 
 	groupDAO := dao.NewGroupDAO(s.db)
 	groupRepo := repository.NewGroupRepository(groupDAO, s.userRepo)
-	s.groupSvc = group.NewGroupService(groupRepo, s.userRepo, s.enforcer)
+	s.groupSvc = group.NewGroupService(groupRepo, s.tenantSvc, s.userRepo, s.enforcer)
 }
 
 func (s *DeptGroupSuite) TearDownTest() {

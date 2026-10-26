@@ -6,26 +6,53 @@ import (
 	"strconv"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/internal/repository"
+	"github.com/Havens-blog/e-iam/internal/service/tenant"
 	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/casbin/casbin/v2"
 )
 
 type groupService struct {
-	repo     repository.IGroupRepository
-	userRepo repository.IUserRepository
-	enforcer *casbin.SyncedEnforcer
+	repo      repository.IGroupRepository
+	tenantSvc tenant.ITenantService // 注入租户服务：创建组前读取 MaxUserGroups 做配额强制校验 (R2.6)
+	userRepo  repository.IUserRepository
+	enforcer  *casbin.SyncedEnforcer
 }
 
-func NewGroupService(repo repository.IGroupRepository, userRepo repository.IUserRepository, enforcer *casbin.SyncedEnforcer) IGroupService {
+func NewGroupService(repo repository.IGroupRepository, tenantSvc tenant.ITenantService, userRepo repository.IUserRepository, enforcer *casbin.SyncedEnforcer) IGroupService {
 	return &groupService{
-		repo:     repo,
-		userRepo: userRepo,
-		enforcer: enforcer,
+		repo:      repo,
+		tenantSvc: tenantSvc,
+		userRepo:  userRepo,
+		enforcer:  enforcer,
 	}
 }
 
 func (s *groupService) Create(ctx context.Context, g domain.Group) (int64, error) {
+	// 写操作防缺失租户上下文：与 gormx 租户插件形成纵深防御——插件负责数据行过滤，
+	// 这里显式业务拒绝，避免 tid<=0 时配额读取与组计数被静默绕过
+	tid := ctxutil.GetTenantID(ctx).Int64()
+	if tid <= 0 {
+		return 0, errs.ErrMissingTenantContext
+	}
+
+	// 配额校验 (R2.6/R2.7)：MaxUserGroups <= 0 视为无限制，只有 > 0 才计数拦截；
+	// 组计数复用 List 的 total 返回并限定 limit=1，避免为校验拉取全量数据
+	t, err := s.tenantSvc.GetByID(ctx, tid)
+	if err != nil {
+		return 0, fmt.Errorf("查询租户配额失败: %w", err)
+	}
+	if quota := t.MaxUserGroups; quota > 0 {
+		_, total, err := s.repo.List(ctx, 0, 1)
+		if err != nil {
+			return 0, fmt.Errorf("统计用户组数量失败: %w", err)
+		}
+		if total >= quota {
+			return 0, errs.ErrTenantQuotaExceeded
+		}
+	}
+
 	return s.repo.Create(ctx, g)
 }
 
