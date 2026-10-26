@@ -11,6 +11,7 @@ import (
 	"github.com/Havens-blog/e-iam/internal/web/department"
 	"github.com/Havens-blog/e-iam/internal/web/discovery"
 	"github.com/Havens-blog/e-iam/internal/web/group"
+	healthhdl "github.com/Havens-blog/e-iam/internal/web/health"
 	idhdl "github.com/Havens-blog/e-iam/internal/web/identity_source"
 	idphdl "github.com/Havens-blog/e-iam/internal/web/idp"
 	invitationhdl "github.com/Havens-blog/e-iam/internal/web/invitation"
@@ -53,6 +54,7 @@ func InitGinWebServer(sp session.Provider, listener net.Listener, mdls []gin.Han
 	server.Use(mdls...)
 
 	// 1. 注册公开路由 (无鉴权，天然隔离不经过 Audit 中间件)
+	healthhdl.NewHandler().PublicRoutes(server.Engine)
 	userHdl.PublicRoutes(server.Engine)
 	policyHdl.PublicRoutes(server.Engine)
 	tenantHdl.PublicRoutes(server.Engine)

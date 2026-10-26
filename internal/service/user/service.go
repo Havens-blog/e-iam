@@ -35,6 +35,8 @@ type IUserService interface {
 
 	// SwitchTenant 切换当前激活的租户空间
 	SwitchTenant(ctx context.Context, uid int64, targetTenantID int64) error
+	// SetDefaultTenant 设置用户默认登录租户（个人偏好，switch 不覆盖；下次登录直接落入）
+	SetDefaultTenant(ctx context.Context, uid int64, tenantID int64) error
 	// Invite 邀请用户进入系统
 	Invite(ctx context.Context, username string) error
 
@@ -127,6 +129,23 @@ func (s *userService) SwitchTenant(ctx context.Context, uid int64, targetTenantI
 	_ = s.repo.UpdateLastActiveTenantID(ctx, uid, targetTenantID)
 
 	return nil
+}
+
+// SetDefaultTenant 设置用户默认登录租户。
+// 与 SwitchTenant 的区别：本方法只持久化「默认登录租户」偏好，不改写 LastActiveTenantID，
+// 也不切换当前会话——下次登录时 resolveActiveTenant 会优先采用本字段。
+// 校验目标租户确属该用户（Membership 存在），防越权设他人租户为默认。
+func (s *userService) SetDefaultTenant(ctx context.Context, uid int64, tenantID int64) error {
+	targetCtx := ctxutil.WithTenantID(ctx, tenantID)
+	hasAccess, err := s.tenantSvc.CheckUserTenantAccess(targetCtx, uid)
+	if err != nil {
+		return err
+	}
+	if !hasAccess {
+		return errs.ErrTenantAccessDenied
+	}
+
+	return s.repo.UpdateDefaultTenantID(ctx, uid, tenantID)
 }
 
 func (s *userService) Invite(ctx context.Context, username string) error {

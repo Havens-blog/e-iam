@@ -73,6 +73,8 @@ type IUserDAO interface {
 	UpdateLastLoginAt(ctx context.Context, id int64, loginAt int64) error
 	// UpdateLastActiveTenantID 更新用户最近一次活跃租户 ID
 	UpdateLastActiveTenantID(ctx context.Context, id int64, tenantID int64) error
+	// UpdateDefaultTenantID 更新用户默认登录租户 ID（用户个人偏好，switch 不覆盖）
+	UpdateDefaultTenantID(ctx context.Context, id int64, tenantID int64) error
 	// DeleteIdentity 解除外部身份绑定
 	DeleteIdentity(ctx context.Context, userID int64, provider, identityID string) error
 	// FindIdentitiesByUserID 根据用户 ID 和提供商查询身份列表
@@ -115,6 +117,10 @@ type User struct {
 	Utime              int64  `gorm:"comment:'更新时间'"`
 	LastLoginAt        int64  `gorm:"comment:'最近登录时间'"`
 	LastActiveTenantID int64  `gorm:"column:last_active_tenant_id;default:0;comment:'最近一次活跃租户ID'"`
+	// DefaultTenantID 默认登录租户 ID（用户个人偏好）。与 last_active_tenant_id 独立：
+	// 仅由用户在租户管理页显式设置，登录时优先采用；switch 切换租户不改写本字段。
+	// 0 表示未设置，回退到 last_active_tenant_id。
+	DefaultTenantID int64 `gorm:"column:default_tenant_id;default:0;comment:'默认登录租户ID（用户个人偏好，switch不覆盖）'"`
 }
 
 type UserProfile struct {
@@ -182,6 +188,11 @@ func (dao *userDAO) Update(ctx context.Context, u User, ui UserProfile) (int64, 
 		}
 		if u.Status != 0 {
 			updateData["status"] = u.Status
+		}
+		// 密码同理按零值保护：只有显式带了新密码（改密流程写入的是 bcrypt 哈希）才更新，
+		// 未加载密码的普通资料更新（UpdateUserReq.ToDomain 不含 password）不会误清空登录口令。
+		if u.Password != "" {
+			updateData["password"] = u.Password
 		}
 
 		if err := tx.Model(&u).Select(lo.Keys(updateData)).Updates(updateData).Error; err != nil {
@@ -490,6 +501,10 @@ func (dao *userDAO) UpdateLastLoginAt(ctx context.Context, id int64, loginAt int
 
 func (dao *userDAO) UpdateLastActiveTenantID(ctx context.Context, id int64, tenantID int64) error {
 	return dao.db.WithContext(ctx).Model(&User{}).Where("id = ?", id).Update("last_active_tenant_id", tenantID).Error
+}
+
+func (dao *userDAO) UpdateDefaultTenantID(ctx context.Context, id int64, tenantID int64) error {
+	return dao.db.WithContext(ctx).Model(&User{}).Where("id = ?", id).Update("default_tenant_id", tenantID).Error
 }
 
 func (dao *userDAO) DeleteIdentity(ctx context.Context, userID int64, provider, identityID string) error {

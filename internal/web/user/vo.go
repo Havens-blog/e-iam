@@ -143,6 +143,8 @@ type RetrieveUser struct {
 	User            User     `json:"user"`
 	Tenants         []Tenant `json:"tenants"`
 	CurrentTenantID int64    `json:"current_tenant_id"`
+	// DefaultTenantID 用户个人偏好的默认登录租户（0=未设置）。前端据此标记当前默认项。
+	DefaultTenantID int64    `json:"default_tenant_id"`
 	MustBind        bool     `json:"must_bind"`
 	BindToken       string   `json:"bind_token,omitempty"`
 	MfaRequired     bool     `json:"mfa_required"`
@@ -150,6 +152,11 @@ type RetrieveUser struct {
 	IsAdmin         bool     `json:"is_admin"`
 	Permissions     []string `json:"permissions"`
 	RedirectURL     string   `json:"redirect_url,omitempty"`
+}
+
+// SetDefaultTenantReq 设置默认登录租户请求
+type SetDefaultTenantReq struct {
+	TenantID int64 `json:"tenant_id"`
 }
 
 type UpdatePasswordRequest struct {

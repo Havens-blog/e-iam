@@ -71,3 +71,18 @@ func MapLoginError(err error) ginx.Result {
 	// 未命中领域哨兵的登录错误统一回退为通用认证失败
 	return weberrx.Map(err, ErrUnauthorized, loginErrorMappings...)
 }
+
+// MapPasswordUpdateError 将「修改密码」场景的领域哨兵映射为富语义 ginx.Result。
+//
+// 与登录共用同一批哨兵（userService.UpdatePassword 的两种失败原因）：
+//   - errs.ErrInvalidUser  → ErrUnauthorized(4010202) 旧密码校验失败；
+//   - errs.ErrPasswordWeak → ErrPasswordWeak(4010205) 新密码不满足口令策略。
+//
+// 兜底刻意不用 ErrUnauthorized：改密路径上的非凭据故障（查库失败、bcrypt 失败等）
+// 若被报成「账号或密码错误」，会误导用户反复重试旧密码，故回退为「更新用户信息失败」。
+func MapPasswordUpdateError(err error) ginx.Result {
+	if err == nil {
+		return ginx.Result{}
+	}
+	return weberrx.Map(err, ErrUserUpdateFailed, loginErrorMappings...)
+}

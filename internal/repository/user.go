@@ -53,6 +53,8 @@ type IUserRepository interface {
 	UpdateLastLoginAt(ctx context.Context, id int64, loginAt int64) error
 	// UpdateLastActiveTenantID 更新用户最近一次活跃租户 ID
 	UpdateLastActiveTenantID(ctx context.Context, id int64, tenantID int64) error
+	// UpdateDefaultTenantID 更新用户默认登录租户 ID（用户个人偏好，switch 不覆盖）
+	UpdateDefaultTenantID(ctx context.Context, id int64, tenantID int64) error
 	// Delete 删除用户
 	Delete(ctx context.Context, id int64) error
 	// BatchDelete 批量删除用户
@@ -356,6 +358,7 @@ func (repo *userRepository) toDomain(u dao.User, up dao.UserProfile, ids []dao.U
 		Utime:              u.Utime,
 		LastLoginAt:        u.LastLoginAt,
 		LastActiveTenantID: u.LastActiveTenantID,
+		DefaultTenantID:    u.DefaultTenantID,
 		Profile: domain.UserProfile{
 			UserID:   up.UserID,
 			Nickname: up.Nickname,
@@ -381,6 +384,7 @@ func (repo *userRepository) toEntity(u domain.User) dao.User {
 		Utime:              u.Utime,
 		LastLoginAt:        u.LastLoginAt,
 		LastActiveTenantID: u.LastActiveTenantID,
+		DefaultTenantID:    u.DefaultTenantID,
 	}
 }
 
@@ -395,6 +399,10 @@ func (repo *userRepository) UpdateLastLoginAt(ctx context.Context, id int64, log
 
 func (repo *userRepository) UpdateLastActiveTenantID(ctx context.Context, id int64, tenantID int64) error {
 	return repo.dao.UpdateLastActiveTenantID(ctx, id, tenantID)
+}
+
+func (repo *userRepository) UpdateDefaultTenantID(ctx context.Context, id int64, tenantID int64) error {
+	return repo.dao.UpdateDefaultTenantID(ctx, id, tenantID)
 }
 
 func (repo *userRepository) Delete(ctx context.Context, id int64) error {

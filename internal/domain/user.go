@@ -59,6 +59,10 @@ type User struct {
 	Utime              int64
 	LastLoginAt        int64
 	LastActiveTenantID int64
+	// DefaultTenantID 默认登录租户（用户个人偏好）。与 LastActiveTenantID 独立：
+	// 仅由用户在租户管理页显式设置，登录时优先采用；switch 不改写。
+	// 0 表示未设置，登录回退到 LastActiveTenantID。
+	DefaultTenantID int64
 
 	// 各司其职：侧写资料归公司
 	Profile UserProfile

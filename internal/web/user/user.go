@@ -48,10 +48,25 @@ func (h *Handler) Profile(ctx *ginx.Context, sess session.Session) (ginx.Result,
 			CurrentTenantID: tenantID,
 			// 管理员判定统一走 domain.HasAdminRole：role:admin 与 role:super_admin
 			// 均视为管理员（此前只认 "admin"，系统空间仅 super_admin 的管理员被误判）
-			IsAdmin:     domain.HasAdminRole(roles),
-			Permissions: permissions,
+			IsAdmin:         domain.HasAdminRole(roles),
+			Permissions:     permissions,
+			DefaultTenantID: u.DefaultTenantID,
 		},
 	}, nil
+}
+
+// SetDefaultTenant 设置当前登录用户的默认登录租户（个人偏好）。
+// 仅持久化偏好，不切换当前会话——下次登录时 resolveActiveTenant 优先采用该值。
+// 租户归属校验由 userSvc.SetDefaultTenant 承载（防越权设他人租户为默认）。
+func (h *Handler) SetDefaultTenant(ctx *ginx.Context, req SetDefaultTenantReq, sess session.Session) (ginx.Result, error) {
+	if req.TenantID <= 0 {
+		return ErrUserNotFound, fmt.Errorf("未指定目标租户")
+	}
+	uid := sess.Claims().Uid
+	if err := h.userSvc.SetDefaultTenant(ctx.Request.Context(), uid, req.TenantID); err != nil {
+		return ErrUserUpdateFailed, err
+	}
+	return ginx.Result{Msg: "默认登录租户设置成功"}, nil
 }
 
 func (h *Handler) Create(ctx *ginx.Context, req SignupRequest) (ginx.Result, error) {
@@ -84,7 +99,10 @@ func (h *Handler) UpdatePassword(ctx *ginx.Context, req UpdatePasswordRequest, s
 
 	err := h.userSvc.UpdatePassword(ctx.Request.Context(), sess.Claims().Uid, req.OldPassword, req.NewPassword)
 	if err != nil {
-		return ErrUnauthorized, err
+		// 刻意返回 nil error：业务失败按 eiam 信封（HTTP 200 + code）下发，由前端按 code 提示原因。
+		// 若一并返回 err，ginx wrapper 会写 HTTP 500，前端只能拿到 axios 异常，
+		// 且服务端日志会把「用户输错旧密码」记成 ERROR 执行业务逻辑失败。
+		return MapPasswordUpdateError(err), nil
 	}
 
 	return ginx.Result{Msg: "密码修改成功"}, nil
