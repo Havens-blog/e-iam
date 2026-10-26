@@ -164,7 +164,32 @@ func (s *userService) ListIdentitiesByUserID(ctx context.Context, userID int64, 
 }
 
 func (s *userService) Signup(ctx context.Context, u domain.User) (int64, error) {
-	_, err := s.repo.FindByUsername(ctx, u.Username)
+	// 配额校验 (R2.5)：Signup 是唯一用户创建入口（覆盖自注册 /signup 与管理员 /create
+	// 两条 web 路由）。写操作防缺失租户上下文，与 R2.6 组配额同模式形成纵深防御——
+	// gormx 插件负责数据行过滤，这里显式业务拒绝，避免 tid<=0 时配额读取与
+	// 用户计数被静默绕过
+	tid := ctxutil.GetTenantID(ctx).Int64()
+	if tid <= 0 {
+		return 0, errs.ErrMissingTenantContext
+	}
+
+	// MaxUsers <= 0 视为无限制，只有 > 0 才计数拦截；CountSearch 经 DAO 层
+	// membershipScope 强制按当前租户成员过滤，保证计数不跨租户
+	t, err := s.tenantSvc.GetByID(ctx, tid)
+	if err != nil {
+		return 0, fmt.Errorf("查询租户配额失败: %w", err)
+	}
+	if quota := t.MaxUsers; quota > 0 {
+		total, err := s.repo.CountSearch(ctx, "")
+		if err != nil {
+			return 0, fmt.Errorf("统计用户数量失败: %w", err)
+		}
+		if total >= quota {
+			return 0, errs.ErrTenantQuotaExceeded
+		}
+	}
+
+	_, err = s.repo.FindByUsername(ctx, u.Username)
 	if err == nil {
 		return 0, errs.ErrUserExist
 	}
