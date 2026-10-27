@@ -4,6 +4,7 @@ package ioc
 
 import (
 	"github.com/Havens-blog/e-iam/internal/service/discovery"
+	idpsvc "github.com/Havens-blog/e-iam/internal/service/idp"
 	"github.com/google/wire"
 )
 
@@ -33,6 +34,15 @@ func InitTokenService() (discovery.ITokenService, error) {
 	wire.Build(
 		InitDBWithoutMigrate,
 		TokenCliSet,
+	)
+	return nil, nil
+}
+
+// InitSeedClientService 为 S2S 客户端注册 CLI 提供轻量级依赖注入树 (仅 DB 依赖)。
+func InitSeedClientService() (idpsvc.IService, error) {
+	wire.Build(
+		InitDBWithoutMigrate,
+		SeedClientSet,
 	)
 	return nil, nil
 }

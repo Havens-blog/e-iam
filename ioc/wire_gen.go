@@ -188,3 +188,13 @@ func InitTokenService() (discovery.ITokenService, error) {
 	iTokenService := discovery.NewTokenService(iTenantKeyRepository, iServiceRepository)
 	return iTokenService, nil
 }
+
+// InitSeedClientService 为 S2S 客户端注册 CLI 提供轻量级依赖注入树 (仅 DB 依赖)。
+func InitSeedClientService() (idp.IService, error) {
+	db := InitDBWithoutMigrate()
+	iApplicationDAO := dao.NewApplicationDAO(db)
+	iOidcCache := InitNilOidcCache()
+	iApplicationRepository := repository.NewApplicationRepository(iApplicationDAO, iOidcCache)
+	iService := idp.NewApplicationService(iApplicationRepository)
+	return iService, nil
+}

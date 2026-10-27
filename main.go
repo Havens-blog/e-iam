@@ -6,6 +6,7 @@ import (
 
 	"github.com/Havens-blog/e-iam/cmd/cert"
 	"github.com/Havens-blog/e-iam/cmd/migrate"
+	"github.com/Havens-blog/e-iam/cmd/seedclient"
 	"github.com/Havens-blog/e-iam/cmd/server"
 	"github.com/Havens-blog/e-iam/cmd/token"
 	"github.com/fsnotify/fsnotify"
@@ -37,6 +38,7 @@ func main() {
 	rootCmd.AddCommand(migrate.NewCommand())
 	rootCmd.AddCommand(token.NewCommand())
 	rootCmd.AddCommand(cert.NewCommand())
+	rootCmd.AddCommand(seedclient.NewCommand())
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
