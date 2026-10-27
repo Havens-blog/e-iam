@@ -38,6 +38,15 @@ func FromUser(user domain.User, tenantID int64, roles []string) Claims {
 	}
 }
 
+// FromService 从服务身份构造标准化 Claims (sub = client_id,无用户属性)。
+// 用于 S2S client_credentials:tenantID 为 0 表示纯服务身份(无租户,仅用于无租户端点)。
+func FromService(clientID string, tenantID int64) Claims {
+	return Claims{
+		Subject:  clientID,
+		TenantID: tenantID,
+	}
+}
+
 // ToUser 还原为领域模型 User 实体 (方便各协议回退或统一构造响应)
 func (c Claims) ToUser() domain.User {
 	return domain.User{

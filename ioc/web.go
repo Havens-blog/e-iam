@@ -6,6 +6,7 @@ import (
 
 	auditevt "github.com/Havens-blog/e-iam/internal/event/audit"
 	"github.com/Havens-blog/e-iam/internal/pkg/middleware"
+	oidcsvc "github.com/Havens-blog/e-iam/internal/service/idp/oidc"
 	"github.com/Havens-blog/e-iam/internal/service/permission"
 	audithdl "github.com/Havens-blog/e-iam/internal/web/audit"
 	"github.com/Havens-blog/e-iam/internal/web/department"
@@ -22,6 +23,7 @@ import (
 	"github.com/Havens-blog/e-iam/internal/web/user"
 	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	pkgmiddleware "github.com/Havens-blog/e-iam/pkg/web/middleware"
+	"github.com/ecodeclub/ginx"
 	"github.com/ecodeclub/ginx/session"
 	"github.com/gin-gonic/gin"
 	"github.com/gotomicro/ego/server/egin"
@@ -34,7 +36,7 @@ func InitGinWebServer(sp session.Provider, listener net.Listener, mdls []gin.Han
 	deptHdl *department.Handler, groupHdl *group.Handler,
 	identitySourceHdl *idhdl.Handler, invitationHdl *invitationhdl.Handler,
 	discoveryHdl *discovery.Handler, auditHdl *audithdl.Handler, idpHdl *idphdl.Handler, tenancyBuilder *pkgmiddleware.TenancyBuilder,
-	permSvc permission.IPermissionService, auditProd auditevt.IAuditProducer) *egin.Component {
+	permSvc permission.IPermissionService, auditProd auditevt.IAuditProducer, km oidcsvc.IKeyManager) *egin.Component {
 	session.SetDefaultProvider(sp)
 
 	server := egin.Load("server.egin").Build(egin.WithListener(listener))
@@ -64,6 +66,10 @@ func InitGinWebServer(sp session.Provider, listener net.Listener, mdls []gin.Han
 	discoveryHdl.PublicRoutes(server.Engine)
 	auditHdl.PublicRoutes(server.Engine)
 	idpHdl.PublicRoutes(server.Engine)
+
+	// 1.5 服务间调用路由 (独立 S2S 令牌验签，不经用户会话/OPA 鉴权链)
+	s2sGroup := server.Engine.Group("/api/s2s", middleware.S2STokenAuth(km))
+	s2sGroup.GET("/tenant/detail/:id", ginx.W(tenantHdl.Detail))
 
 	// 2. 登录层：验证是否登录
 	server.Use(session.CheckLoginMiddleware())

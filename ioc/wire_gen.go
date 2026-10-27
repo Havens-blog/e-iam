@@ -156,7 +156,7 @@ func InitApp() (*App, error) {
 	iSamlService := saml.NewSamlService(iCertificateManager, iClaimsResolver, iApplicationRepository)
 	idpHandler := idp2.NewHandler(idpIService, iOidcService, iCasService, iSamlService)
 	tenancyBuilder := middleware.NewTenancyBuilder(provider)
-	component := InitGinWebServer(provider, listener, v, handler, policyHandler, tenantHandler, permissionHandler, roleHandler, departmentHandler, groupHandler, identity_sourceHandler, invitationHandler, discoveryHandler, auditHandler, idpHandler, tenancyBuilder, iPermissionService, iAuditProducer)
+	component := InitGinWebServer(provider, listener, v, handler, policyHandler, tenantHandler, permissionHandler, roleHandler, departmentHandler, groupHandler, identity_sourceHandler, invitationHandler, discoveryHandler, auditHandler, idpHandler, tenancyBuilder, iPermissionService, iAuditProducer, iKeyManager)
 	userServiceServer := grpc.NewUserServer(iUserService, iPermissionService)
 	tenantServiceServer := grpc.NewTenantServiceServer(iTenantKeyService)
 	departmentServiceServer := grpc.NewDepartmentServer(iDepartmentService)

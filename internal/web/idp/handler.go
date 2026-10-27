@@ -247,6 +247,22 @@ func (h *Handler) Token(c *gin.Context) {
 	refreshToken := c.PostForm("refresh_token")
 	clientID, clientSecret := h.extractClientCredentials(c)
 
+	// client_credentials 分支:读取可选 tenant_id(其余 grant 忽略);非法整数直接 400
+	var tenantID int64
+	if grantType == "client_credentials" {
+		if raw := c.PostForm("tenant_id"); raw != "" {
+			tid, err := strconv.ParseInt(raw, 10, 64)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error":             "invalid_request",
+					"error_description": "tenant_id 必须为整数",
+				})
+				return
+			}
+			tenantID = tid
+		}
+	}
+
 	issuerURL := h.resolveIssuerURL(c)
 	resp, err := h.svc.ExchangeToken(c.Request.Context(), domain.TokenRequest{
 		GrantType:    grantType,
@@ -256,6 +272,7 @@ func (h *Handler) Token(c *gin.Context) {
 		CodeVerifier: codeVerifier,
 		RedirectURI:  redirectURI,
 		RefreshToken: refreshToken,
+		TenantID:     tenantID,
 	}, issuerURL)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -406,17 +423,18 @@ func (h *Handler) CreateApplication(ctx *ginx.Context, req CreateApplicationReq,
 	protocol := domain.Protocol(lo.CoalesceOrEmpty(req.Protocol, string(domain.ProtocolOIDC)))
 
 	app := domain.Application{
-		TenantID:      tid,
-		Protocol:      protocol,
-		ClientID:      req.ClientID,
-		Name:          req.Name,
-		Logo:          req.Logo,
-		RedirectURIs:  req.RedirectURIs,
-		ResponseTypes: req.ResponseTypes,
-		GrantTypes:    req.GrantTypes,
-		Scopes:        req.Scopes,
-		IsPublic:      req.IsPublic,
-		AutoConsent:   req.AutoConsent,
+		TenantID:       tid,
+		Protocol:       protocol,
+		ClientID:       req.ClientID,
+		Name:           req.Name,
+		Logo:           req.Logo,
+		RedirectURIs:   req.RedirectURIs,
+		ResponseTypes:  req.ResponseTypes,
+		GrantTypes:     req.GrantTypes,
+		Scopes:         req.Scopes,
+		AllowedTenants: req.AllowedTenants,
+		IsPublic:       req.IsPublic,
+		AutoConsent:    req.AutoConsent,
 	}
 
 	created, err := h.appSvc.Create(ctx.Request.Context(), app)
@@ -509,20 +527,21 @@ func (h *Handler) GetApplicationDetail(ctx *ginx.Context) (ginx.Result, error) {
 
 func (h *Handler) toVO(app domain.Application) ApplicationVO {
 	return ApplicationVO{
-		ID:            app.ID,
-		TenantID:      app.TenantID,
-		Protocol:      lo.CoalesceOrEmpty(string(app.Protocol), string(domain.ProtocolOIDC)),
-		ClientID:      app.ClientID,
-		ClientSecret:  app.ClientSecret,
-		Name:          app.Name,
-		Logo:          app.Logo,
-		RedirectURIs:  app.RedirectURIs,
-		ResponseTypes: app.ResponseTypes,
-		GrantTypes:    app.GrantTypes,
-		Scopes:        app.Scopes,
-		IsPublic:      app.IsPublic,
-		AutoConsent:   app.AutoConsent,
-		Ctime:         app.Ctime,
-		Utime:         app.Utime,
+		ID:             app.ID,
+		TenantID:       app.TenantID,
+		Protocol:       lo.CoalesceOrEmpty(string(app.Protocol), string(domain.ProtocolOIDC)),
+		ClientID:       app.ClientID,
+		ClientSecret:   app.ClientSecret,
+		Name:           app.Name,
+		Logo:           app.Logo,
+		RedirectURIs:   app.RedirectURIs,
+		ResponseTypes:  app.ResponseTypes,
+		GrantTypes:     app.GrantTypes,
+		Scopes:         app.Scopes,
+		AllowedTenants: app.AllowedTenants,
+		IsPublic:       app.IsPublic,
+		AutoConsent:    app.AutoConsent,
+		Ctime:          app.Ctime,
+		Utime:          app.Utime,
 	}
 }

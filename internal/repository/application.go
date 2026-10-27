@@ -160,6 +160,7 @@ func (r *applicationRepository) toDao(app domain.Application) dao.Application {
 		ResponseTypes:    sqlx.JSONColumn[[]string]{Val: app.ResponseTypes, Valid: len(app.ResponseTypes) > 0},
 		GrantTypes:       sqlx.JSONColumn[[]string]{Val: app.GrantTypes, Valid: len(app.GrantTypes) > 0},
 		Scopes:           sqlx.JSONColumn[[]string]{Val: app.Scopes, Valid: len(app.Scopes) > 0},
+		AllowedTenants:   sqlx.JSONColumn[[]int64]{Val: app.AllowedTenants, Valid: len(app.AllowedTenants) > 0},
 		IsPublic:         app.IsPublic,
 		AutoConsent:      app.AutoConsent,
 	}
@@ -182,6 +183,7 @@ func (r *applicationRepository) toDomain(entity dao.Application) domain.Applicat
 		ResponseTypes:    entity.ResponseTypes.Val,
 		GrantTypes:       entity.GrantTypes.Val,
 		Scopes:           entity.Scopes.Val,
+		AllowedTenants:   entity.AllowedTenants.Val,
 		IsPublic:         entity.IsPublic,
 		AutoConsent:      entity.AutoConsent,
 		Ctime:            time.UnixMilli(entity.Ctime),
