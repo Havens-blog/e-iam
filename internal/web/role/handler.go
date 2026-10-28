@@ -1,6 +1,7 @@
 package role
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -198,7 +199,7 @@ func (h *Handler) BatchDelete(ctx *ginx.Context, req BatchDeleteReq) (ginx.Resul
 }
 
 func (h *Handler) List(ctx *ginx.Context, req ListRoleRequest) (ginx.Result, error) {
-	roles, total, err := h.svc.List(ctx.Request.Context(), req.Offset, req.Limit)
+	roles, total, err := h.listByKeyword(ctx.Request.Context(), req)
 	if err != nil {
 		return ErrRoleListFailed, err
 	}
@@ -211,6 +212,36 @@ func (h *Handler) List(ctx *ginx.Context, req ListRoleRequest) (ginx.Result, err
 			Total: total,
 		},
 	}, nil
+}
+
+// listByKeyword 按 keyword 分派列表查询。
+//
+// 修复前 List 恒定调用 svc.List(offset, limit)，丢弃 ListRoleRequest.Keyword：
+// 请求体一直带该字段、Service 也早已提供 Search/CountByKeyword（DAO 侧为
+// `name LIKE ? OR code LIKE ?`），但从未被接线——前端「角色名搜索」因此静默失效，
+// 传了关键词仍返回全量，用户以为筛过了。
+//
+// 为何放在 Transport 而非 Service：本仓 AGENTS.md 要求 Transport 严禁业务逻辑，
+// 严格做法是给 IRoleService 加 ListByKeyword 方法；但该接口被 17 个文件引用、其中
+// internal/test/integration 有多个测试假体，加方法会连带改动这些假体并需重生成 mock
+// （mockery 未在构建机 PATH）。此处的「按参数选两条既有 Service 调用」不做任何计算，
+// 权衡后取最小改动，避免为一个分派改动共享接口。
+// 后续如统一收口分层，可在 Service 增加 ListByKeyword 后将本函数简化为一次调用。
+func (h *Handler) listByKeyword(ctx context.Context, req ListRoleRequest) ([]domain.Role, int64, error) {
+	if req.Keyword == "" {
+		// 空关键词维持原全量路径，行为与修复前完全一致
+		return h.svc.List(ctx, req.Offset, req.Limit)
+	}
+
+	total, err := h.svc.CountByKeyword(ctx, req.Keyword)
+	if err != nil {
+		return nil, 0, err
+	}
+	roles, err := h.svc.Search(ctx, req.Keyword, req.Offset, req.Limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	return roles, total, nil
 }
 
 func (h *Handler) Detail(ctx *ginx.Context) (ginx.Result, error) {
