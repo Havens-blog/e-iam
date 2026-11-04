@@ -47,7 +47,7 @@ func WithClient(client *http.Client) Option {
 }
 
 // New 从 viper 配置中自动读取 policy.discovery_url 与 policy.discovery_token 构建 HTTP 上报器
-func New(opts ...Option) capability.Reporter {
+func New(opts ...Option) capability.IReporter {
 	url := viper.GetString("policy.discovery_url")
 	if url == "" {
 		url = "http://127.0.0.1:8000"
@@ -65,7 +65,7 @@ func New(opts ...Option) capability.Reporter {
 }
 
 // NewWithURL 显式传入地址构建 HTTP 上报器
-func NewWithURL(endpoint string, opts ...Option) capability.Reporter {
+func NewWithURL(endpoint string, opts ...Option) capability.IReporter {
 	endpoint = strings.TrimRight(endpoint, "/")
 	if !strings.HasPrefix(endpoint, "http://") && !strings.HasPrefix(endpoint, "https://") {
 		endpoint = "http://" + endpoint

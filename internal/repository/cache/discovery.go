@@ -71,4 +71,3 @@ func (c *discoveryCache) TryLockSync(ctx context.Context, service, owner string,
 func (c *discoveryCache) UnlockSync(ctx context.Context, service, owner string) error {
 	return luaReleaseLock.Run(ctx, c.client, []string{c.lockKey(service)}, owner).Err()
 }
-

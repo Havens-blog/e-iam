@@ -65,6 +65,9 @@ type TokenRequest struct {
 	CodeVerifier string `json:"code_verifier"`
 	RedirectURI  string `json:"redirect_uri"`
 	RefreshToken string `json:"refresh_token"`
+	// TenantID client_credentials 可选的"代表租户";仅该 grant 使用。
+	// 为 0 表示仅换"纯服务身份 token"(无租户,用于不涉及租户数据的端点)。
+	TenantID int64 `json:"tenant_id"`
 }
 
 // OidcTokenResult 换发令牌结果领域对象
@@ -175,7 +178,7 @@ func NewOidcDiscovery(issuerURL string, opts ...OidcDiscoveryOption) OidcDiscove
 			"sub", "iss", "aud", "exp", "iat", "preferred_username", "nickname", "email", "roles", "tenant_id",
 		},
 		CodeChallengeMethodsSupported: []string{"S256", "plain"},
-		GrantTypesSupported:           []string{"authorization_code", "refresh_token"},
+		GrantTypesSupported:           []string{"authorization_code", "refresh_token", "client_credentials"},
 	}
 
 	for _, opt := range opts {
@@ -206,4 +209,3 @@ func ResolveScopeDescriptions(scopes []string) []string {
 	}
 	return descriptions
 }
-

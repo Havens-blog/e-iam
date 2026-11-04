@@ -47,18 +47,22 @@ func (s Source) String() string {
 
 // User 全局主账户
 type User struct {
-	ID          int64
-	Username    string
-	Password    string
-	Email       string
-	Status      Status
-	Source      Source
-	MfaType     string
-	MfaSecret   string
+	ID                 int64
+	Username           string
+	Password           string
+	Email              string
+	Status             Status
+	Source             Source
+	MfaType            string
+	MfaSecret          string
 	Ctime              int64
 	Utime              int64
 	LastLoginAt        int64
 	LastActiveTenantID int64
+	// DefaultTenantID 默认登录租户（用户个人偏好）。与 LastActiveTenantID 独立：
+	// 仅由用户在租户管理页显式设置，登录时优先采用；switch 不改写。
+	// 0 表示未设置，登录回退到 LastActiveTenantID。
+	DefaultTenantID int64
 
 	// 各司其职：侧写资料归公司
 	Profile UserProfile
@@ -178,8 +182,8 @@ type LoginResult struct {
 	BindToken string `json:"bind_token"`
 }
 
-// CredentialProvider 外部凭证提供者策略接口。
-type CredentialProvider interface {
+// ICredentialProvider 外部凭证提供者策略接口。
+type ICredentialProvider interface {
 	// Name 返回身份源唯一标识 (ldap 等)
 	Name() string
 	// Authenticate 执行外部身份核验，返回构造完毕的领域用户模型

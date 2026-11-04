@@ -108,6 +108,7 @@ func NewService(
 	s.grantHandlers = map[string]grant.IGrantHandler{
 		"authorization_code": grant.NewAuthCodeGrantHandler(claimsResolver, cache, km, secLogFn),
 		"refresh_token":      grant.NewRefreshTokenGrantHandler(claimsResolver, cache, km),
+		"client_credentials": grant.NewClientCredentialsGrantHandler(km, secLogFn),
 	}
 
 	return s

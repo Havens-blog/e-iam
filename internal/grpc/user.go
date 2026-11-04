@@ -13,7 +13,6 @@ import (
 	"github.com/gotomicro/ego/core/elog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
 )
 
 type UserServer struct {
@@ -130,7 +129,7 @@ func (u *UserServer) isSystemError(err error) bool {
 }
 
 func (u *UserServer) isBusinessError(err error) bool {
-	return errors.Is(err, gorm.ErrRecordNotFound)
+	return errors.Is(err, errs.ErrUserNotFound)
 }
 
 // toGRPCErrorCode 将常规业务错误映射为 protobuf 定义的 ErrorCode
@@ -140,7 +139,7 @@ func (u *UserServer) toGRPCErrorCode(err error) userv1.ErrorCode {
 	}
 
 	switch {
-	case errors.Is(err, gorm.ErrRecordNotFound):
+	case errors.Is(err, errs.ErrUserNotFound):
 		return userv1.ErrorCode_USER_NOT_FOUND
 	default:
 		return userv1.ErrorCode_INVALID_PARAMETER

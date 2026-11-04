@@ -38,22 +38,48 @@ func (c *inMemoryOidcCache) GetOrSetClusterSigningKey(ctx context.Context, keyID
 	return pemStr, nil
 }
 
-func (c *inMemoryOidcCache) SaveAuthCodeContext(ctx context.Context, code string, data []byte) error { return nil }
-func (c *inMemoryOidcCache) GetAndDelAuthCodeContext(ctx context.Context, code string) ([]byte, error) { return nil, nil }
-func (c *inMemoryOidcCache) SaveConsentContext(ctx context.Context, consentID string, data []byte) error { return nil }
-func (c *inMemoryOidcCache) GetConsentContext(ctx context.Context, consentID string) ([]byte, error) { return nil, nil }
-func (c *inMemoryOidcCache) GetAndDelConsentContext(ctx context.Context, consentID string) ([]byte, error) { return nil, nil }
-func (c *inMemoryOidcCache) SaveRefreshToken(ctx context.Context, token string, data []byte) error { return nil }
-func (c *inMemoryOidcCache) GetRefreshToken(ctx context.Context, token string) ([]byte, error) { return nil, nil }
-func (c *inMemoryOidcCache) DeleteRefreshToken(ctx context.Context, token string) error        { return nil }
-func (c *inMemoryOidcCache) RevokeToken(ctx context.Context, token string, ttl time.Duration) error { return nil }
-func (c *inMemoryOidcCache) IsTokenRevoked(ctx context.Context, token string) (bool, error)   { return false, nil }
-func (c *inMemoryOidcCache) TrackUserRefreshToken(ctx context.Context, userID, token string) error { return nil }
-func (c *inMemoryOidcCache) DeleteUserRefreshTokens(ctx context.Context, userID string) error  { return nil }
-func (c *inMemoryOidcCache) SaveApplication(ctx context.Context, clientID string, data []byte) error { return nil }
-func (c *inMemoryOidcCache) GetApplication(ctx context.Context, clientID string) ([]byte, error) { return nil, nil }
-func (c *inMemoryOidcCache) DeleteApplication(ctx context.Context, clientID string) error      { return nil }
-func (c *inMemoryOidcCache) Ping(ctx context.Context) error                                   { return nil }
+func (c *inMemoryOidcCache) SaveAuthCodeContext(ctx context.Context, code string, data []byte) error {
+	return nil
+}
+func (c *inMemoryOidcCache) GetAndDelAuthCodeContext(ctx context.Context, code string) ([]byte, error) {
+	return nil, nil
+}
+func (c *inMemoryOidcCache) SaveConsentContext(ctx context.Context, consentID string, data []byte) error {
+	return nil
+}
+func (c *inMemoryOidcCache) GetConsentContext(ctx context.Context, consentID string) ([]byte, error) {
+	return nil, nil
+}
+func (c *inMemoryOidcCache) GetAndDelConsentContext(ctx context.Context, consentID string) ([]byte, error) {
+	return nil, nil
+}
+func (c *inMemoryOidcCache) SaveRefreshToken(ctx context.Context, token string, data []byte) error {
+	return nil
+}
+func (c *inMemoryOidcCache) GetRefreshToken(ctx context.Context, token string) ([]byte, error) {
+	return nil, nil
+}
+func (c *inMemoryOidcCache) DeleteRefreshToken(ctx context.Context, token string) error { return nil }
+func (c *inMemoryOidcCache) RevokeToken(ctx context.Context, token string, ttl time.Duration) error {
+	return nil
+}
+func (c *inMemoryOidcCache) IsTokenRevoked(ctx context.Context, token string) (bool, error) {
+	return false, nil
+}
+func (c *inMemoryOidcCache) TrackUserRefreshToken(ctx context.Context, userID, token string) error {
+	return nil
+}
+func (c *inMemoryOidcCache) DeleteUserRefreshTokens(ctx context.Context, userID string) error {
+	return nil
+}
+func (c *inMemoryOidcCache) SaveApplication(ctx context.Context, clientID string, data []byte) error {
+	return nil
+}
+func (c *inMemoryOidcCache) GetApplication(ctx context.Context, clientID string) ([]byte, error) {
+	return nil, nil
+}
+func (c *inMemoryOidcCache) DeleteApplication(ctx context.Context, clientID string) error { return nil }
+func (c *inMemoryOidcCache) Ping(ctx context.Context) error                               { return nil }
 
 func TestClusterKeyManager_MultiPodConsistency(t *testing.T) {
 	sharedCache := newInMemoryOidcCache()

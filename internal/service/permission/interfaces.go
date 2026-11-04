@@ -74,8 +74,8 @@ type IPermissionService interface {
 	GetPoliciesSummary(ctx context.Context, policies []domain.Policy) ([]domain.PolicySummary, error)
 }
 
-// AuthorizationProvider 授权关系查询提供者接口
-type AuthorizationProvider interface {
+// IAuthorizationProvider 授权关系查询提供者接口
+type IAuthorizationProvider interface {
 	// ObjType 返回该提供者支持的目标类型
 	ObjType() domain.AuthorizationObjType
 	// ListAuthorizations 查询授权关系

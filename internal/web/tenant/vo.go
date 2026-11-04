@@ -2,7 +2,6 @@ package tenant
 
 import "github.com/Havens-blog/e-iam/internal/domain"
 
-
 type SwitchTenantReq struct {
 	TenantID int64 `json:"tenant_id" binding:"required,gt=0"`
 }
@@ -10,6 +9,13 @@ type SwitchTenantReq struct {
 type CreateTenantReq struct {
 	Name string `json:"name" binding:"required,max=64"`
 	Code string `json:"code" binding:"required,max=32"`
+	// 三类治理配置均为可选入参：零值即"无约束"语义（配额 0=无限制、
+	// 白名单空=全部允许、开关空表），创建时不强制填写
+	MaxAccounts    int64           `json:"max_accounts"`
+	MaxUsers       int64           `json:"max_users"`
+	MaxUserGroups  int64           `json:"max_user_groups"`
+	FeatureSwitch  map[string]bool `json:"feature_switch"`
+	AllowedVendors []string        `json:"allowed_vendors"`
 }
 
 type UpdateTenantReq struct {
@@ -18,6 +24,12 @@ type UpdateTenantReq struct {
 	Code   string `json:"code" binding:"required,max=32"`
 	Domain string `json:"domain"`
 	Status int    `json:"status"`
+	// 三类治理配置可选更新；nil 字段经整体覆盖式更新落库后等价于"清空配置"
+	MaxAccounts    int64           `json:"max_accounts"`
+	MaxUsers       int64           `json:"max_users"`
+	MaxUserGroups  int64           `json:"max_user_groups"`
+	FeatureSwitch  map[string]bool `json:"feature_switch"`
+	AllowedVendors []string        `json:"allowed_vendors"`
 }
 
 type ListTenantReq struct {
@@ -56,7 +68,13 @@ type TenantVO struct {
 	Code   string `json:"code"`
 	Domain string `json:"domain"`
 	Status int    `json:"status"`
-	Ctime  int64  `json:"ctime"`
+	// 三类治理配置原样出参：nil 序列化为 null，语义与空配置等价
+	MaxAccounts    int64           `json:"max_accounts"`
+	MaxUsers       int64           `json:"max_users"`
+	MaxUserGroups  int64           `json:"max_user_groups"`
+	FeatureSwitch  map[string]bool `json:"feature_switch"`
+	AllowedVendors []string        `json:"allowed_vendors"`
+	Ctime          int64           `json:"ctime"`
 }
 
 func ToTenantVOs(tenants []domain.Tenant) []TenantVO {
@@ -74,7 +92,13 @@ func ToTenantVO(t domain.Tenant) TenantVO {
 		Code:   t.Code,
 		Domain: t.Domain,
 		Status: t.Status,
-		Ctime:  t.Ctime,
+		// 配置字段随详情/列表出参透出，读取契约不丢字段
+		MaxAccounts:    t.MaxAccounts,
+		MaxUsers:       t.MaxUsers,
+		MaxUserGroups:  t.MaxUserGroups,
+		FeatureSwitch:  t.FeatureSwitch,
+		AllowedVendors: t.AllowedVendors,
+		Ctime:          t.Ctime,
 	}
 }
 

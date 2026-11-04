@@ -21,6 +21,7 @@ import (
 
 	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/Havens-blog/e-iam/internal/service/permission"
+	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/gotomicro/ego/core/elog"
 )
 
@@ -55,6 +56,12 @@ func Build(ctx context.Context, permSvc permission.IPermissionService, logger *e
 	if tenantID == 0 || permSvc == nil {
 		return data
 	}
+
+	// 登录/切换租户时请求上下文尚无租户（ctxutil.GetTenantID = 0），导致
+	// GetRolesForUser / GetAuthorizedCodes 的 casbin 域匹配到 "0"、
+	// 查不到任何授权 → is_admin 缺失 → 下游（opsagent 等）判为非管理员。
+	// 按本次签发的租户注入上下文后再查询。
+	ctx = ctxutil.WithTenantID(ctx, tenantID)
 
 	var (
 		codes []string

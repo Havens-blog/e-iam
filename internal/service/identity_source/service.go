@@ -59,12 +59,12 @@ type IService interface {
 
 type service struct {
 	repo    repository.IIdentitySourceRepository
-	oidcSvc OidcService
+	oidcSvc IOidcService
 	cm      *cryptox.CryptoManager
 	logger  *elog.Component
 }
 
-func NewService(repo repository.IIdentitySourceRepository, oidcSvc OidcService, cm *cryptox.CryptoManager) IService {
+func NewService(repo repository.IIdentitySourceRepository, oidcSvc IOidcService, cm *cryptox.CryptoManager) IService {
 	return &service{
 		repo:    repo,
 		oidcSvc: oidcSvc,

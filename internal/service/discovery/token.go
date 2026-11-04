@@ -3,10 +3,12 @@ package discovery
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"strings"
 
+	"github.com/Havens-blog/e-iam/internal/cryptox"
 	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/internal/repository"
@@ -63,12 +65,15 @@ func (s *tokenService) GenerateToken(ctx context.Context, serviceName string) (s
 
 	token := "eiam_sct_" + randomPart
 
-	// 存入系统租户名下，description 标记服务绑定关系
+	// 存入系统租户名下，description 标记服务绑定关系。
+	// AccessKey 落库前做 SHA-256 哈希：资产发现令牌为单值 bearer（AccessKey==令牌），
+	// 明文落库会使 DB 只读泄露即等于全部微服务发现令牌泄露；存哈希后即便泄露也无法逆推 256 位原值。
+	// 明文令牌仅在生成时返回一次，校验时由调用方传入再哈希比对。
 	tk := domain.TenantKey{
 		TenantID:    ctxutil.SystemTenantID,
-		AccessKey:   token,
-		SecretKey:   token, // 单值 Token 模式下 AccessKey 与 SecretKey 等同
-		Status:      1,     // 启用
+		AccessKey:   cryptox.HashSecret(token),
+		SecretKey:   "",
+		Status:      1, // 启用
 		Description: fmt.Sprintf("%s%s", discoveryTokenPrefix, serviceName),
 	}
 
@@ -86,9 +91,18 @@ func (s *tokenService) VerifyToken(ctx context.Context, token string) (string, e
 		return "", errs.ErrInvalidToken
 	}
 
-	tk, err := s.tenantKeyRepo.FindByAccessKey(ctx, token)
+	// 新记录 AccessKey 存哈希，按哈希查表；历史明文令牌按原值查表（平滑迁移期）。
+	tk, err := s.tenantKeyRepo.FindByAccessKey(ctx, cryptox.HashSecret(token))
 	if err != nil {
-		return "", errs.ErrInvalidToken
+		// 回退明文查表：兼容迁移前已落库的明文令牌。
+		tk, err = s.tenantKeyRepo.FindByAccessKey(ctx, token)
+		if err != nil {
+			return "", errs.ErrInvalidToken
+		}
+		// 历史明文令牌命中时以恒定时间确认原值（防明文表弱化时序侧信道）。
+		if subtle.ConstantTimeCompare([]byte(tk.AccessKey), []byte(token)) != 1 {
+			return "", errs.ErrInvalidToken
+		}
 	}
 
 	if tk.Status != 1 {

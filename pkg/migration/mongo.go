@@ -136,7 +136,7 @@ func (s *mongoAutoIncrementSyncer) SyncAutoIncrement(ctx context.Context, env Mi
 }
 
 // NewMongoMigrator 通过 1:1 规约创建通用迁移器
-func NewMongoMigrator[S any, D any](spec MongoMigration[S, D]) Migrator {
+func NewMongoMigrator[S any, D any](spec MongoMigration[S, D]) IMigrator {
 	var dst D
 	return &genericMigrator[S, D]{
 		name:        spec.Name(),
@@ -151,7 +151,7 @@ func NewMongoMigrator[S any, D any](spec MongoMigration[S, D]) Migrator {
 }
 
 // NewMongoMigratorMany 通过 1:N 规约创建通用迁移器
-func NewMongoMigratorMany[S any, D any](spec MongoMigrationMany[S, D]) Migrator {
+func NewMongoMigratorMany[S any, D any](spec MongoMigrationMany[S, D]) IMigrator {
 	var dst D
 	return &genericMigrator[S, D]{
 		name:        spec.Name(),

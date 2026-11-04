@@ -19,8 +19,8 @@ import (
 //
 //go:generate mockgen -source=./tenant.go -package=tenantmocks -destination=./mocks/tenant.mock.go -typed ITenantService
 type ITenantService interface {
-	// CreateTenant 创建一个租户空间
-	CreateTenant(ctx context.Context, name, code, username string, userID int64) (int64, error)
+	// CreateTenant 创建一个租户空间；配置（配额/开关/白名单）经领域模型整体传入
+	CreateTenant(ctx context.Context, t domain.Tenant, username string, userID int64) (int64, error)
 	// InitPersonalTenant 为新用户初始化个人空间 (注册即拥有)
 	InitPersonalTenant(ctx context.Context, userId int64, username string) (int64, error)
 	// GetTenantsByUserId 查看用户属于哪些空间 (用于登录后选定或切换)
@@ -82,13 +82,11 @@ func NewTenantService(r repository.ITenantRepository, userRepo repository.IUserR
 }
 
 // CreateTenant 创建租户的核心流程
-func (s *tenantService) CreateTenant(ctx context.Context, name, code, username string, userID int64) (int64, error) {
-	// 1. 保存租户基本信息
-	tenantID, err := s.repo.Create(ctx, domain.Tenant{
-		Name:   name,
-		Code:   code,
-		Status: 1,
-	})
+func (s *tenantService) CreateTenant(ctx context.Context, t domain.Tenant, username string, userID int64) (int64, error) {
+	// 创建入口强制活跃态：状态生命周期由规格 R3.1 约束，不允许经配置侧路注入
+	t.Status = 1
+	// 1. 保存租户基本信息（配额/开关/白名单随领域模型一并落库，零值即无限制语义）
+	tenantID, err := s.repo.Create(ctx, t)
 	if err != nil {
 		return 0, err
 	}

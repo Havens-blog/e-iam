@@ -23,6 +23,7 @@ var (
 )
 
 // IResourceCache 物理接口资源缓存
+//
 //go:generate mockgen -package=cachemocks -destination=./mocks/resource.mock.go github.com/Havens-blog/e-iam/internal/repository/cache IResourceCache
 type IResourceCache interface {
 	// GetAPI 获取接口缓存；未命中返回 ErrCacheNotFound
@@ -33,12 +34,21 @@ type IResourceCache interface {
 	SetEmptyAPI(ctx context.Context, service, method, path string) error
 	// InvalidateServiceAPIs 清理指定微服务下的全部 API 缓存
 	InvalidateServiceAPIs(ctx context.Context, service string) error
+
+	// GetAllMenus 获取菜单全量缓存；未命中返回 ErrCacheNotFound。
+	// 菢单元数据极低频变更，授权菜单接口高频读取，全量缓存避免每请求全表扫描。
+	GetAllMenus(ctx context.Context) ([]domain.Menu, error)
+	// SetAllMenus 缓存全量菜单（已按 sort 升序），TTL 较长 + 抖动。
+	SetAllMenus(ctx context.Context, menus []domain.Menu) error
+	// InvalidateAllMenus 清理菜单全量缓存，菜单同步/标记孤儿后调用。
+	InvalidateAllMenus(ctx context.Context) error
 }
 
 type resourceCache struct {
 	client   redis.Cmdable
 	apiTTL   time.Duration
 	emptyTTL time.Duration
+	menuTTL  time.Duration
 }
 
 // NewResourceCache 创建资源缓存实例
@@ -47,6 +57,7 @@ func NewResourceCache(client redis.Cmdable) IResourceCache {
 		client:   client,
 		apiTTL:   2 * time.Hour,
 		emptyTTL: 2 * time.Minute,
+		menuTTL:  2 * time.Hour,
 	}
 }
 
@@ -123,6 +134,35 @@ func (c *resourceCache) SetEmptyAPI(ctx context.Context, service, method, path s
 func (c *resourceCache) InvalidateServiceAPIs(ctx context.Context, service string) error {
 	setKey := c.serviceKeysSet(service)
 	return c.client.Eval(ctx, luaInvalidateService, []string{setKey}).Err()
+}
+
+const menusAllKey = "eiam:resource:menus:all"
+
+func (c *resourceCache) GetAllMenus(ctx context.Context) ([]domain.Menu, error) {
+	val, err := c.client.Get(ctx, menusAllKey).Bytes()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, ErrCacheNotFound
+		}
+		return nil, err
+	}
+	var menus []domain.Menu
+	if err = json.Unmarshal(val, &menus); err != nil {
+		return nil, fmt.Errorf("反序列化菜单全量缓存失败: %w", err)
+	}
+	return menus, nil
+}
+
+func (c *resourceCache) SetAllMenus(ctx context.Context, menus []domain.Menu) error {
+	data, err := json.Marshal(menus)
+	if err != nil {
+		return fmt.Errorf("序列化菜单全量缓存失败: %w", err)
+	}
+	return c.client.Set(ctx, menusAllKey, data, c.jitterTTL(c.menuTTL)).Err()
+}
+
+func (c *resourceCache) InvalidateAllMenus(ctx context.Context) error {
+	return c.client.Del(ctx, menusAllKey).Err()
 }
 
 // jitterTTL 为过期时间增加 ±10% 随机抖动，打散失效时间窗口

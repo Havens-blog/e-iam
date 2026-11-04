@@ -23,4 +23,3 @@ func TestCasXML_Output(t *testing.T) {
 	assert.Contains(t, output, "<cas:email>admin@example.com</cas:email>")
 	assert.Contains(t, output, "<cas:name>系统管理员</cas:name>")
 }
-

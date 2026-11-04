@@ -1,9 +1,51 @@
 package role
 
 import (
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/internal/web/user"
+	"github.com/Havens-blog/e-iam/internal/web/weberrx"
 	"github.com/ecodeclub/ginx"
 )
+
+var (
+	// 4010503xx: 角色增删改查与继承治理类错误。Transport 层将领域哨兵映射为富语义 Result。
+	// 各 handler 调 MapDeleteError / MapInheritanceError / MapUnassignError 一次完成匹配，
+	// 消除 `if errors.Is(...) { return ErrX, err }` 样板（此前 Delete/BatchDelete 重复、
+	// AddParent/RemoveParent 重复、BatchUnassign/Unassign 重复）。
+
+	// 角色删除场景：系统角色禁止删除 / 角色占用中
+	deleteErrorMappings = []weberrx.Mapping{
+		{Sentinel: errs.ErrDeleteSystemRole, Result: ErrReservedRoleCode},
+		{Sentinel: errs.ErrRoleInUse, Result: ErrRoleInUse},
+	}
+
+	// 角色继承场景：自继承 / 循环继承 / 不可变继承
+	inheritanceErrorMappings = []weberrx.Mapping{
+		{Sentinel: errs.ErrRoleSelfInheritance, Result: ErrRoleSelfInheritance},
+		{Sentinel: errs.ErrRoleCycleInheritance, Result: ErrRoleCycleInheritance},
+		{Sentinel: errs.ErrImmutableInheritance, Result: ErrImmutableInheritance},
+	}
+
+	// 角色移除场景：个人空间 admin 解绑禁止
+	unassignErrorMappings = []weberrx.Mapping{
+		{Sentinel: errs.ErrPersonalTenantAdminUnassignForbidden, Result: ErrPersonalTenantAdminUnassignForbidden},
+	}
+)
+
+// MapDeleteError 将角色删除类领域哨兵映射为 Result，未命中回退 ErrRoleDeleteFailed。
+func MapDeleteError(err error) ginx.Result {
+	return weberrx.Map(err, ErrRoleDeleteFailed, deleteErrorMappings...)
+}
+
+// MapInheritanceError 将角色继承类领域哨兵映射为 Result，未命中回退通用失败。
+func MapInheritanceError(err error, fallback ginx.Result) ginx.Result {
+	return weberrx.Map(err, fallback, inheritanceErrorMappings...)
+}
+
+// MapUnassignError 将角色移除类领域哨兵映射为 Result，未命中回退 ErrRoleAssignFailed。
+func MapUnassignError(err error) ginx.Result {
+	return weberrx.Map(err, ErrRoleAssignFailed, unassignErrorMappings...)
+}
 
 var (
 	// ErrRoleCreateFailed 创建逻辑错误

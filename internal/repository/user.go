@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/internal/repository/cache"
 	"github.com/Havens-blog/e-iam/internal/repository/dao"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/samber/lo"
 	"golang.org/x/sync/errgroup"
-	"gorm.io/gorm"
 )
 
 // IUserRepository 用户仓储接口
@@ -53,6 +53,8 @@ type IUserRepository interface {
 	UpdateLastLoginAt(ctx context.Context, id int64, loginAt int64) error
 	// UpdateLastActiveTenantID 更新用户最近一次活跃租户 ID
 	UpdateLastActiveTenantID(ctx context.Context, id int64, tenantID int64) error
+	// UpdateDefaultTenantID 更新用户默认登录租户 ID（用户个人偏好，switch 不覆盖）
+	UpdateDefaultTenantID(ctx context.Context, id int64, tenantID int64) error
 	// Delete 删除用户
 	Delete(ctx context.Context, id int64) error
 	// BatchDelete 批量删除用户
@@ -173,7 +175,7 @@ func (repo *userRepository) fullHydration(ctx context.Context, u dao.User) (doma
 	eg.Go(func() error {
 		var err error
 		up, err = repo.dao.FindProfileByUserId(ctx, u.ID)
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, errs.ErrRecordNotFound) {
 			return nil
 		}
 		return err
@@ -182,7 +184,7 @@ func (repo *userRepository) fullHydration(ctx context.Context, u dao.User) (doma
 	eg.Go(func() error {
 		var err error
 		identities, err = repo.dao.FindIdentitiesByUserId(ctx, u.ID)
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, errs.ErrRecordNotFound) {
 			return nil
 		}
 		return err
@@ -344,18 +346,19 @@ func (repo *userRepository) toDomain(u dao.User, up dao.UserProfile, ids []dao.U
 	}
 
 	return domain.User{
-		ID:          u.ID,
-		Username:    u.Username,
-		Password:    u.Password,
-		Email:       u.Email,
-		Status:      domain.Status(u.Status),
-		Source:      domain.Source(u.Source),
-		MfaType:     u.MfaType,
-		MfaSecret:   u.MfaSecret,
+		ID:                 u.ID,
+		Username:           u.Username,
+		Password:           u.Password,
+		Email:              u.Email,
+		Status:             domain.Status(u.Status),
+		Source:             domain.Source(u.Source),
+		MfaType:            u.MfaType,
+		MfaSecret:          u.MfaSecret,
 		Ctime:              u.Ctime,
 		Utime:              u.Utime,
 		LastLoginAt:        u.LastLoginAt,
 		LastActiveTenantID: u.LastActiveTenantID,
+		DefaultTenantID:    u.DefaultTenantID,
 		Profile: domain.UserProfile{
 			UserID:   up.UserID,
 			Nickname: up.Nickname,
@@ -369,18 +372,19 @@ func (repo *userRepository) toDomain(u dao.User, up dao.UserProfile, ids []dao.U
 
 func (repo *userRepository) toEntity(u domain.User) dao.User {
 	return dao.User{
-		ID:          u.ID,
-		Username:    u.Username,
-		Password:    u.Password,
-		Email:       u.Email,
-		Status:      int(u.Status),
-		Source:      string(u.Source),
-		MfaType:     u.MfaType,
-		MfaSecret:   u.MfaSecret,
+		ID:                 u.ID,
+		Username:           u.Username,
+		Password:           u.Password,
+		Email:              u.Email,
+		Status:             int(u.Status),
+		Source:             string(u.Source),
+		MfaType:            u.MfaType,
+		MfaSecret:          u.MfaSecret,
 		Ctime:              u.Ctime,
 		Utime:              u.Utime,
 		LastLoginAt:        u.LastLoginAt,
 		LastActiveTenantID: u.LastActiveTenantID,
+		DefaultTenantID:    u.DefaultTenantID,
 	}
 }
 
@@ -395,6 +399,10 @@ func (repo *userRepository) UpdateLastLoginAt(ctx context.Context, id int64, log
 
 func (repo *userRepository) UpdateLastActiveTenantID(ctx context.Context, id int64, tenantID int64) error {
 	return repo.dao.UpdateLastActiveTenantID(ctx, id, tenantID)
+}
+
+func (repo *userRepository) UpdateDefaultTenantID(ctx context.Context, id int64, tenantID int64) error {
+	return repo.dao.UpdateDefaultTenantID(ctx, id, tenantID)
 }
 
 func (repo *userRepository) Delete(ctx context.Context, id int64) error {

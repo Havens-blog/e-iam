@@ -165,7 +165,15 @@ func (h *Handler) CreateTenant(ctx *ginx.Context, req CreateTenantReq, sess sess
 		return ErrUnauthenticated, fmt.Errorf("session 中缺失用户名信息")
 	}
 
-	tenantId, err := h.svc.CreateTenant(ctx.Context, req.Name, req.Code, username, sess.Claims().Uid)
+	tenantId, err := h.svc.CreateTenant(ctx.Context, domain.Tenant{
+		Name:           req.Name,
+		Code:           req.Code,
+		MaxAccounts:    req.MaxAccounts,
+		MaxUsers:       req.MaxUsers,
+		MaxUserGroups:  req.MaxUserGroups,
+		FeatureSwitch:  req.FeatureSwitch,
+		AllowedVendors: req.AllowedVendors,
+	}, username, sess.Claims().Uid)
 	if err != nil {
 		return ErrTenantCreate, err
 	}
@@ -248,11 +256,16 @@ func (h *Handler) UpdateTenant(ctx *ginx.Context, req UpdateTenantReq) (ginx.Res
 	}
 
 	err := h.svc.Update(ctx.Context, domain.Tenant{
-		ID:     req.ID,
-		Name:   req.Name,
-		Code:   req.Code,
-		Domain: req.Domain,
-		Status: req.Status,
+		ID:             req.ID,
+		Name:           req.Name,
+		Code:           req.Code,
+		Domain:         req.Domain,
+		Status:         req.Status,
+		MaxAccounts:    req.MaxAccounts,
+		MaxUsers:       req.MaxUsers,
+		MaxUserGroups:  req.MaxUserGroups,
+		FeatureSwitch:  req.FeatureSwitch,
+		AllowedVendors: req.AllowedVendors,
 	})
 	if err != nil {
 		return ErrTenantUpdate, err

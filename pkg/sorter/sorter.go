@@ -11,8 +11,8 @@ const (
 	DefaultIndexGap = 1000
 )
 
-// Sortable 可排序元素接口
-type Sortable interface {
+// ISortable 可排序元素接口
+type ISortable interface {
 	GetID() int64
 	GetSortKey() int64
 }
@@ -36,12 +36,12 @@ type ReorderPlan struct {
 }
 
 // Reorder 使用默认步长计算重排方案
-func Reorder[E Sortable](elements []E, draggedID, targetPosition int64) ReorderPlan {
+func Reorder[E ISortable](elements []E, draggedID, targetPosition int64) ReorderPlan {
 	return ReorderWithGap(elements, draggedID, targetPosition, DefaultIndexGap)
 }
 
 // ReorderWithGap 自定义稀疏步长计算重排方案
-func ReorderWithGap[E Sortable](elements []E, draggedID, targetPosition, gap int64) ReorderPlan {
+func ReorderWithGap[E ISortable](elements []E, draggedID, targetPosition, gap int64) ReorderPlan {
 	if gap <= 0 {
 		gap = DefaultIndexGap
 	}
@@ -106,14 +106,14 @@ func ReorderWithGap[E Sortable](elements []E, draggedID, targetPosition, gap int
 }
 
 // removeByID 过滤掉指定 ID 的元素
-func removeByID[E Sortable](elems []E, id int64) []E {
+func removeByID[E ISortable](elems []E, id int64) []E {
 	return lo.Filter(elems, func(e E, _ int) bool {
 		return e.GetID() != id
 	})
 }
 
 // calculateSortKey 计算插入点的新 SortKey
-func calculateSortKey[E Sortable](elems []E, position, gap int64) int64 {
+func calculateSortKey[E ISortable](elems []E, position, gap int64) int64 {
 	n := int64(len(elems))
 
 	// 列表为空或追加至末尾
@@ -134,7 +134,7 @@ func calculateSortKey[E Sortable](elems []E, position, gap int64) int64 {
 }
 
 // needsRebalance 检查是否空间不足触发重平衡
-func needsRebalance[E Sortable](elems []E, position, newSortKey int64) bool {
+func needsRebalance[E ISortable](elems []E, position, newSortKey int64) bool {
 	n := int64(len(elems))
 	if n == 0 {
 		return false
@@ -155,7 +155,7 @@ func needsRebalance[E Sortable](elems []E, position, newSortKey int64) bool {
 }
 
 // SortBySortKey 通用排序辅助函数
-func SortBySortKey[E Sortable](elems []E) {
+func SortBySortKey[E ISortable](elems []E) {
 	slices.SortFunc(elems, func(a, b E) int {
 		if a.GetSortKey() < b.GetSortKey() {
 			return -1

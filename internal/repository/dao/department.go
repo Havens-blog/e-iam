@@ -162,7 +162,7 @@ func (dao *departmentDAO) ListMembers(ctx context.Context, deptID int64, offset,
 		return nil, 0, err
 	}
 
-	err = db.Offset(int(offset)).Limit(int(limit)).Order("ctime DESC").Find(&users).Error
+	err = db.Scopes(Paginate(offset, limit)).Order("ctime DESC").Find(&users).Error
 	return users, total, err
 }
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/Havens-blog/e-iam/internal/cryptox"
 	"github.com/gotomicro/ego/core/constant"
 	"github.com/gotomicro/ego/core/elog"
 	"github.com/gotomicro/ego/server"
@@ -22,7 +23,7 @@ const ComponentName = "grpc.server"
 type ServerConfig struct {
 	Name       string `mapstructure:"name"`        // 必填:服务名
 	ListenAddr string `mapstructure:"listen_addr"` // 必填:绑定地址
-	AuthToken  string `mapstructure:"auth_token"`  // 可选:JWT 鉴权密钥，为空则不启用鉴权
+	AuthToken  string `mapstructure:"auth_token"`  // 必填:JWT 鉴权密钥，为空则启动失败（gRPC 暴露 Verify 等凭证校验端点，禁止裸奔）
 }
 
 // Validate 验证配置
@@ -92,8 +93,13 @@ func (s *Server) Name() string {
 	return s.config.Name
 }
 
-// Init 实现 server.Server 接口
+// Init 实现 server.Server 接口。
+// 启动期 fail-fast：gRPC 暴露 TenantService.Verify 等凭证校验端点，
+// 禁止在无/弱鉴权密钥下裸奔。空值、过短值、示例占位符一律拒绝启动。
 func (s *Server) Init() error {
+	if err := cryptox.ValidateSecret("grpc.server.eiam.auth_token", s.config.AuthToken); err != nil {
+		return fmt.Errorf("gRPC 鉴权密钥校验失败: %w", err)
+	}
 	return nil
 }
 

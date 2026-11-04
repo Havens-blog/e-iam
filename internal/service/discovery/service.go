@@ -62,8 +62,9 @@ func (s *discoveryService) Sync(ctx context.Context, req capability.SyncRequest)
 		}()
 	}
 
-	// 3. 异步驱动 Registry 统一录入引擎（长任务使用独立 context）
-	if err = s.registry.Sync(context.Background(), req); err != nil {
+	// 3. 异步驱动 Registry 统一录入引擎：透传调用方 ctx 使客户端断连时可中止长任务，
+	// 而非用无界 context.Background() 让请求取消后仍空跑至完成
+	if err = s.registry.Sync(ctx, req); err != nil {
 		return false, fmt.Errorf("微服务资产同步落库失败: %w", err)
 	}
 

@@ -13,6 +13,7 @@ import (
 )
 
 // IPermissionRepository 权限仓库：管理全局能力项及其绑定的物理资产
+//
 //go:generate mockgen -package=repomocks -destination=./mocks/permission.mock.go github.com/Havens-blog/e-iam/internal/repository IPermissionRepository
 type IPermissionRepository interface {
 	// CreatePermission 录入一个新的全局逻辑能力 (如 iam:user:view)
@@ -401,16 +402,15 @@ func (r *PermissionRepository) DeletePermissionsByServiceAndCodes(ctx context.Co
 
 func (r *PermissionRepository) PhysicalClearService(ctx context.Context, service, source string) error {
 	// 不在此处开启新事务，调用方（engine.Ingest）负责管理外层事务边界。
-	all, err := r.dao.ListAll(ctx)
+	// 直接在 DB 侧按 service+source 过滤，避免 ListAll 全表扫描后内存过滤。
+	all, err := r.dao.ListByServiceAndSource(ctx, service, source)
 	if err != nil {
 		return err
 	}
 
-	var codes []string
+	codes := make([]string, 0, len(all))
 	for _, p := range all {
-		if p.Service == service && p.Source == source {
-			codes = append(codes, p.Code)
-		}
+		codes = append(codes, p.Code)
 	}
 
 	if len(codes) > 0 {

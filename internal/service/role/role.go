@@ -2,6 +2,7 @@ package role
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/Havens-blog/e-iam/internal/errs"
@@ -71,11 +72,14 @@ func (s *roleService) Create(ctx context.Context, r domain.Role) (int64, error) 
 func (s *roleService) List(ctx context.Context, offset, limit int64) ([]domain.Role, int64, error) {
 	total, err := s.repo.Count(ctx)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("获取角色总数失败: %w", err)
 	}
 
 	rs, err := s.repo.List(ctx, offset, limit)
-	return rs, total, err
+	if err != nil {
+		return rs, total, fmt.Errorf("获取角色列表失败: %w", err)
+	}
+	return rs, total, nil
 }
 
 func (s *roleService) Search(ctx context.Context, keyword string, offset, limit int64) ([]domain.Role, error) {
@@ -121,13 +125,19 @@ func (s *roleService) GetByCode(ctx context.Context, code string) (domain.Role, 
 	eg.Go(func() error {
 		var err error
 		role, err = s.repo.GetByCode(ctx, code)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载角色详情-角色底数失败: %w", err)
+		}
+		return nil
 	})
 
 	eg.Go(func() error {
 		var err error
 		managed, err = s.policySvc.GetAttachedPolicies(ctx, code)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载权限清单-权限底数失败: %w", err)
+		}
+		return nil
 	})
 
 	if err := eg.Wait(); err != nil {
@@ -145,7 +155,7 @@ func (s *roleService) ListByIncludeCodes(ctx context.Context, codes []string) ([
 
 	roles, err := s.repo.ListByIncludeCodes(ctx, codes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("查询包含指定编码的角色失败: %w", err)
 	}
 
 	// 一次性批量补全所有角色的托管策略，避免 N+1
@@ -169,7 +179,7 @@ func (s *roleService) Delete(ctx context.Context, id int64) error {
 	// 1. 获取角色详情
 	role, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("获取角色详情失败: %w", err)
 	}
 
 	// 2. 校验系统内置与保留角色 (不允许删除)
@@ -200,7 +210,7 @@ func (s *roleService) BatchDelete(ctx context.Context, ids []int64) (int64, erro
 	// 1. 批量获取角色详情进行校验
 	roles, err := s.repo.GetByIDs(ctx, ids)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("批量获取角色详情失败: %w", err)
 	}
 
 	roleSubjects := make([]string, 0, len(roles))
@@ -215,7 +225,7 @@ func (s *roleService) BatchDelete(ctx context.Context, ids []int64) (int64, erro
 	// 3. 批量校验关联性 (是否有用户绑定、或作为父角色被继承)
 	usedSubjects, err := s.repo.CheckRolesUsage(ctx, roleSubjects)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("校验角色关联性失败: %w", err)
 	}
 
 	if len(usedSubjects) > 0 {

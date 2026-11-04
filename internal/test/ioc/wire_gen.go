@@ -53,7 +53,10 @@ func InitPermissionSuiteDeps() (*PermissionSuiteDeps, error) {
 	iResourceService := resource.NewResourceService(iResourceRepository, iServiceRepository)
 	iSubjectRegistry := ProvideTestSubjectRegistry()
 	iAuthorizer := ioc.InitOPA()
-	iPermissionService := permission.NewPermissionService(syncedEnforcer, iPolicyService, iRoleService, iSubjectRegistry, iResourceService, iPermissionRepository, iAuthorizer, iBoundaryChecker, iTenantRepository)
+	iPermissionService, err := permission.NewPermissionService(syncedEnforcer, iPolicyService, iRoleService, iSubjectRegistry, iResourceService, iPermissionRepository, iAuthorizer, iBoundaryChecker, iTenantRepository, cmdable)
+	if err != nil {
+		return nil, err
+	}
 	permissionSuiteDeps := &PermissionSuiteDeps{
 		DB:           db,
 		Enforcer:     syncedEnforcer,

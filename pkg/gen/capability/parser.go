@@ -35,6 +35,11 @@ func (p *Parser) ParseDir(dir string) (*Graph, error) {
 			return nil
 		}
 
+		// 统一为正斜杠：源码路径会写入 permissions.md 等产物，
+		// 若保留 OS 原生分隔符 (Windows 为 \)，会导致 Windows 开发者与 Linux CI
+		// 的生成产物出现“仅为路径分隔符差异”的 diff，破坏生成链一致性守护。
+		path = filepath.ToSlash(path)
+
 		fileNode, err := parser.ParseFile(p.fset, path, nil, parser.ParseComments)
 		if err != nil {
 			return err

@@ -71,7 +71,7 @@ func (s *gormRecordStore) Clear(ctx context.Context) error {
 // Runner 负责连接数据源，并按顺序执行一组迁移任务。
 type Runner struct {
 	cfg             Config
-	migrators       []Migrator
+	migrators       []IMigrator
 	preHooks        []Hook
 	postHooks       []Hook
 	autoMigrateFunc func(db *gorm.DB) error
@@ -79,7 +79,7 @@ type Runner struct {
 }
 
 // NewRunner 创建迁移执行器。
-func NewRunner(cfg Config, migrators []Migrator, options ...RunnerOption) *Runner {
+func NewRunner(cfg Config, migrators []IMigrator, options ...RunnerOption) *Runner {
 	r := &Runner{cfg: cfg, migrators: migrators}
 	for _, opt := range options {
 		opt(r)
@@ -308,7 +308,7 @@ func (r *Runner) runMigrators(ctx context.Context, env MigrationEnv, store IReco
 }
 
 // shouldSkip 判断指定任务是否已存在执行成功的历史，存在则跳过以达到幂等性
-func (r *Runner) shouldSkip(ctx context.Context, store IRecordStore, migrator Migrator) (bool, error) {
+func (r *Runner) shouldSkip(ctx context.Context, store IRecordStore, migrator IMigrator) (bool, error) {
 	if r.cfg.DryRun {
 		return false, nil
 	}

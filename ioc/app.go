@@ -18,7 +18,7 @@ type App struct {
 	// Init 资产初始化器
 	Init resource.IInitializer
 	// Providers 权限能力供应者清单
-	Providers []capability.PermissionProvider
+	Providers []capability.IPermissionProvider
 	// Tasks 调度任务清单
 	Tasks []Task
 }

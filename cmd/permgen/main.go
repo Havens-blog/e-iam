@@ -22,7 +22,7 @@ func main() {
 		Short: "EIAM 权限 AST 静态扫描与强类型契约代码生成器",
 		Long: `PermGen 是专为 EIAM 及生态微服务 (如 etask、eflow) 打造的权限静态分析与代码生成脚手架。
 无需启动服务，在编译期静态分析 Handler 路由并导出全套强类型契约代码与权限大盘蓝图文档。`,
-		Version: fmt.Sprintf("%s (build %s)", Version, BuildTime),
+		Version:      fmt.Sprintf("%s (build %s)", Version, BuildTime),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			engine := capability.NewEngine(cfg)

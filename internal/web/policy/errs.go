@@ -1,9 +1,37 @@
 package policy
 
 import (
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/internal/web/user"
+	"github.com/Havens-blog/e-iam/internal/web/weberrx"
 	"github.com/ecodeclub/ginx"
 )
+
+// 4050xxx: 策略中心错误码。Transport 层将领域哨兵映射为富语义 Result，
+// 各 handler 调 MapCreateError / MapDeleteError 一次完成匹配，消除样板。
+
+var (
+	// 策略创建：标识码重复
+	createErrorMappings = []weberrx.Mapping{
+		{Sentinel: errs.ErrDuplicatePolicyCode, Result: ErrDuplicatePolicyCode},
+	}
+
+	// 策略删除：系统预置禁止删除 / 策略占用中
+	deleteErrorMappings = []weberrx.Mapping{
+		{Sentinel: errs.ErrDeleteSystemPolicy, Result: ErrDeleteSystemPolicy},
+		{Sentinel: errs.ErrPolicyInUse, Result: ErrPolicyInUse},
+	}
+)
+
+// MapCreateError 将策略创建类领域哨兵映射为 Result，未命中回退 ErrCreatePolicyFailed。
+func MapCreateError(err error) ginx.Result {
+	return weberrx.Map(err, ErrCreatePolicyFailed, createErrorMappings...)
+}
+
+// MapDeleteError 将策略删除类领域哨兵映射为 Result，未命中回退 ErrDeletePolicyFailed。
+func MapDeleteError(err error) ginx.Result {
+	return weberrx.Map(err, ErrDeletePolicyFailed, deleteErrorMappings...)
+}
 
 // 策略中心错误码规范：4050xxx
 // 目前主要透传 User 模块的认证错误

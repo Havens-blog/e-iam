@@ -60,6 +60,7 @@ func (CasbinRule) TableName() string {
 }
 
 // IPermissionDAO 定义了逻辑权限能力项与物理资产绑定的底层持久化接口。
+//
 //go:generate mockgen -package=daomocks -destination=./mocks/permission.mock.go github.com/Havens-blog/e-iam/internal/repository/dao IPermissionDAO
 type IPermissionDAO interface {
 	// Insert 录入单个逻辑权限定义，返回自增 ID
@@ -72,6 +73,9 @@ type IPermissionDAO interface {
 	GetByCode(ctx context.Context, code string) (Permission, error)
 	// ListAll 查询系统中全部逻辑权限定义
 	ListAll(ctx context.Context) ([]Permission, error)
+	// ListByServiceAndSource 按 service+source 精确查询逻辑权限定义，
+	// 供资产对账清理路径直接走索引过滤，避免 ListAll 全表扫描后内存过滤。
+	ListByServiceAndSource(ctx context.Context, service, source string) ([]Permission, error)
 
 	// BindResources 批量写入物理资源绑定关系；以 (perm_code, tenant_id, resource_urn) 为唯一索引进行 Upsert
 	BindResources(ctx context.Context, bindings []PermissionBinding) error
@@ -172,6 +176,12 @@ func (d *PermissionDAO) ListAll(ctx context.Context) ([]Permission, error) {
 	return res, err
 }
 
+func (d *PermissionDAO) ListByServiceAndSource(ctx context.Context, service, source string) ([]Permission, error) {
+	var res []Permission
+	err := d.getDB(ctx).Where("service = ? AND source = ?", service, source).Find(&res).Error
+	return res, err
+}
+
 func (d *PermissionDAO) BindResources(ctx context.Context, bindings []PermissionBinding) error {
 	if len(bindings) == 0 {
 		return nil
@@ -255,7 +265,7 @@ func (d *PermissionDAO) ListCasbinRules(ctx context.Context, tid, offset, limit 
 		return nil, 0, err
 	}
 
-	err := db.Limit(int(limit)).Offset(int(offset)).Order("id DESC").Find(&res).Error
+	err := db.Scopes(Paginate(offset, limit)).Order("id DESC").Find(&res).Error
 	return res, total, err
 }
 

@@ -22,6 +22,7 @@ type Application struct {
 	ResponseTypes    sqlx.JSONColumn[[]string] `gorm:"column:response_types;type:json;comment:'允许的响应类型'"`
 	GrantTypes       sqlx.JSONColumn[[]string] `gorm:"column:grant_types;type:json;comment:'允许的授权模式'"`
 	Scopes           sqlx.JSONColumn[[]string] `gorm:"column:scopes;type:json;comment:'允许申请的权限范围'"`
+	AllowedTenants   sqlx.JSONColumn[[]int64]  `gorm:"column:allowed_tenants;type:json;comment:'S2S允许代表访问的租户ID列表(空=禁止;-1=全租户通配)'"`
 	IsPublic         bool                      `gorm:"column:is_public;type:tinyint(1);NOT NULL;default:0;comment:'是否为公共客户端'"`
 	AutoConsent      bool                      `gorm:"column:auto_consent;type:tinyint(1);NOT NULL;default:1;comment:'是否跳过授权确认'"`
 	Ctime            int64                     `gorm:"column:ctime;comment:'创建时间戳'"`
@@ -77,16 +78,17 @@ func (dao *applicationDAO) Update(ctx context.Context, app Application) error {
 	return dao.db.WithContext(ctx).Model(&Application{}).
 		Where("id = ?", app.ID).
 		Updates(map[string]any{
-			"name":           app.Name,
-			"protocol":       app.Protocol,
-			"logo":           app.Logo,
-			"redirect_uris":  app.RedirectURIs,
-			"response_types": app.ResponseTypes,
-			"grant_types":    app.GrantTypes,
-			"scopes":         app.Scopes,
-			"is_public":      app.IsPublic,
-			"auto_consent":   app.AutoConsent,
-			"utime":          now,
+			"name":            app.Name,
+			"protocol":        app.Protocol,
+			"logo":            app.Logo,
+			"redirect_uris":   app.RedirectURIs,
+			"response_types":  app.ResponseTypes,
+			"grant_types":     app.GrantTypes,
+			"scopes":          app.Scopes,
+			"allowed_tenants": app.AllowedTenants,
+			"is_public":       app.IsPublic,
+			"auto_consent":    app.AutoConsent,
+			"utime":           now,
 		}).Error
 }
 

@@ -2,9 +2,11 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"github.com/samber/lo"
@@ -71,6 +73,8 @@ type IUserDAO interface {
 	UpdateLastLoginAt(ctx context.Context, id int64, loginAt int64) error
 	// UpdateLastActiveTenantID 更新用户最近一次活跃租户 ID
 	UpdateLastActiveTenantID(ctx context.Context, id int64, tenantID int64) error
+	// UpdateDefaultTenantID 更新用户默认登录租户 ID（用户个人偏好，switch 不覆盖）
+	UpdateDefaultTenantID(ctx context.Context, id int64, tenantID int64) error
 	// DeleteIdentity 解除外部身份绑定
 	DeleteIdentity(ctx context.Context, userID int64, provider, identityID string) error
 	// FindIdentitiesByUserID 根据用户 ID 和提供商查询身份列表
@@ -101,18 +105,22 @@ func (dao *userDAO) membershipScope(tid int64) func(db *gorm.DB) *gorm.DB {
 }
 
 type User struct {
-	ID          int64  `gorm:"primaryKey;autoIncrement"`
-	Username    string `gorm:"column:username;uniqueIndex;type:varchar(64)"`
-	Password    string `gorm:"type:varchar(255)"`
-	Email       string `gorm:"type:varchar(128)"`
-	Status      int    `gorm:"type:tinyint"`
-	Source      string `gorm:"type:varchar(32);index;comment:'身份来源: local, ldap等'"`
-	MfaType     string `gorm:"type:varchar(16);comment:'MFA类型: totp等'"`
-	MfaSecret   string `gorm:"type:varchar(255);comment:'MFA密钥'"`
+	ID                 int64  `gorm:"primaryKey;autoIncrement"`
+	Username           string `gorm:"column:username;uniqueIndex;type:varchar(64)"`
+	Password           string `gorm:"type:varchar(255)"`
+	Email              string `gorm:"type:varchar(128)"`
+	Status             int    `gorm:"type:tinyint"`
+	Source             string `gorm:"type:varchar(32);index;comment:'身份来源: local, ldap等'"`
+	MfaType            string `gorm:"type:varchar(16);comment:'MFA类型: totp等'"`
+	MfaSecret          string `gorm:"type:varchar(255);comment:'MFA密钥'"`
 	Ctime              int64  `gorm:"comment:'创建时间'"`
 	Utime              int64  `gorm:"comment:'更新时间'"`
 	LastLoginAt        int64  `gorm:"comment:'最近登录时间'"`
 	LastActiveTenantID int64  `gorm:"column:last_active_tenant_id;default:0;comment:'最近一次活跃租户ID'"`
+	// DefaultTenantID 默认登录租户 ID（用户个人偏好）。与 last_active_tenant_id 独立：
+	// 仅由用户在租户管理页显式设置，登录时优先采用；switch 切换租户不改写本字段。
+	// 0 表示未设置，回退到 last_active_tenant_id。
+	DefaultTenantID int64 `gorm:"column:default_tenant_id;default:0;comment:'默认登录租户ID（用户个人偏好，switch不覆盖）'"`
 }
 
 type UserProfile struct {
@@ -181,6 +189,11 @@ func (dao *userDAO) Update(ctx context.Context, u User, ui UserProfile) (int64, 
 		if u.Status != 0 {
 			updateData["status"] = u.Status
 		}
+		// 密码同理按零值保护：只有显式带了新密码（改密流程写入的是 bcrypt 哈希）才更新，
+		// 未加载密码的普通资料更新（UpdateUserReq.ToDomain 不含 password）不会误清空登录口令。
+		if u.Password != "" {
+			updateData["password"] = u.Password
+		}
 
 		if err := tx.Model(&u).Select(lo.Keys(updateData)).Updates(updateData).Error; err != nil {
 			return err
@@ -198,6 +211,9 @@ func (dao *userDAO) Update(ctx context.Context, u User, ui UserProfile) (int64, 
 func (dao *userDAO) FindById(ctx context.Context, id int64) (User, error) {
 	var u User
 	err := dao.db.WithContext(ctx).Where("id = ?", id).First(&u).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return u, errs.ErrUserNotFound
+	}
 	return u, err
 }
 
@@ -219,18 +235,29 @@ func (dao *userDAO) FindByUsernames(ctx context.Context, usernames []string) ([]
 func (dao *userDAO) FindByUsername(ctx context.Context, username string) (User, error) {
 	var u User
 	err := dao.db.WithContext(ctx).Where("username = ?", username).First(&u).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return u, errs.ErrUserNotFound
+	}
 	return u, err
 }
 
 func (dao *userDAO) FindByEmail(ctx context.Context, email string) (User, error) {
 	var u User
 	err := dao.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return u, errs.ErrUserNotFound
+	}
 	return u, err
 }
 
 func (dao *userDAO) FindProfileByUserId(ctx context.Context, userID int64) (UserProfile, error) {
 	var ui UserProfile
 	err := dao.db.WithContext(ctx).Where("user_id = ?", userID).First(&ui).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// 用户档案为可选附属记录，不存在时翻译为通用 ErrRecordNotFound，
+		// 供 Repository 层按“无档案”语义处理，且不泄漏 gorm 哨兵到上层。
+		return ui, errs.ErrRecordNotFound
+	}
 	return ui, err
 }
 
@@ -303,7 +330,7 @@ func (dao *userDAO) List(ctx context.Context, offset, limit int64, keyword strin
 		db = db.Where("username LIKE ?", "%"+keyword+"%")
 	}
 
-	err := db.Offset(int(offset)).Limit(int(limit)).Order("ctime DESC").Find(&us).Error
+	err := db.Scopes(Paginate(offset, limit)).Order("ctime DESC").Find(&us).Error
 	return us, err
 }
 
@@ -335,7 +362,7 @@ func (dao *userDAO) Search(ctx context.Context, keyword string, offset, limit in
 	}
 
 	// 增加排序，使其能替代原有的 ListMembers
-	err := db.Offset(int(offset)).Limit(int(limit)).Order("ctime DESC").Find(&us).Error
+	err := db.Scopes(Paginate(offset, limit)).Order("ctime DESC").Find(&us).Error
 	return us, err
 }
 
@@ -408,7 +435,7 @@ func (dao *userDAO) GetAttachedUsersWithFilter(ctx context.Context, roleCode str
 
 	// 4. 将关联子查询结果注入 Select 字段，执行具体的分页与 Order 详情获取
 	err = baseQuery.Select("*, (?) AS ctime", subQueryExpr).
-		Offset(int(offset)).Limit(int(limit)).
+		Scopes(Paginate(offset, limit)).
 		Order("ctime DESC").Find(&us).Error
 
 	return us, total, err
@@ -457,6 +484,7 @@ func (dao *userDAO) BatchUpsertProfilesAndIdentities(ctx context.Context, profil
 		return nil
 	})
 }
+
 // UpdateMfa 更新用户 MFA 绑定信息
 func (dao *userDAO) UpdateMfa(ctx context.Context, id int64, mfaType, mfaSecret string) error {
 	now := time.Now().UnixMilli()
@@ -473,6 +501,10 @@ func (dao *userDAO) UpdateLastLoginAt(ctx context.Context, id int64, loginAt int
 
 func (dao *userDAO) UpdateLastActiveTenantID(ctx context.Context, id int64, tenantID int64) error {
 	return dao.db.WithContext(ctx).Model(&User{}).Where("id = ?", id).Update("last_active_tenant_id", tenantID).Error
+}
+
+func (dao *userDAO) UpdateDefaultTenantID(ctx context.Context, id int64, tenantID int64) error {
+	return dao.db.WithContext(ctx).Model(&User{}).Where("id = ?", id).Update("default_tenant_id", tenantID).Error
 }
 
 func (dao *userDAO) DeleteIdentity(ctx context.Context, userID int64, provider, identityID string) error {

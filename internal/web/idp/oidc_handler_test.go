@@ -18,6 +18,7 @@ import (
 	"github.com/ecodeclub/ginx/session"
 	"github.com/gin-gonic/gin"
 	"github.com/go-jose/go-jose/v4"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -35,6 +36,12 @@ type OIDCHandlerTestSuite struct {
 func (s *OIDCHandlerTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.svc = oidcmocks.NewMockIOidcService(s.ctrl)
+
+	// 登记已注册客户端的 OIDC 注销回跳白名单，供 Logout 同源校验之外的精确比对放行。
+	viper.Set("oidc.post_logout_redirect_uris", []string{
+		"https://app.example.com/logged-out",
+		"https://app.example.com/loggedout",
+	})
 
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
@@ -502,6 +509,12 @@ func (s *OIDCHandlerTestSuite) TestLogout() {
 			query:    "",
 			wantCode: http.StatusOK,
 			wantBody: "已成功注销登录态",
+		},
+		{
+			// 开放重定向防护：未登记的外部域名须被拒绝，不得 302 跳转。
+			name:     "未登记的外部 redirect_uri，拒绝跳转",
+			query:    "post_logout_redirect_uri=https://evil.example.com/phish&state=x",
+			wantCode: http.StatusBadRequest,
 		},
 	}
 

@@ -169,7 +169,7 @@ func (s *MenuTreeSuite) TestGetAuthorizedMenus() {
 
 			s.ensureAdminRole(context.Background())
 
-			tid, err := s.tenantSvc.CreateTenant(context.Background(), "测试中心", "test-center", fmt.Sprintf("user_%d", s.testUid), s.testUid)
+			tid, err := s.tenantSvc.CreateTenant(context.Background(), domain.Tenant{Name: "测试中心", Code: "test-center"}, fmt.Sprintf("user_%d", s.testUid), s.testUid)
 			require.NoError(s.T(), err)
 			ctx := ctxutil.WithTenantID(context.Background(), tid)
 			ctx = ctxutil.WithUserID(ctx, s.testUid)
@@ -225,7 +225,7 @@ func (s *MenuTreeSuite) TestGetMenusByURNs() {
 			defer s.clearAll()
 			s.ensureAdminRole(context.Background())
 
-			tid, err := s.tenantSvc.CreateTenant(context.Background(), "测试中心", "test-center", fmt.Sprintf("user_%d", s.testUid), s.testUid)
+			tid, err := s.tenantSvc.CreateTenant(context.Background(), domain.Tenant{Name: "测试中心", Code: "test-center"}, fmt.Sprintf("user_%d", s.testUid), s.testUid)
 			require.NoError(s.T(), err)
 			ctx := ctxutil.WithTenantID(context.Background(), tid)
 

@@ -140,4 +140,3 @@ func GetUserAgent(ctx context.Context) string {
 func WithClientInfo(ctx context.Context, ip, userAgent string) context.Context {
 	return With(With(ctx, ClientIPKey, ip), UserAgentKey, userAgent)
 }
-

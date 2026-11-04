@@ -97,9 +97,9 @@ func TestAuditService_ListOperationLogs(t *testing.T) {
 					}, int64(1), nil)
 				return repo
 			},
-			filter:    domain.OperationLogFilter{Action: "user:create"},
-			offset:    0,
-			limit:     20,
+			filter: domain.OperationLogFilter{Action: "user:create"},
+			offset: 0,
+			limit:  20,
 			wantLogs: []domain.OperationLog{
 				{ID: 101, TenantID: 1, OperatorID: 1, OperatorName: "superadmin", Action: "user:create", ResourceURN: "urn:iam:user:101"},
 			},

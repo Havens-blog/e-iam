@@ -2,48 +2,79 @@ package group
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/internal/repository"
+	"github.com/Havens-blog/e-iam/internal/service/tenant"
 	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/casbin/casbin/v2"
 )
 
 type groupService struct {
-	repo     repository.IGroupRepository
-	userRepo repository.IUserRepository
-	enforcer *casbin.SyncedEnforcer
+	repo      repository.IGroupRepository
+	tenantSvc tenant.ITenantService // 注入租户服务：创建组前读取 MaxUserGroups 做配额强制校验 (R2.6)
+	userRepo  repository.IUserRepository
+	enforcer  *casbin.SyncedEnforcer
 }
 
-func NewGroupService(repo repository.IGroupRepository, userRepo repository.IUserRepository, enforcer *casbin.SyncedEnforcer) IGroupService {
+func NewGroupService(repo repository.IGroupRepository, tenantSvc tenant.ITenantService, userRepo repository.IUserRepository, enforcer *casbin.SyncedEnforcer) IGroupService {
 	return &groupService{
-		repo:     repo,
-		userRepo: userRepo,
-		enforcer: enforcer,
+		repo:      repo,
+		tenantSvc: tenantSvc,
+		userRepo:  userRepo,
+		enforcer:  enforcer,
 	}
 }
 
 func (s *groupService) Create(ctx context.Context, g domain.Group) (int64, error) {
+	// 写操作防缺失租户上下文：与 gormx 租户插件形成纵深防御——插件负责数据行过滤，
+	// 这里显式业务拒绝，避免 tid<=0 时配额读取与组计数被静默绕过
+	tid := ctxutil.GetTenantID(ctx).Int64()
+	if tid <= 0 {
+		return 0, errs.ErrMissingTenantContext
+	}
+
+	// 配额校验 (R2.6/R2.7)：MaxUserGroups <= 0 视为无限制，只有 > 0 才计数拦截；
+	// 组计数复用 List 的 total 返回并限定 limit=1，避免为校验拉取全量数据
+	t, err := s.tenantSvc.GetByID(ctx, tid)
+	if err != nil {
+		return 0, fmt.Errorf("查询租户配额失败: %w", err)
+	}
+	if quota := t.MaxUserGroups; quota > 0 {
+		_, total, err := s.repo.List(ctx, 0, 1)
+		if err != nil {
+			return 0, fmt.Errorf("统计用户组数量失败: %w", err)
+		}
+		if total >= quota {
+			return 0, errs.ErrTenantQuotaExceeded
+		}
+	}
+
 	return s.repo.Create(ctx, g)
 }
 
 func (s *groupService) Update(ctx context.Context, g domain.Group) error {
 	_, err := s.repo.Update(ctx, g)
-	return err
+	if err != nil {
+		return fmt.Errorf("更新用户组失败: %w", err)
+	}
+	return nil
 }
 
 func (s *groupService) Delete(ctx context.Context, id int64) error {
 	group, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("查询用户组失败: %w", err)
 	}
 
 	tid := ctxutil.GetTenantID(ctx).Int64()
 
 	// 1. 删除组实体和数据库中的成员关联
 	if err = s.repo.Delete(ctx, id); err != nil {
-		return err
+		return fmt.Errorf("删除用户组失败: %w", err)
 	}
 
 	// 2. 清除 Casbin 规则
@@ -80,13 +111,13 @@ func (s *groupService) AssignMembers(ctx context.Context, groupCode string, user
 	// 1. 获取组详情
 	group, err := s.repo.GetByCode(ctx, groupCode)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("查询用户组失败: %w", err)
 	}
 
 	// 2. 批量查找用户 ID
 	users, err := s.userRepo.FindUsersByUsernames(ctx, usernames)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("批量查询用户失败: %w", err)
 	}
 
 	userIDs := make([]int64, 0, len(users))
@@ -96,7 +127,7 @@ func (s *groupService) AssignMembers(ctx context.Context, groupCode string, user
 
 	// 3. 写入 GORM 关系表
 	if err = s.repo.BindMembers(ctx, group.ID, userIDs); err != nil {
-		return false, err
+		return false, fmt.Errorf("绑定组成员失败: %w", err)
 	}
 
 	// 4. 批量向 Casbin 添加分组策略
@@ -121,13 +152,13 @@ func (s *groupService) RemoveMembers(ctx context.Context, groupCode string, user
 	// 1. 获取组详情
 	group, err := s.repo.GetByCode(ctx, groupCode)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("查询用户组失败: %w", err)
 	}
 
 	// 2. 批量查找用户 ID
 	users, err := s.userRepo.FindUsersByUsernames(ctx, usernames)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("批量查询用户失败: %w", err)
 	}
 
 	userIDs := make([]int64, 0, len(users))
@@ -137,7 +168,7 @@ func (s *groupService) RemoveMembers(ctx context.Context, groupCode string, user
 
 	// 3. 解绑 GORM 关系
 	if err = s.repo.UnbindMembers(ctx, group.ID, userIDs); err != nil {
-		return false, err
+		return false, fmt.Errorf("解绑组成员失败: %w", err)
 	}
 
 	// 4. 批量向 Casbin 移除分组策略
@@ -157,7 +188,7 @@ func (s *groupService) RemoveMembers(ctx context.Context, groupCode string, user
 func (s *groupService) ListMembers(ctx context.Context, groupCode string, offset, limit int64, keyword string) ([]domain.User, int64, error) {
 	group, err := s.repo.GetByCode(ctx, groupCode)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("查询用户组失败: %w", err)
 	}
 
 	return s.repo.ListMembers(ctx, group.ID, offset, limit, keyword)
@@ -171,7 +202,7 @@ func (s *groupService) ListAttachedGroupsByUser(ctx context.Context, username st
 	if userID == 0 {
 		user, err := s.userRepo.FindByUsername(ctx, username)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, fmt.Errorf("查询用户失败: %w", err)
 		}
 		userID = user.ID
 	}

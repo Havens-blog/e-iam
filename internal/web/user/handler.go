@@ -79,6 +79,11 @@ func (h *Handler) IdentityRoutes(server *gin.Engine) {
 		Scope(capability.ScopeTenant).NoSync().NoAudit().
 		Bind(ginx.S(h.Logout)),
 	)
+	// 设置默认登录租户（用户个人偏好，下次登录直接落入；switch 不覆盖）
+	g.POST("/default_tenant", h.Define("设置默认登录租户", "set_default_tenant").
+		Scope(capability.ScopeTenant).NoSync().NoAudit().
+		Bind(ginx.BS[SetDefaultTenantReq](h.SetDefaultTenant)),
+	)
 
 	// Passkey 个人自服务
 	g.POST("/passkey/register/start", ginx.S(h.PasskeyRegisterStart))

@@ -35,7 +35,7 @@ func NewAESCryptoV2(key string) (*CryptoAESV2, error) {
 }
 
 // MustNewAESCryptoV2 包装 NewAESCryptoV2，出错时直接 panic (配合 Builder 模式使用)
-func MustNewAESCryptoV2(key string) Crypto {
+func MustNewAESCryptoV2(key string) ICrypto {
 	algo, err := NewAESCryptoV2(key)
 	if err != nil {
 		panic("failed to init v2 aes crypto: " + err.Error())

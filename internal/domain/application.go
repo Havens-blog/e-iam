@@ -100,6 +100,7 @@ type Application struct {
 	ResponseTypes    []string  `json:"response_types"`     // 允许的响应类型 (e.g. ["code"])
 	GrantTypes       []string  `json:"grant_types"`        // 允许的授权模式 (e.g. ["authorization_code", "refresh_token"])
 	Scopes           []string  `json:"scopes"`             // 允许申请的权限范围 (e.g. ["openid", "profile", "email"])
+	AllowedTenants   []int64   `json:"allowed_tenants"`    // S2S 允许代表访问的租户 ID 列表 (空=禁止; -1=全租户通配)
 	IsPublic         bool      `json:"is_public"`          // 是否为公共客户端 (SPA/移动应用无客户端密钥)
 	AutoConsent      bool      `json:"auto_consent"`       // 是否跳过用户显式授权确认 (第一方应用默认为 true)
 	Ctime            time.Time `json:"ctime"`
@@ -286,6 +287,17 @@ func (a *Application) IsGrantTypeAllowed(grantType string) bool {
 		return grantType == "authorization_code"
 	}
 	return slices.Contains(a.GrantTypes, grantType)
+}
+
+// CanRepresentTenant 判断该 client 是否有资格代表目标租户签发 S2S 令牌。
+// 空列表 = 禁止代表任何租户;-1 = 全租户通配(平台级服务)。
+// 非法/空租户(<=0)一律拒绝(fail-closed)。
+func (a *Application) CanRepresentTenant(tenantID int64) bool {
+	if tenantID <= 0 {
+		return false
+	}
+	return slices.Contains(a.AllowedTenants, int64(-1)) ||
+		slices.Contains(a.AllowedTenants, tenantID)
 }
 
 // FilterAllowedScopes 过滤请求中属于该客户端配置范围内的有效 Scopes

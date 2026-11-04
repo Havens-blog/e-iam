@@ -86,7 +86,7 @@ func (d *RoleDAO) Update(ctx context.Context, r Role) (int64, error) {
 func (d *RoleDAO) List(ctx context.Context, offset, limit int64) ([]Role, error) {
 	var roles []Role
 	err := d.db.WithContext(ctx).
-		Offset(int(offset)).Limit(int(limit)).Order("tenant_id ASC, ctime DESC").Find(&roles).Error
+		Scopes(Paginate(offset, limit)).Order("tenant_id ASC, ctime DESC").Find(&roles).Error
 	return roles, err
 }
 
@@ -119,7 +119,7 @@ func (d *RoleDAO) Search(ctx context.Context, keyword string, offset, limit int6
 		db = db.Where("name LIKE ? OR code LIKE ?", kw, kw)
 	}
 
-	err := db.Offset(int(offset)).Limit(int(limit)).
+	err := db.Scopes(Paginate(offset, limit)).
 		Order("tenant_id ASC, ctime DESC").Find(&roles).Error
 	return roles, err
 }
@@ -186,7 +186,7 @@ func (d *RoleDAO) GetAttachedRolesWithFilter(ctx context.Context, username strin
 
 	// 4. 将关联子查询结果注入 Select 字段，执行具体的分页与 Order 详情获取
 	err = baseQuery.Select("*, (?) AS ctime", subQueryExpr).
-		Offset(int(offset)).Limit(int(limit)).
+		Scopes(Paginate(offset, limit)).
 		Order("ctime DESC").Find(&rs).Error
 
 	return rs, total, err

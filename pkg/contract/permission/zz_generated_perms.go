@@ -256,6 +256,7 @@ var User = struct {
 	Logout           string // 退出登录 [租户级 · 静默]
 	ManageIdentity   string // 治理外部身份 [租户级]
 	Profile          string // 个人信息 [租户级 · 静默]
+	SetDefaultTenant string // 设置默认登录租户 [租户级 · 静默]
 	UnbindIdentity   string // 解绑外部身份 [租户级]
 	View             string // 用户列表 [租户级]
 	ViewUserGroups   string // 查询用户所属分组 [租户级 · 跨域: group]
@@ -275,6 +276,7 @@ var User = struct {
 	Logout:           "iam:user:logout",
 	ManageIdentity:   "iam:user:manage_identity",
 	Profile:          "iam:user:profile",
+	SetDefaultTenant: "iam:user:set_default_tenant",
 	UnbindIdentity:   "iam:user:unbind_identity",
 	View:             "iam:user:view",
 	ViewUserGroups:   "iam:user:view_user_groups",

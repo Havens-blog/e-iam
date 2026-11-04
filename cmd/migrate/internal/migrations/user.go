@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/Havens-blog/e-iam/internal/cryptox"
-	"github.com/Havens-blog/e-iam/pkg/migration"
 	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/migration"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -59,7 +59,7 @@ type userMigrator struct {
 	crypto *cryptox.CryptoManager
 }
 
-func NewUserMigrator(encryptionKey, encryptionVersion string) migration.Migrator {
+func NewUserMigrator(encryptionKey, encryptionVersion string) migration.IMigrator {
 	var cm *cryptox.CryptoManager
 	if encryptionKey != "" {
 		cm = cryptox.NewCryptoManager("V2").
@@ -110,7 +110,7 @@ func (m userMigrator) migratePassword(username, encrypted string) string {
 
 type userProfileMigrator struct{}
 
-func NewUserProfileMigrator() migration.Migrator {
+func NewUserProfileMigrator() migration.IMigrator {
 	return migration.NewMongoMigrator[mongoUser, dao.UserProfile](userProfileMigrator{})
 }
 
@@ -128,7 +128,7 @@ func (userProfileMigrator) Convert(src mongoUser) dao.UserProfile {
 
 type userIdentityMigrator struct{}
 
-func NewUserIdentityMigrator() migration.Migrator {
+func NewUserIdentityMigrator() migration.IMigrator {
 	return migration.NewMongoMigratorMany[mongoUser, dao.UserIdentity](userIdentityMigrator{})
 }
 
@@ -160,7 +160,7 @@ func (userIdentityMigrator) ConvertMany(src mongoUser) []dao.UserIdentity {
 
 type userMembershipMigrator struct{}
 
-func NewUserMembershipMigrator() migration.Migrator {
+func NewUserMembershipMigrator() migration.IMigrator {
 	return migration.NewMongoMigrator[mongoUser, dao.Membership](userMembershipMigrator{})
 }
 
@@ -178,7 +178,7 @@ func (userMembershipMigrator) Convert(src mongoUser) dao.Membership {
 
 type userDepartmentMigrator struct{}
 
-func NewUserDepartmentMigrator() migration.Migrator {
+func NewUserDepartmentMigrator() migration.IMigrator {
 	return migration.NewMongoMigratorMany[mongoUser, dao.UserDepartment](userDepartmentMigrator{})
 }
 

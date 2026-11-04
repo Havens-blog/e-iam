@@ -1,8 +1,8 @@
 package migrations
 
 import (
-	"github.com/Havens-blog/e-iam/pkg/migration"
 	"github.com/Havens-blog/e-iam/internal/repository/dao"
+	"github.com/Havens-blog/e-iam/pkg/migration"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 )
 
@@ -23,7 +23,7 @@ type mongoDepartment struct {
 
 type deptMigrator struct{}
 
-func NewDepartmentMigrator() migration.Migrator {
+func NewDepartmentMigrator() migration.IMigrator {
 	return migration.NewMongoMigrator[mongoDepartment, dao.Department](deptMigrator{})
 }
 

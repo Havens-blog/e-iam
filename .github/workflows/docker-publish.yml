@@ -3,13 +3,18 @@ on:
   schedule:
     - cron: '32 20 * * *'
   push:
-    branches: [ "**" ]
-    tags: [ 'v*.*.*' ]
+    branches: [main]
+    tags: ['v*.*.*']
   pull_request:
-    branches: [ "**" ]
+    branches: [main]
 env:
   REGISTRY: registry.cn-qingdao.aliyuncs.com
   TAGS: duke1616/eiam
+
+# 同分支后续推送取消前序运行，避免每分支推送都重复打镜像
+concurrency:
+  group: docker-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:

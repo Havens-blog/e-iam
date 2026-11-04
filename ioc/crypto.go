@@ -17,8 +17,8 @@ func InitCryptoManager() *cryptox.CryptoManager {
 		panic(fmt.Errorf("unable to decode identity config: %v", err))
 	}
 
-	if cfg.EncryptionKey == "" {
-		panic("identity encryption key is required")
+	if err := cryptox.ValidateSecret("identity encryption_key", cfg.EncryptionKey); err != nil {
+		panic(err)
 	}
 
 	return cryptox.NewCryptoManager("v1").

@@ -2,14 +2,17 @@ package ioc
 
 import (
 	"net"
+	"net/http"
 
 	auditevt "github.com/Havens-blog/e-iam/internal/event/audit"
 	"github.com/Havens-blog/e-iam/internal/pkg/middleware"
+	oidcsvc "github.com/Havens-blog/e-iam/internal/service/idp/oidc"
 	"github.com/Havens-blog/e-iam/internal/service/permission"
 	audithdl "github.com/Havens-blog/e-iam/internal/web/audit"
 	"github.com/Havens-blog/e-iam/internal/web/department"
 	"github.com/Havens-blog/e-iam/internal/web/discovery"
 	"github.com/Havens-blog/e-iam/internal/web/group"
+	healthhdl "github.com/Havens-blog/e-iam/internal/web/health"
 	idhdl "github.com/Havens-blog/e-iam/internal/web/identity_source"
 	idphdl "github.com/Havens-blog/e-iam/internal/web/idp"
 	invitationhdl "github.com/Havens-blog/e-iam/internal/web/invitation"
@@ -20,6 +23,7 @@ import (
 	"github.com/Havens-blog/e-iam/internal/web/user"
 	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	pkgmiddleware "github.com/Havens-blog/e-iam/pkg/web/middleware"
+	"github.com/ecodeclub/ginx"
 	"github.com/ecodeclub/ginx/session"
 	"github.com/gin-gonic/gin"
 	"github.com/gotomicro/ego/server/egin"
@@ -32,7 +36,7 @@ func InitGinWebServer(sp session.Provider, listener net.Listener, mdls []gin.Han
 	deptHdl *department.Handler, groupHdl *group.Handler,
 	identitySourceHdl *idhdl.Handler, invitationHdl *invitationhdl.Handler,
 	discoveryHdl *discovery.Handler, auditHdl *audithdl.Handler, idpHdl *idphdl.Handler, tenancyBuilder *pkgmiddleware.TenancyBuilder,
-	permSvc permission.IPermissionService, auditProd auditevt.IAuditProducer) *egin.Component {
+	permSvc permission.IPermissionService, auditProd auditevt.IAuditProducer, km oidcsvc.IKeyManager) *egin.Component {
 	session.SetDefaultProvider(sp)
 
 	server := egin.Load("server.egin").Build(egin.WithListener(listener))
@@ -40,6 +44,9 @@ func InitGinWebServer(sp session.Provider, listener net.Listener, mdls []gin.Han
 	// 这样 ctxutil.GetTenantID(ctx.Context) 无需 ctx.Set 双通道注入即可正确读取
 	server.Engine.ContextWithFallback = true
 	server.Use(func(ctx *gin.Context) {
+		// 强制 SameSite=Lax：上游 cookie.TokenCarrier 未暴露 SameSite 字段，
+		// 借助 gin Context.SetSameSite 在 SetCookie 时统一注入，收敛跨站 CSRF 面。
+		ctx.SetSameSite(http.SameSiteLaxMode)
 		ctx.Header(TokenCarrierHeader, ConfiguredTokenCarrier().String())
 		ctx.Request = ctx.Request.WithContext(
 			ctxutil.WithClientInfo(ctx.Request.Context(), ctx.ClientIP(), ctx.Request.UserAgent()),
@@ -49,6 +56,7 @@ func InitGinWebServer(sp session.Provider, listener net.Listener, mdls []gin.Han
 	server.Use(mdls...)
 
 	// 1. 注册公开路由 (无鉴权，天然隔离不经过 Audit 中间件)
+	healthhdl.NewHandler().PublicRoutes(server.Engine)
 	userHdl.PublicRoutes(server.Engine)
 	policyHdl.PublicRoutes(server.Engine)
 	tenantHdl.PublicRoutes(server.Engine)
@@ -58,6 +66,10 @@ func InitGinWebServer(sp session.Provider, listener net.Listener, mdls []gin.Han
 	discoveryHdl.PublicRoutes(server.Engine)
 	auditHdl.PublicRoutes(server.Engine)
 	idpHdl.PublicRoutes(server.Engine)
+
+	// 1.5 服务间调用路由 (独立 S2S 令牌验签，不经用户会话/OPA 鉴权链)
+	s2sGroup := server.Engine.Group("/api/s2s", middleware.S2STokenAuth(km))
+	s2sGroup.GET("/tenant/detail/:id", ginx.W(tenantHdl.Detail))
 
 	// 2. 登录层：验证是否登录
 	server.Use(session.CheckLoginMiddleware())

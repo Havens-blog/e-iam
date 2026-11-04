@@ -90,12 +90,12 @@ func InitApp() (*App, error) {
 	v2 := InitCredentialProviders(iService)
 	iAuthCoordinator := user.NewAuthCoordinator(iUserRepository, iTenantService, iService, cryptoManager, iAuditProducer, v2)
 	client := InitRedisSearch()
-	redisearchLdapUserCache := InitLdapUserCache(client)
-	iLdapService := ldap.NewLdapService(iUserRepository, iTenantService, iService, redisearchLdapUserCache)
+	iRedisearchLdapUserCache := InitLdapUserCache(client)
+	iLdapService := ldap.NewLdapService(iUserRepository, iTenantService, iService, iRedisearchLdapUserCache)
 	iPasskeyService := passkey.NewPasskeyService(iUserRepository, iService)
 	iGroupDAO := dao.NewGroupDAO(db)
 	iGroupRepository := repository.NewGroupRepository(iGroupDAO, iUserRepository)
-	iGroupService := group.NewGroupService(iGroupRepository, iUserRepository, syncedEnforcer)
+	iGroupService := group.NewGroupService(iGroupRepository, iTenantService, iUserRepository, syncedEnforcer)
 	iSubjectRegistry := InitSearchSubjectProviders(iRoleService, iUserService, iGroupService)
 	iResourceDAO := dao.NewResourceDAO(db)
 	iResourceCache := cache.NewResourceCache(cmdable)
@@ -104,7 +104,10 @@ func InitApp() (*App, error) {
 	iServiceRepository := repository.NewServiceRepository(iServiceDAO)
 	iResourceService := resource.NewResourceService(iResourceRepository, iServiceRepository)
 	iAuthorizer := InitOPA()
-	iPermissionService := permission.NewPermissionService(syncedEnforcer, iPolicyService, iRoleService, iSubjectRegistry, iResourceService, iPermissionRepository, iAuthorizer, iBoundaryChecker, iTenantRepository)
+	iPermissionService, err := permission.NewPermissionService(syncedEnforcer, iPolicyService, iRoleService, iSubjectRegistry, iResourceService, iPermissionRepository, iAuthorizer, iBoundaryChecker, iTenantRepository, cmdable)
+	if err != nil {
+		return nil, err
+	}
 	handler := user2.NewUserHandler(iUserService, iAuthCoordinator, iTenantService, iLdapService, iService, iPasskeyService, iPermissionService)
 	policyHandler := policy2.NewHandler(iPolicyService, iUserService, iPermissionService)
 	tenantHandler := tenant2.NewHandler(iTenantService, iPermissionService)
@@ -123,9 +126,9 @@ func InitApp() (*App, error) {
 	iInvitationService := invitation.NewInvitationService(iInvitationRepository, iTenantRepository, iPermissionService, iUserService)
 	invitationHandler := invitation2.NewHandler(iInvitationService, provider)
 	clientv3Client := InitEtcd()
-	reporter := InitCapabilityRegistry(clientv3Client)
+	v3 := InitCapabilityRegistry(clientv3Client)
 	iDiscoveryCache := cache.NewDiscoveryCache(cmdable)
-	iDiscoveryService := discovery.NewDiscoveryService(reporter, iDiscoveryCache)
+	iDiscoveryService := discovery.NewDiscoveryService(v3, iDiscoveryCache)
 	iTokenService := discovery.NewTokenService(iTenantKeyRepository, iServiceRepository)
 	discoveryHandler := discovery2.NewHandler(iDiscoveryService, iTokenService)
 	iAuditDAO := dao.NewAuditDAO(db)
@@ -153,24 +156,24 @@ func InitApp() (*App, error) {
 	iSamlService := saml.NewSamlService(iCertificateManager, iClaimsResolver, iApplicationRepository)
 	idpHandler := idp2.NewHandler(idpIService, iOidcService, iCasService, iSamlService)
 	tenancyBuilder := middleware.NewTenancyBuilder(provider)
-	component := InitGinWebServer(provider, listener, v, handler, policyHandler, tenantHandler, permissionHandler, roleHandler, departmentHandler, groupHandler, identity_sourceHandler, invitationHandler, discoveryHandler, auditHandler, idpHandler, tenancyBuilder, iPermissionService, iAuditProducer)
+	component := InitGinWebServer(provider, listener, v, handler, policyHandler, tenantHandler, permissionHandler, roleHandler, departmentHandler, groupHandler, identity_sourceHandler, invitationHandler, discoveryHandler, auditHandler, idpHandler, tenancyBuilder, iPermissionService, iAuditProducer, iKeyManager)
 	userServiceServer := grpc.NewUserServer(iUserService, iPermissionService)
 	tenantServiceServer := grpc.NewTenantServiceServer(iTenantKeyService)
 	departmentServiceServer := grpc.NewDepartmentServer(iDepartmentService)
 	server := InitGrpcServer(userServiceServer, tenantServiceServer, departmentServiceServer)
-	engine := ingestion.NewEngine(iPermissionRepository, iResourceRepository, iServiceRepository)
-	iInitializer := resource.NewResourceInitializer(engine, reporter)
-	v3 := InitProviders()
+	iEngine := ingestion.NewEngine(iPermissionRepository, iResourceRepository, iServiceRepository)
+	iInitializer := resource.NewResourceInitializer(iEngine, v3)
+	v4 := InitProviders()
 	dlockClient := InitDLock(cmdable)
 	worker := discovery.NewWorker(clientv3Client, iDiscoveryService, iInitializer, dlockClient)
 	consumer := audit.NewConsumer(cmdable, iAuditRepository)
-	v4 := InitTasks(worker, consumer)
+	v5 := InitTasks(worker, consumer)
 	app := &App{
 		Web:       component,
 		Server:    server,
 		Init:      iInitializer,
-		Providers: v3,
-		Tasks:     v4,
+		Providers: v4,
+		Tasks:     v5,
 	}
 	return app, nil
 }
@@ -184,4 +187,14 @@ func InitTokenService() (discovery.ITokenService, error) {
 	iServiceRepository := repository.NewServiceRepository(iServiceDAO)
 	iTokenService := discovery.NewTokenService(iTenantKeyRepository, iServiceRepository)
 	return iTokenService, nil
+}
+
+// InitSeedClientService 为 S2S 客户端注册 CLI 提供轻量级依赖注入树 (仅 DB 依赖)。
+func InitSeedClientService() (idp.IService, error) {
+	db := InitDBWithoutMigrate()
+	iApplicationDAO := dao.NewApplicationDAO(db)
+	iOidcCache := InitNilOidcCache()
+	iApplicationRepository := repository.NewApplicationRepository(iApplicationDAO, iOidcCache)
+	iService := idp.NewApplicationService(iApplicationRepository)
+	return iService, nil
 }

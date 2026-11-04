@@ -1,6 +1,10 @@
 package audit
 
 import (
+	"crypto/subtle"
+	"net/http"
+	"strings"
+
 	"github.com/Havens-blog/e-iam/internal/domain"
 	auditevt "github.com/Havens-blog/e-iam/internal/event/audit"
 	auditsvc "github.com/Havens-blog/e-iam/internal/service/audit"
@@ -8,6 +12,7 @@ import (
 	"github.com/ecodeclub/ginx"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
+	"github.com/spf13/viper"
 )
 
 // Handler 审计 HTTP 控制器
@@ -26,9 +31,31 @@ func NewHandler(svc auditsvc.IAuditService, producer auditevt.IAuditProducer) *H
 	}
 }
 
-// PublicRoutes 注册开放给微服务 SDK 的批量上报端点
+// reportAuthMiddleware 守护批量上报端点，防匿名审计投毒/栽赃/DoS。
+// fail-closed：audit.report_token 未配置时直接拒绝所有上报（强制运维显式配置）；
+// 配置后以恒定时间比较校验 Bearer 令牌，令牌与服务绑定由上报方保证。
+func (h *Handler) reportAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		expected := viper.GetString("audit.report_token")
+		if expected == "" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "审计上报令牌未配置，批量上报已禁用"})
+			return
+		}
+		authHeader := c.GetHeader("Authorization")
+		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+		if token == "" || subtle.ConstantTimeCompare([]byte(token), []byte(expected)) != 1 {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "无效的审计上报令牌"})
+			return
+		}
+		c.Next()
+	}
+}
+
+// PublicRoutes 注册开放给微服务 SDK 的批量上报端点（须携带上报令牌）
 func (h *Handler) PublicRoutes(server *gin.Engine) {
-	server.POST("/api/audit/batch", ginx.B[BatchOperationReq](h.ReportBatchOperations))
+	g := server.Group("/api/audit")
+	g.Use(h.reportAuthMiddleware())
+	g.POST("/batch", ginx.B[BatchOperationReq](h.ReportBatchOperations))
 }
 
 // ReportBatchOperations 接收微服务 SDK 批量聚合上报的操作审计日志 (零阻塞入队)
@@ -39,21 +66,35 @@ func (h *Handler) ReportBatchOperations(ctx *ginx.Context, req BatchOperationReq
 			TenantID:     r.TenantID,
 			Service:      r.Service,
 			OperatorID:   r.OperatorID,
-			OperatorName: r.OperatorName,
-			Module:       r.Module,
-			Action:       r.Action,
-			ResourceID:   r.ResourceID,
-			ResourceName: r.ResourceName,
-			ResourceURN:  r.ResourceURN,
-			AfterState:   r.AfterState,
-			Status:       r.Status,
-			FailReason:   r.FailReason,
-			ClientIP:     r.ClientIP,
-			UserAgent:    r.UserAgent,
-			Ctime:        r.Ctime,
+			OperatorName: sanitizeAuditText(r.OperatorName),
+			Module:       sanitizeAuditText(r.Module),
+			Action:       sanitizeAuditText(r.Action),
+			ResourceID:   sanitizeAuditText(r.ResourceID),
+			ResourceName: sanitizeAuditText(r.ResourceName),
+			ResourceURN:  sanitizeAuditText(r.ResourceURN),
+			// AfterState 为自由文本，前端审计查看页若未转义可触发存储型 XSS；
+			// 此处截断长度上限，后续渲染须强制转义。
+			AfterState: sanitizeAuditText(r.AfterState),
+			Status:     r.Status,
+			FailReason: sanitizeAuditText(r.FailReason),
+			ClientIP:   r.ClientIP,
+			UserAgent:  r.UserAgent,
+			Ctime:      r.Ctime,
 		})
 	})
 	return ginx.Result{Msg: "ok"}, nil
+}
+
+// maxAuditTextLen 审计自由文本字段长度上限，防超长负载撑爆审计表/日志注入。
+const maxAuditTextLen = 4096
+
+// sanitizeAuditText 截断自由文本字段上限，降低日志注入与存储 XSS 拼面。
+// 最终防 XSS 仍依赖前端渲染强制转义，此处仅做长度收敛。
+func sanitizeAuditText(s string) string {
+	if len(s) > maxAuditTextLen {
+		return s[:maxAuditTextLen]
+	}
+	return s
 }
 
 // PrivateRoutes 注册审计管理私有路由

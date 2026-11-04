@@ -2,12 +2,12 @@ package swagger
 
 // Spec OpenAPI 3.0 顶级根规范对象
 type Spec struct {
-	OpenAPI    string               `json:"openapi"`
-	Info       Info                 `json:"info"`
+	OpenAPI    string                `json:"openapi"`
+	Info       Info                  `json:"info"`
 	Security   []SecurityRequirement `json:"security,omitempty"`
-	Paths      map[string]PathItem  `json:"paths"`
-	Tags       []Tag                `json:"tags,omitempty"`
-	Components *Components          `json:"components,omitempty"`
+	Paths      map[string]PathItem   `json:"paths"`
+	Tags       []Tag                 `json:"tags,omitempty"`
+	Components *Components           `json:"components,omitempty"`
 }
 
 type Info struct {

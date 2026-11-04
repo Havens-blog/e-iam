@@ -529,6 +529,20 @@ func (mr *MockIUserRepositoryMockRecorder) Update(ctx, u any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIUserRepository)(nil).Update), ctx, u)
 }
 
+// UpdateDefaultTenantID mocks base method.
+func (m *MockIUserRepository) UpdateDefaultTenantID(ctx context.Context, id, tenantID int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDefaultTenantID", ctx, id, tenantID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateDefaultTenantID indicates an expected call of UpdateDefaultTenantID.
+func (mr *MockIUserRepositoryMockRecorder) UpdateDefaultTenantID(ctx, id, tenantID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDefaultTenantID", reflect.TypeOf((*MockIUserRepository)(nil).UpdateDefaultTenantID), ctx, id, tenantID)
+}
+
 // UpdateLastActiveTenantID mocks base method.
 func (m *MockIUserRepository) UpdateLastActiveTenantID(ctx context.Context, id, tenantID int64) error {
 	m.ctrl.T.Helper()

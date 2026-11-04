@@ -19,6 +19,16 @@ var (
 	// 多租户隔离相关错误
 	ErrMissingTenantContext = errors.New("多租户安全拦截：未显式声明 IgnoreTenant 且缺失有效租户上下文")
 
+	// 租户配额治理相关错误：创建侧配额校验 (R2.6) 的统一拒绝哨兵，
+	// 后续用户/云账号等配额切片复用同一哨兵，避免每种资源各造一个错误类型
+	ErrTenantQuotaExceeded = errors.New("租户资源配额已达上限")
+
+	// 通用持久化哨兵：DAO 层把 gorm.ErrRecordNotFound 统一翻译为此错误，
+	// 使 Repository/Service/Transport 不再依赖 gorm 持久化框架即可识别“记录不存在”。
+	ErrRecordNotFound = errors.New("记录不存在")
+	// ErrUserNotFound 用户记录不存在（ErrRecordNotFound 的领域特化）。
+	ErrUserNotFound = errors.New("用户不存在")
+
 	ErrUserExist          = errors.New("用户名已存在")
 	ErrUsernameConflict   = errors.New("用户名已被本地账号占用，请先以本地凭证登录后显式绑定外部身份")
 	ErrInvalidUser        = errors.New("账号或密码错误")
@@ -48,7 +58,7 @@ var (
 	// 角色管理相关错误
 	ErrDeleteSystemRole = errors.New("系统预置角色禁止删除")
 	ErrRoleInUse        = errors.New("角色正在使用中，请先解除所有关联（用户或子角色）后再重试删除")
-	
+
 	// 个人空间相关错误
 	ErrPersonalTenantAdminUnassignForbidden = errors.New("个人空间无法解绑拥有者的 admin 角色")
 
@@ -71,8 +81,8 @@ var (
 	ErrCasTicketInvalid        = errors.New("票据无效或已过期")
 	ErrCasUserNotFound         = errors.New("凭据关联用户不存在或状态异常")
 	ErrCasServiceNotRegistered = errors.New("目标服务未在当前租户或系统级接入应用白名单中注册")
-	ErrSamlInvalidRequest       = errors.New("SAML 请求格式非法或无法解析")
-	ErrSamlIssuerNotRegistered  = errors.New("SAML 目标应用未在当前租户或系统级白名单中注册")
-	ErrSamlInvalidACSURL        = errors.New("SAML ACS 回调地址不在应用配置的合法白名单中")
-	ErrSamlSigningFailed        = errors.New("SAML 断言签名生成失败")
+	ErrSamlInvalidRequest      = errors.New("SAML 请求格式非法或无法解析")
+	ErrSamlIssuerNotRegistered = errors.New("SAML 目标应用未在当前租户或系统级白名单中注册")
+	ErrSamlInvalidACSURL       = errors.New("SAML ACS 回调地址不在应用配置的合法白名单中")
+	ErrSamlSigningFailed       = errors.New("SAML 断言签名生成失败")
 )

@@ -38,9 +38,9 @@ type DeptGroupSuite struct {
 	resourceSvc resource.IResourceService
 	permSvc     permission.IPermissionService
 
-	userRepo  repository.IUserRepository
-	deptSvc   department.IDepartmentService
-	groupSvc  group.IGroupService
+	userRepo repository.IUserRepository
+	deptSvc  department.IDepartmentService
+	groupSvc group.IGroupService
 }
 
 func (s *DeptGroupSuite) SetupSuite() {
@@ -75,7 +75,7 @@ func (s *DeptGroupSuite) SetupSuite() {
 
 	groupDAO := dao.NewGroupDAO(s.db)
 	groupRepo := repository.NewGroupRepository(groupDAO, s.userRepo)
-	s.groupSvc = group.NewGroupService(groupRepo, s.userRepo, s.enforcer)
+	s.groupSvc = group.NewGroupService(groupRepo, s.tenantSvc, s.userRepo, s.enforcer)
 }
 
 func (s *DeptGroupSuite) TearDownTest() {
@@ -173,7 +173,7 @@ func (s *DeptGroupSuite) TestDepartment_CRUD() {
 func (s *DeptGroupSuite) TestGroup_CasbinInheritance() {
 	ctx := context.Background()
 	// 创建租户 B (tid=3)
-	tid, err := s.tenantSvc.CreateTenant(ctx, "租户B", "t-b", "admin_b", 3)
+	tid, err := s.tenantSvc.CreateTenant(ctx, domain.Tenant{Name: "租户B", Code: "t-b"}, "admin_b", 3)
 	s.NoError(err)
 	tCtx := ctxutil.WithTenantID(ctx, tid)
 

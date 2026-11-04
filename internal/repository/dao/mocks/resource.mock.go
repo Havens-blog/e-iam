@@ -112,6 +112,21 @@ func (mr *MockIResourceDAOMockRecorder) FindAPIByPath(ctx, service, method, path
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAPIByPath", reflect.TypeOf((*MockIResourceDAO)(nil).FindAPIByPath), ctx, service, method, path)
 }
 
+// FindMenuByID mocks base method.
+func (m *MockIResourceDAO) FindMenuByID(ctx context.Context, id int64) (dao.Menu, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindMenuByID", ctx, id)
+	ret0, _ := ret[0].(dao.Menu)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindMenuByID indicates an expected call of FindMenuByID.
+func (mr *MockIResourceDAOMockRecorder) FindMenuByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindMenuByID", reflect.TypeOf((*MockIResourceDAO)(nil).FindMenuByID), ctx, id)
+}
+
 // FindMenuByName mocks base method.
 func (m *MockIResourceDAO) FindMenuByName(ctx context.Context, name string) (dao.Menu, error) {
 	m.ctrl.T.Helper()

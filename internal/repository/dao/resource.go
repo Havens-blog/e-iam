@@ -2,8 +2,10 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -63,6 +65,7 @@ const (
 
 // IResourceDAO 定义了物理资源 (Menu/API) 的底层持久化接口。
 // 所有查询方法默认仅返回 status = Active 的有效资产，已标记为 orphan 的数据对业务层不可见。
+//
 //go:generate mockgen -package=daomocks -destination=./mocks/resource.mock.go github.com/Havens-blog/e-iam/internal/repository/dao IResourceDAO
 type IResourceDAO interface {
 	// InsertMenu 插入一条菜单记录，返回自增 ID
@@ -73,6 +76,9 @@ type IResourceDAO interface {
 	FindMenuByName(ctx context.Context, name string) (Menu, error)
 	// ListAllMenus 列出所有状态为 Active 的菜单，按 sort 升序排列
 	ListAllMenus(ctx context.Context) ([]Menu, error)
+	// FindMenuByID 按主键精确查找单条菜单，供 GetMenu 点查路径，
+	// 替代 ListAllMenus 全表扫描后线性查找。未找到返回 errs.ErrRecordNotFound。
+	FindMenuByID(ctx context.Context, id int64) (Menu, error)
 	// ListMenusByParentID 列出指定父菜单下所有状态为 Active 的子菜单
 	ListMenusByParentID(ctx context.Context, parentID int64) ([]Menu, error)
 	// ListMenusByNames 根据名称列表批量查找状态为 Active 的菜单
@@ -155,6 +161,15 @@ func (d *ResourceDAO) ListAllMenus(ctx context.Context) ([]Menu, error) {
 	var menus []Menu
 	err := d.getDB(ctx).Where("status = ?", MenuStatusActive).Order("sort ASC").Find(&menus).Error
 	return menus, err
+}
+
+func (d *ResourceDAO) FindMenuByID(ctx context.Context, id int64) (Menu, error) {
+	var m Menu
+	err := d.getDB(ctx).Where("id = ?", id).First(&m).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return m, errs.ErrRecordNotFound
+	}
+	return m, err
 }
 
 func (d *ResourceDAO) ListMenusByNames(ctx context.Context, names []string) ([]Menu, error) {
@@ -257,6 +272,10 @@ func (d *ResourceDAO) FindAPIByPath(ctx context.Context, service, method, path s
 	var a API
 	err := d.getDB(ctx).Where("service = ? AND method = ? AND path = ? AND status = ?",
 		service, method, path, APIStatusActive).First(&a).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// 翻译为通用哨兵 errs.ErrRecordNotFound，避免 gorm 错误类型穿透到 Repository/Service 层。
+		return a, errs.ErrRecordNotFound
+	}
 	return a, err
 }
 

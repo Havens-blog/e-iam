@@ -3,12 +3,10 @@ package role
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
-	"github.com/Havens-blog/e-iam/internal/errs"
 	permissionsvc "github.com/Havens-blog/e-iam/internal/service/permission"
 	rolesvc "github.com/Havens-blog/e-iam/internal/service/role"
 	usersvc "github.com/Havens-blog/e-iam/internal/service/user"
@@ -172,13 +170,7 @@ func (h *Handler) Delete(ctx *ginx.Context) (ginx.Result, error) {
 	}
 
 	if err = h.svc.Delete(ctx.Request.Context(), id); err != nil {
-		if errors.Is(err, errs.ErrDeleteSystemRole) {
-			return ErrReservedRoleCode, err
-		}
-		if errors.Is(err, errs.ErrRoleInUse) {
-			return ErrRoleInUse, err
-		}
-		return ErrRoleDeleteFailed, err
+		return MapDeleteError(err), err
 	}
 
 	return ginx.Result{Msg: "删除角色成功"}, nil
@@ -186,13 +178,7 @@ func (h *Handler) Delete(ctx *ginx.Context) (ginx.Result, error) {
 
 func (h *Handler) BatchDelete(ctx *ginx.Context, req BatchDeleteReq) (ginx.Result, error) {
 	if _, err := h.svc.BatchDelete(ctx.Request.Context(), req.IDs); err != nil {
-		if errors.Is(err, errs.ErrDeleteSystemRole) {
-			return ErrReservedRoleCode, err
-		}
-		if errors.Is(err, errs.ErrRoleInUse) {
-			return ErrRoleInUse, err
-		}
-		return ErrRoleDeleteFailed, err
+		return MapDeleteError(err), err
 	}
 
 	return ginx.Result{Msg: "批量删除角色成功"}, nil
@@ -286,13 +272,7 @@ func (h *Handler) AnalyzeInlinePolicies(ctx *ginx.Context, req RoleAnalysisReq) 
 func (h *Handler) AddParentRole(ctx *ginx.Context, req RoleInheritanceReq) (ginx.Result, error) {
 	_, err := h.permSvc.AddRoleInheritance(ctx.Request.Context(), req.RoleCode, req.ParentRoleCode)
 	if err != nil {
-		if errors.Is(err, errs.ErrRoleSelfInheritance) {
-			return ErrRoleSelfInheritance, err
-		}
-		if errors.Is(err, errs.ErrRoleCycleInheritance) {
-			return ErrRoleCycleInheritance, err
-		}
-		return ginx.Result{Code: 50101, Msg: "添加父角色失败"}, err
+		return MapInheritanceError(err, ginx.Result{Code: 50101, Msg: "添加父角色失败"}), err
 	}
 	return ginx.Result{Msg: "添加成功"}, nil
 }
@@ -300,10 +280,7 @@ func (h *Handler) AddParentRole(ctx *ginx.Context, req RoleInheritanceReq) (ginx
 func (h *Handler) RemoveParentRole(ctx *ginx.Context, req RoleInheritanceReq) (ginx.Result, error) {
 	_, err := h.permSvc.RemoveRoleInheritance(ctx.Request.Context(), req.RoleCode, req.ParentRoleCode)
 	if err != nil {
-		if errors.Is(err, errs.ErrImmutableInheritance) {
-			return ErrImmutableInheritance, err
-		}
-		return ginx.Result{Code: 50102, Msg: "移除父角色失败"}, err
+		return MapInheritanceError(err, ginx.Result{Code: 50102, Msg: "移除父角色失败"}), err
 	}
 	return ginx.Result{Msg: "移除成功"}, nil
 }
@@ -350,10 +327,7 @@ func (h *Handler) BatchAssignRole(ctx *ginx.Context, req BatchAssignRoleRequest)
 func (h *Handler) BatchUnassignRole(ctx *ginx.Context, req BatchUnassignRoleRequest) (ginx.Result, error) {
 	_, err := h.permSvc.RemoveRolesFromUser(ctx.Request.Context(), req.Usernames, req.RoleCodes)
 	if err != nil {
-		if errors.Is(err, errs.ErrPersonalTenantAdminUnassignForbidden) {
-			return ErrPersonalTenantAdminUnassignForbidden, err
-		}
-		return ErrRoleAssignFailed, err
+		return MapUnassignError(err), err
 	}
 
 	return ginx.Result{Msg: "批量移除成功"}, nil
@@ -362,10 +336,7 @@ func (h *Handler) BatchUnassignRole(ctx *ginx.Context, req BatchUnassignRoleRequ
 func (h *Handler) UnassignRole(ctx *ginx.Context, req UnassignRoleRequest) (ginx.Result, error) {
 	_, err := h.permSvc.RemoveRolesFromUser(ctx.Request.Context(), []string{req.Username}, []string{req.RoleCode})
 	if err != nil {
-		if errors.Is(err, errs.ErrPersonalTenantAdminUnassignForbidden) {
-			return ErrPersonalTenantAdminUnassignForbidden, err
-		}
-		return ErrRoleAssignFailed, err
+		return MapUnassignError(err), err
 	}
 
 	return ginx.Result{Msg: "移除成功"}, nil

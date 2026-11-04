@@ -63,7 +63,7 @@ func (s *applicationService) Create(ctx context.Context, app domain.Application)
 
 	id, err := s.repo.Create(ctx, app)
 	if err != nil {
-		return domain.Application{}, err
+		return domain.Application{}, fmt.Errorf("创建接入应用失败: %w", err)
 	}
 
 	app.ID = id
@@ -87,7 +87,10 @@ func (s *applicationService) Update(ctx context.Context, app domain.Application)
 		app.ClientID = existing.ClientID
 	}
 
-	return s.repo.Update(ctx, app)
+	if err := s.repo.Update(ctx, app); err != nil {
+		return fmt.Errorf("更新接入应用失败: %w", err)
+	}
+	return nil
 }
 
 func (s *applicationService) ResetSecret(ctx context.Context, id int64) (string, error) {
@@ -106,7 +109,7 @@ func (s *applicationService) ResetSecret(ctx context.Context, id int64) (string,
 	}
 
 	if err = s.repo.UpdateSecret(ctx, id, tempApp.ClientSecretHash); err != nil {
-		return "", err
+		return "", fmt.Errorf("重置客户端密钥失败: %w", err)
 	}
 
 	return newRawSecret, nil
@@ -137,13 +140,19 @@ func (s *applicationService) List(ctx context.Context, offset, limit int) ([]dom
 	eg.Go(func() error {
 		var err error
 		apps, err = s.repo.List(gctx, offset, limit)
-		return err
+		if err != nil {
+			return fmt.Errorf("查询应用列表失败: %w", err)
+		}
+		return nil
 	})
 
 	eg.Go(func() error {
 		var err error
 		total, err = s.repo.Count(gctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("统计应用总数失败: %w", err)
+		}
+		return nil
 	})
 
 	if err := eg.Wait(); err != nil {
@@ -157,7 +166,10 @@ func (s *applicationService) Delete(ctx context.Context, id int64) error {
 	if _, err := s.repo.FindByID(ctx, id); err != nil {
 		return errs.ErrApplicationNotFound
 	}
-	return s.repo.Delete(ctx, id)
+	if err := s.repo.Delete(ctx, id); err != nil {
+		return fmt.Errorf("删除接入应用失败: %w", err)
+	}
+	return nil
 }
 
 func (s *applicationService) generateSecret() (string, error) {
@@ -172,4 +184,3 @@ func generateRandomString(byteLen int) (string, error) {
 	}
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
-

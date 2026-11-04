@@ -19,7 +19,7 @@ import (
 // 支持“本地自发现”与“远端 SDK 协议上报”两种归一化的对等发现逻辑。
 type IInitializer interface {
 	// SyncDiscoveryAPIs 为 EIAM 本地服务提供基于 SDK Collector 的自发现支持 (SDK 模式)
-	SyncDiscoveryAPIs(ctx context.Context, providers []capability.PermissionProvider, router *gin.Engine) error
+	SyncDiscoveryAPIs(ctx context.Context, providers []capability.IPermissionProvider, router *gin.Engine) error
 
 	// SyncSDKDiscovery 处理符合标准 SDK 协议定义的资产同步请求 (SDK 模式)
 	SyncSDKDiscovery(ctx context.Context, req capability.SyncRequest) error
@@ -36,12 +36,12 @@ type IInitializer interface {
 
 // Initializer 资产同步引擎实现。
 type Initializer struct {
-	engine   ingestion.Engine
+	engine   ingestion.IEngine
 	registry capability.Registry
 	logger   *elog.Component
 }
 
-func NewResourceInitializer(engine ingestion.Engine, registry capability.Registry) IInitializer {
+func NewResourceInitializer(engine ingestion.IEngine, registry capability.Registry) IInitializer {
 	return &Initializer{
 		engine:   engine,
 		registry: registry,
@@ -50,7 +50,7 @@ func NewResourceInitializer(engine ingestion.Engine, registry capability.Registr
 }
 
 // SyncDiscoveryAPIs 为 EIAM 本地服务提供基于 SDK Collector 的自发现支持 (SDK 模式)
-func (i *Initializer) SyncDiscoveryAPIs(ctx context.Context, providers []capability.PermissionProvider, router *gin.Engine) error {
+func (i *Initializer) SyncDiscoveryAPIs(ctx context.Context, providers []capability.IPermissionProvider, router *gin.Engine) error {
 	return syncer.New(i.registry,
 		capability.WithPermissions(providers...),
 		capability.WithRouter(router),

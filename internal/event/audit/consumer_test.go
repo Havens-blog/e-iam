@@ -18,12 +18,12 @@ import (
 
 func TestConsumer_Flush(t *testing.T) {
 	testCases := []struct {
-		name       string
-		mockRepo   func(ctrl *gomock.Controller) repository.IAuditRepository
-		mockQueue  func(ctrl *gomock.Controller) redisx.IStreamQueue[Event]
-		mockDL     func(ctrl *gomock.Controller) redisx.IStreamQueue[DeadLetterEvent]
-		authItems  []pendingAuthItem
-		opItems    []pendingOpItem
+		name      string
+		mockRepo  func(ctrl *gomock.Controller) repository.IAuditRepository
+		mockQueue func(ctrl *gomock.Controller) redisx.IStreamQueue[Event]
+		mockDL    func(ctrl *gomock.Controller) redisx.IStreamQueue[DeadLetterEvent]
+		authItems []pendingAuthItem
+		opItems   []pendingOpItem
 	}{
 		{
 			name: "成功批量持久化认证与操作日志并执行ACK",
@@ -129,11 +129,11 @@ func TestConsumer_CollectMessages(t *testing.T) {
 			},
 			messages: []redisx.Message[Event]{
 				{
-					ID: "100-0",
+					ID:      "100-0",
 					Payload: NewAuthEvent(domain.AuthLog{ID: 1, Username: "user1"}),
 				},
 				{
-					ID: "100-1",
+					ID:      "100-1",
 					Payload: NewOperationEvent(domain.OperationLog{ID: 2, Action: "create"}),
 				},
 			},

@@ -102,6 +102,3 @@ func (h *Handler) Sync(ctx *ginx.Context, req capability.SyncRequest) (ginx.Resu
 		},
 	}, nil
 }
-
-
-

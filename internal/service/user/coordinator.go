@@ -16,6 +16,7 @@ import (
 	"github.com/Havens-blog/e-iam/internal/service/tenant"
 	"github.com/Havens-blog/e-iam/pkg/ctxutil"
 	"github.com/google/uuid"
+	"github.com/gotomicro/ego/core/elog"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	"github.com/samber/lo"
@@ -50,9 +51,9 @@ func NewAuthCoordinator(
 	idsSvc idsource.IService,
 	cm *cryptox.CryptoManager,
 	auditProducer auditevt.IAuditProducer,
-	ps []domain.CredentialProvider,
+	ps []domain.ICredentialProvider,
 ) IAuthCoordinator {
-	registry := lo.SliceToMap(ps, func(p domain.CredentialProvider) (string, domain.CredentialProvider) {
+	registry := lo.SliceToMap(ps, func(p domain.ICredentialProvider) (string, domain.ICredentialProvider) {
 		return p.Name(), p
 	})
 
@@ -203,7 +204,7 @@ func (c *authCoordinator) RecordLogout(ctx context.Context, uid, tid int64, user
 		defer func() { _ = recover() }()
 		asyncCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		_ = c.auditProducer.RecordAuth(asyncCtx, domain.AuthLog{
+		if err := c.auditProducer.RecordAuth(asyncCtx, domain.AuthLog{
 			TenantID:  tid,
 			UserID:    uid,
 			Username:  username,
@@ -212,7 +213,9 @@ func (c *authCoordinator) RecordLogout(ctx context.Context, uid, tid int64, user
 			ClientIP:  clientIP,
 			UserAgent: userAgent,
 			Ctime:     time.Now().UnixMilli(),
-		})
+		}); err != nil {
+			elog.DefaultLogger.Warn("用户认证审计异步记录失败(logout)", elog.FieldErr(err), elog.String("username", username))
+		}
 	}()
 }
 
@@ -234,7 +237,7 @@ func (c *authCoordinator) recordAuthSuccess(ctx context.Context, uid, tid int64,
 		defer func() { _ = recover() }()
 		asyncCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		_ = c.auditProducer.RecordAuth(asyncCtx, domain.AuthLog{
+		if err := c.auditProducer.RecordAuth(asyncCtx, domain.AuthLog{
 			TenantID:  tid,
 			UserID:    uid,
 			Username:  username,
@@ -243,7 +246,9 @@ func (c *authCoordinator) recordAuthSuccess(ctx context.Context, uid, tid int64,
 			ClientIP:  clientIP,
 			UserAgent: userAgent,
 			Ctime:     time.Now().UnixMilli(),
-		})
+		}); err != nil {
+			elog.DefaultLogger.Warn("用户认证审计异步记录失败(login)", elog.FieldErr(err), elog.String("username", username), elog.String("auth_type", authType))
+		}
 	}()
 }
 
@@ -257,7 +262,7 @@ func (c *authCoordinator) recordAuthFailure(ctx context.Context, authType string
 	clientIP := ctxutil.GetClientIP(ctx)
 	userAgent := ctxutil.GetUserAgent(ctx)
 
-	_ = c.auditProducer.RecordAuth(ctx, domain.AuthLog{
+	if err := c.auditProducer.RecordAuth(ctx, domain.AuthLog{
 		TenantID:   ctxutil.SystemTenantID, // 登录错误统一归属系统根租户
 		UserID:     0,
 		Username:   username,
@@ -267,7 +272,9 @@ func (c *authCoordinator) recordAuthFailure(ctx context.Context, authType string
 		ClientIP:   clientIP,
 		UserAgent:  userAgent,
 		Ctime:      time.Now().UnixMilli(),
-	})
+	}); err != nil {
+		elog.DefaultLogger.Warn("用户认证审计记录失败(login-fail)", elog.FieldErr(err), elog.String("username", username))
+	}
 }
 
 // extractUsernameFromPayload 从强类型入参中提取登录账号名
@@ -403,18 +410,25 @@ func (c *authCoordinator) postLoginPipeline(ctx context.Context, u domain.User, 
 	}, nil
 }
 
-// resolveActiveTenant 智能推导当前活跃租户 (记忆优先 -> 首个租户兜底)
+// resolveActiveTenant 智能推导当前活跃租户 (默认登录优先 -> 记忆优先 -> 首个租户兜底)
 func (c *authCoordinator) resolveActiveTenant(ctx context.Context, u domain.User, tenants []domain.Tenant) int64 {
 	if len(tenants) == 0 {
 		return 0
 	}
 
-	// 1. 优先使用用户最近一次活跃的租户 (若依然属于该租户)
+	// 1. 优先使用用户显式设置的默认登录租户（若依然属于该租户）。
+	//    与 LastActiveTenantID 独立：仅由用户在租户管理页设置，switch 切换不改写，
+	//    满足「设一次即永久生效」的语义。
+	if u.DefaultTenantID > 0 && lo.SomeBy(tenants, func(t domain.Tenant) bool { return t.ID == u.DefaultTenantID }) {
+		return u.DefaultTenantID
+	}
+
+	// 2. 次选用户最近一次活跃的租户 (若依然属于该租户)
 	if u.LastActiveTenantID > 0 && lo.SomeBy(tenants, func(t domain.Tenant) bool { return t.ID == u.LastActiveTenantID }) {
 		return u.LastActiveTenantID
 	}
 
-	// 2. 首次登录或记忆失效，默认直接进入用户的第 1 个租户并持久化记录
+	// 3. 首次登录或记忆失效，默认直接进入用户的第 1 个租户并持久化记录
 	firstTid := tenants[0].ID
 	_ = c.repo.UpdateLastActiveTenantID(ctx, u.ID, firstTid)
 	return firstTid

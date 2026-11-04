@@ -36,9 +36,9 @@ func NewLdapUserSchema() *redisearch.Schema {
 		AddField(redisearch.NewNumericField("updated_at"))
 }
 
-// RedisearchLdapUserCache 基于 RediSearch 的 LDAP 用户搜索缓存
+// IRedisearchLdapUserCache 基于 RediSearch 的 LDAP 用户搜索缓存
 // 提供高性能的关键词模糊搜索和分页查询能力
-type RedisearchLdapUserCache interface {
+type IRedisearchLdapUserCache interface {
 	// Document 将 LDAP 用户数据批量同步到 RediSearch 索引中
 	Document(ctx context.Context, tid int64, users []domain.User) error
 	// Query 执行基于关键词的 LDAP 用户搜索
@@ -50,7 +50,7 @@ type redisearchLdapUserCache struct {
 	logger *elog.Component
 }
 
-func NewRedisearchLdapUserCache(conn *redisearch.Client) RedisearchLdapUserCache {
+func NewRedisearchLdapUserCache(conn *redisearch.Client) IRedisearchLdapUserCache {
 	return &redisearchLdapUserCache{
 		conn:   conn,
 		logger: elog.DefaultLogger,
@@ -257,4 +257,3 @@ func escapeQueryString(s string) string {
 	r := strings.NewReplacer(replacerArgs...)
 	return r.Replace(s)
 }
-

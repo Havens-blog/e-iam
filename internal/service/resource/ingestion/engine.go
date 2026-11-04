@@ -12,8 +12,8 @@ import (
 	"github.com/samber/lo"
 )
 
-// Engine 统一资源录入引擎，负责将各类来源的资产归一化后落盘并维护绑定关系。
-type Engine interface {
+// IEngine 统一资源录入引擎，负责将各类来源的资产归一化后落盘并维护绑定关系。
+type IEngine interface {
 	// Ingest 执行全量资产同步（SDK 上报/远端发现）。
 	// 依次完成 Permission → API → Menu 的同步，最后批量增量绑定资源。
 	Ingest(ctx context.Context, snap Snapshot) error
@@ -38,7 +38,7 @@ func NewEngine(
 	permRepo repository.IPermissionRepository,
 	resRepo repository.IResourceRepository,
 	svcRepo repository.IServiceRepository,
-) Engine {
+) IEngine {
 	return &engine{
 		permRepo: permRepo,
 		resRepo:  resRepo,

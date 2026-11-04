@@ -2,7 +2,9 @@ package permission
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math/rand"
 	"regexp"
 	"slices"
 	"strconv"
@@ -16,6 +18,7 @@ import (
 	"github.com/Havens-blog/e-iam/internal/service/role"
 	"github.com/Havens-blog/e-iam/pkg/pbac"
 	"github.com/ecodeclub/ekit/set"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/Havens-blog/e-iam/internal/authz"
@@ -30,6 +33,19 @@ import (
 	"github.com/samber/lo"
 )
 
+// actionSortRules 动作权重排序规则。正则编译有 AST+锁开销，
+// 提升为包级一次性初始化，避免 sortActions 在 toGroupNodes 递归
+// 构建 manifest 分组树时对每个节点重复 MustCompile 4 个正则。
+var actionSortRules = []struct {
+	pattern *regexp.Regexp
+	weight  int
+}{
+	{regexp.MustCompile(`^(view|list|get|manifest|show).*`), 100},
+	{regexp.MustCompile(`^(add|create|save|new).*`), 90},
+	{regexp.MustCompile(`^(edit|update|modify|toggle|change).*`), 80},
+	{regexp.MustCompile(`^(delete|revoke|remove|drop).*`), 70},
+}
+
 type permissionService struct {
 	enforcer    *casbin.SyncedEnforcer
 	resourceSvc resource.IResourceService
@@ -38,6 +54,8 @@ type permissionService struct {
 	policySvc   policy.IPolicyService
 	authorizer  authz.IAuthorizer
 	tenantRepo  repository.ITenantRepository
+	// cmd Redis 客户端：用于缓存 getEffectivePolicies 结果（每请求 2 次 DB 往返收敛为缓存命中）
+	cmd redis.Cmdable
 
 	// registry 注册中心 (组合模式处理：全域搜索与计数聚合)
 	registry searcher.ISubjectRegistry
@@ -53,9 +71,12 @@ func NewPermissionService(
 	permRepo repository.IPermissionRepository,
 	auth authz.IAuthorizer,
 	boundary checker.IBoundaryChecker,
-	tenantRepo repository.ITenantRepository) IPermissionService {
+	tenantRepo repository.ITenantRepository,
+	cmd redis.Cmdable) (IPermissionService, error) {
 	if en == nil {
-		panic("权限服务初始化失败: Casbin Enforcer 为空，请检查数据库与配置文件")
+		// 构造期返回 error 而非 panic：让启动失败经 wire 聚合到 InitApp，
+		// 调用方统一以 error 处理，避免 panic 在依赖注入链中难以定位根因
+		return nil, fmt.Errorf("权限服务初始化失败: Casbin Enforcer 为空，请检查数据库与配置文件")
 	}
 
 	return &permissionService{
@@ -68,7 +89,8 @@ func NewPermissionService(
 		authorizer:  auth,
 		boundary:    boundary,
 		tenantRepo:  tenantRepo,
-	}
+		cmd:         cmd,
+	}, nil
 }
 
 func (s *permissionService) SearchSubjects(ctx context.Context, keyword string, subType string, offset, limit int64) ([]domain.Subject, int64, error) {
@@ -85,12 +107,18 @@ func (s *permissionService) SearchSubjects(ctx context.Context, keyword string, 
 	eg.Go(func() error {
 		var err error
 		total, err = p.CountSubjects(ctx, keyword)
-		return err
+		if err != nil {
+			return fmt.Errorf("搜索主体-统计总数失败: %w", err)
+		}
+		return nil
 	})
 	eg.Go(func() error {
 		var err error
 		subjects, err = p.SearchSubjects(ctx, keyword, offset, limit)
-		return err
+		if err != nil {
+			return fmt.Errorf("搜索主体-分页查询失败: %w", err)
+		}
+		return nil
 	})
 
 	if err := eg.Wait(); err != nil {
@@ -173,7 +201,7 @@ func (s *permissionService) expandParentActions(ctx context.Context, targetCodes
 	// 1. 获取依赖于 targetCodes 的父级权限码
 	parents, err := s.permRepo.FindParentsByNeeds(ctx, targetCodes)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("查询父级权限码失败: %w", err)
 	}
 
 	// 2. 合并并去重
@@ -257,7 +285,7 @@ func (s *permissionService) GetAuthorizedMenus(ctx context.Context, username str
 	menuURNs := slice.Map(allMenus, func(_ int, m domain.Menu) string { return m.URN() })
 	codesMap, err := s.permRepo.FindCodesByResourceURNs(ctx, menuURNs)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("查询菜单权限映射失败: %w", err)
 	}
 
 	// 3. 边界预过滤：非系统租户剔除掉所有包含 ScopeSystem 权限的菜单 URN
@@ -360,11 +388,18 @@ func (s *permissionService) filterAccessibleMenus(all []domain.Menu, codesMap ma
 
 // getEffectivePolicies 获取用户在当前上下文中所有有效的 Policy 对象 (含直接绑定、角色继承、系统角色收益)
 func (s *permissionService) getEffectivePolicies(ctx context.Context, username string) ([]domain.Policy, error) {
-	// 【核心优化】：身份对齐
+	// 【核心优化 ③-P1-1】：身份对齐 + Redis 短缓存
 	// 权限判定应当基于用户的“原始身份租户 (Origin)”而非“操作目标租户 (Target)”
 	authTid := ctxutil.GetOriginTenantID(ctx)
 	if authTid != 0 {
 		ctx = ctxutil.WithTenantID(ctx, authTid.Int64())
+	}
+
+	// 缓存命中直接返回：CheckAPIDecision 每请求都调本方法，命中可将
+	// GetRolesForUser + GetAttachedBySubjects + ListByIncludeCodes 三次 Casbin/DB 往返收敛为单次 Redis GET。
+	tid := ctxutil.GetTenantID(ctx).Int64()
+	if cached, err := s.getEffectivePoliciesCache(ctx, tid, username); err == nil {
+		return cached, nil
 	}
 
 	// 1. 获取用户的所有角色和组（包括继承）
@@ -406,8 +441,63 @@ func (s *permissionService) getEffectivePolicies(ctx context.Context, username s
 
 	// 7. 合并并去重所有策略
 	allPolicies := append(lo.Flatten(lo.Values(policiesMap)), inlinePolicies...)
+	res := lo.UniqBy(allPolicies, func(p domain.Policy) string { return p.Code })
 
-	return lo.UniqBy(allPolicies, func(p domain.Policy) string { return p.Code }), nil
+	// 缓存写入（best-effort，失败不影响鉴权主路径）
+	s.setEffectivePoliciesCache(ctx, tid, username, res)
+	return res, nil
+}
+
+// effectivePoliciesCacheTTL 用户有效策略缓存基础 TTL（秒级）。
+// 短 TTL 取舍：本服务内的角色分配/撤销点会即时删 key；跨服务（策略绑定、
+// 内联策略）变更依赖 TTL 兜底最终一致（≤30s 生效），避免跨服务反向依赖成环。
+const effectivePoliciesCacheTTL = 30 * time.Second
+
+// effectivePoliciesCacheKey 缓存键：按 (origin_tenant_id, username) 隔离。
+func (s *permissionService) effectivePoliciesCacheKey(tid int64, username string) string {
+	return fmt.Sprintf("eiam:perm:effective:%d:%s", tid, username)
+}
+
+// getEffectivePoliciesCache 读缓存；未命中返回 nil,nil（区分于反序列化失败）。
+func (s *permissionService) getEffectivePoliciesCache(ctx context.Context, tid int64, username string) ([]domain.Policy, error) {
+	if s.cmd == nil {
+		return nil, redis.Nil
+	}
+	val, err := s.cmd.Get(ctx, s.effectivePoliciesCacheKey(tid, username)).Bytes()
+	if err != nil {
+		return nil, err // redis.Nil 或其他错误均回源
+	}
+	var policies []domain.Policy
+	if err = json.Unmarshal(val, &policies); err != nil {
+		return nil, fmt.Errorf("反序列化有效策略缓存失败: %w", err)
+	}
+	return policies, nil
+}
+
+// setEffectivePoliciesCache 写缓存，±10% 抖动 TTL 防雪崩。
+func (s *permissionService) setEffectivePoliciesCache(ctx context.Context, tid int64, username string, policies []domain.Policy) {
+	if s.cmd == nil {
+		return
+	}
+	data, err := json.Marshal(policies)
+	if err != nil {
+		return
+	}
+	jitter := time.Duration(rand.Int63n(int64(effectivePoliciesCacheTTL / 10)))
+	ttl := effectivePoliciesCacheTTL + jitter
+	if rand.Intn(2) == 0 {
+		ttl = effectivePoliciesCacheTTL - jitter
+	}
+	_ = s.cmd.Set(ctx, s.effectivePoliciesCacheKey(tid, username), data, ttl).Err()
+}
+
+// invalidateEffectivePoliciesCache 删除指定用户的策略缓存，用于角色分配/撤销等即时失效。
+func (s *permissionService) invalidateEffectivePoliciesCache(ctx context.Context, tid int64, usernames ...string) {
+	if s.cmd == nil || len(usernames) == 0 {
+		return
+	}
+	keys := lo.Map(usernames, func(u string, _ int) string { return s.effectivePoliciesCacheKey(tid, u) })
+	_ = s.cmd.Del(ctx, keys...).Err()
 }
 
 func (s *permissionService) CreatePermission(ctx context.Context, p domain.Permission) (int64, error) {
@@ -437,17 +527,26 @@ func (s *permissionService) GetPermissionManifest(ctx context.Context) (domain.P
 	eg.Go(func() error {
 		var err error
 		perms, err = s.permRepo.ListAllPermissions(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载权限清单-权限底数失败: %w", err)
+		}
+		return nil
 	})
 	eg.Go(func() error {
 		var err error
 		svcMetas, err = s.resourceSvc.ListServices(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载权限清单-服务元数据失败: %w", err)
+		}
+		return nil
 	})
 	eg.Go(func() error {
 		var err error
 		menuBindings, err = s.permRepo.GetMenuBindings(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载权限清单-菜单绑定失败: %w", err)
+		}
+		return nil
 	})
 
 	if err := eg.Wait(); err != nil {
@@ -644,24 +743,11 @@ func (t *groupTrie) toGroupNodes(sortActions func([]string), codeToSortMap map[s
 
 // sortActions 动作权重排序算法 (支持正则匹配)
 func (s *permissionService) sortActions(actions []string) {
-	// 定义正则优先级规则 (按顺序匹配，命中即止)
-	type rule struct {
-		pattern *regexp.Regexp
-		weight  int
-	}
-
-	rules := []rule{
-		{pattern: regexp.MustCompile(`^(view|list|get|manifest|show).*`), weight: 100},
-		{pattern: regexp.MustCompile(`^(add|create|save|new).*`), weight: 90},
-		{pattern: regexp.MustCompile(`^(edit|update|modify|toggle|change).*`), weight: 80},
-		{pattern: regexp.MustCompile(`^(delete|revoke|remove|drop).*`), weight: 70},
-	}
-
 	priority := func(code string) int {
 		parts := strings.Split(code, ":")
 		action := parts[len(parts)-1]
 
-		for _, r := range rules {
+		for _, r := range actionSortRules {
 			if r.pattern.MatchString(action) {
 				return r.weight
 			}
@@ -727,7 +813,12 @@ func (s *permissionService) AssignRolesToUser(ctx context.Context, usernames []s
 		return true, nil
 	}
 
-	return s.enforcer.AddGroupingPolicies(rules)
+	ok, err := s.enforcer.AddGroupingPolicies(rules)
+	if err == nil && ok {
+		// 角色拓扑变更，即时失效受影响用户的有效策略缓存。
+		s.invalidateEffectivePoliciesCache(ctx, ctxutil.GetTenantID(ctx).Int64(), usernames...)
+	}
+	return ok, err
 }
 
 func (s *permissionService) AssignUsersToRole(ctx context.Context, roleCode string, usernames []string) (bool, error) {
@@ -775,7 +866,12 @@ func (s *permissionService) RemoveRolesFromUser(ctx context.Context, usernames [
 		return true, nil
 	}
 
-	return s.enforcer.RemoveGroupingPolicies(rulesToRemove)
+	ok, err := s.enforcer.RemoveGroupingPolicies(rulesToRemove)
+	if err == nil && ok {
+		// 角色拓扑变更，即时失效受影响用户的有效策略缓存。
+		s.invalidateEffectivePoliciesCache(ctx, ctxutil.GetTenantID(ctx).Int64(), usernames...)
+	}
+	return ok, err
 }
 
 // validatePersonalTenantAdmin 校验是否在个人空间下试图解绑主人的 admin 角色
@@ -783,7 +879,7 @@ func (s *permissionService) validatePersonalTenantAdmin(ctx context.Context, use
 	tid := ctxutil.GetTenantID(ctx)
 	tenant, err := s.tenantRepo.FindById(ctx, tid.Int64())
 	if err != nil {
-		return err
+		return fmt.Errorf("查询租户信息失败: %w", err)
 	}
 
 	if strings.HasSuffix(tenant.Code, "-personal") {
@@ -954,7 +1050,7 @@ func (s *permissionService) GetImplicitSubjectsForUser(ctx context.Context, user
 
 func (s *permissionService) ListAuthorizations(ctx context.Context, query domain.AuthorizationQuery) ([]domain.Authorization, int64, error) {
 	// 定义所有授权提供者
-	providers := []AuthorizationProvider{
+	providers := []IAuthorizationProvider{
 		&roleAuthorizationProvider{service: s},
 		&policyAuthorizationProvider{service: s},
 	}
@@ -982,7 +1078,7 @@ func (s *permissionService) ListAuthorizations(ctx context.Context, query domain
 }
 
 // aggregateAuthorizations 聚合多个提供者的查询结果
-func (s *permissionService) aggregateAuthorizations(ctx context.Context, providers []AuthorizationProvider, query domain.AuthorizationQuery) ([]domain.Authorization, int64, error) {
+func (s *permissionService) aggregateAuthorizations(ctx context.Context, providers []IAuthorizationProvider, query domain.AuthorizationQuery) ([]domain.Authorization, int64, error) {
 	if len(providers) == 0 {
 		return []domain.Authorization{}, 0, nil
 	}
@@ -1024,7 +1120,7 @@ func (s *permissionService) listRoleAuthorizations(ctx context.Context, query do
 	// 分页拉取原子规则记录
 	rules, total, err := s.permRepo.ListCasbinRules(ctx, tid, query.Offset, query.Limit, v0Prefix, v1Prefix, query.Keyword)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("查询角色授权规则失败: %w", err)
 	}
 
 	// 核心流水线：转换 -> 回填
@@ -1139,7 +1235,7 @@ func (s *permissionService) fetchMetadataMap(ctx context.Context, urns []string)
 	eg.Go(func() error {
 		rs, err := s.roleSvc.ListByIncludeCodes(ctx, lo.Uniq(roleCodes))
 		if err != nil {
-			return err
+			return fmt.Errorf("回填元数据-角色信息失败: %w", err)
 		}
 
 		mu.Lock()
@@ -1318,19 +1414,28 @@ func (s *permissionService) fetchPolicySummaryData(ctx context.Context, actions 
 		} else {
 			perms, err = s.permRepo.FindByActions(ctx, lo.Uniq(actions))
 		}
-		return err
+		if err != nil {
+			return fmt.Errorf("加载策略摘要-权限底数失败: %w", err)
+		}
+		return nil
 	})
 
 	eg.Go(func() error {
 		var err error
 		serviceTotal, err = s.permRepo.CountByService(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载策略摘要-服务权限计数失败: %w", err)
+		}
+		return nil
 	})
 
 	eg.Go(func() error {
 		var err error
 		svcMetas, err = s.resourceSvc.ListServices(ctx)
-		return err
+		if err != nil {
+			return fmt.Errorf("加载策略摘要-服务元数据失败: %w", err)
+		}
+		return nil
 	})
 
 	if err := eg.Wait(); err != nil {

@@ -40,8 +40,8 @@ type Result struct {
 	Written   int64
 }
 
-// Migrator 迁移执行者接口
-type Migrator interface {
+// IMigrator 迁移执行者接口
+type IMigrator interface {
 	Name() string
 	Destination() any
 	Migrate(ctx context.Context, env MigrationEnv) (Result, error)

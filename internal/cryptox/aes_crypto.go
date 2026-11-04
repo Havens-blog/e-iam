@@ -54,7 +54,7 @@ func NewAESCrypto(key string) (*CryptoAES, error) {
 }
 
 // MustNewAESCrypto 包装 NewAESCrypto，出错时直接 panic (配合 Builder 模式使用)
-func MustNewAESCrypto(key string) Crypto {
+func MustNewAESCrypto(key string) ICrypto {
 	algo, err := NewAESCrypto(key)
 	if err != nil {
 		panic("failed to init legacy aes crypto: " + err.Error())

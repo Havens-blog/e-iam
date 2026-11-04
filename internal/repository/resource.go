@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/Havens-blog/e-iam/internal/domain"
+	"github.com/Havens-blog/e-iam/internal/errs"
 	"github.com/Havens-blog/e-iam/internal/repository/cache"
 	"github.com/Havens-blog/e-iam/internal/repository/dao"
 	"github.com/Havens-blog/e-iam/pkg/pbac"
 	"github.com/Havens-blog/e-iam/pkg/sqlx"
 	"github.com/samber/lo"
-	"gorm.io/gorm"
 )
 
 // IResourceRepository 物理资源仓库，负责全量 Menu 和 API 资产的底数管理
@@ -84,7 +84,12 @@ func (r *ResourceRepository) SyncMenus(ctx context.Context, menus domain.MenuLis
 	}
 
 	// 3. 孤儿标记 (全量对齐闭环)
-	return r.dao.MarkMenusAsOrphan(ctx, names)
+	if err := r.dao.MarkMenusAsOrphan(ctx, names); err != nil {
+		return err
+	}
+	// 菜单结构/排序/状态变更，失效全量菜单缓存。
+	_ = r.cache.InvalidateAllMenus(ctx)
+	return nil
 }
 
 func (r *ResourceRepository) alignTopology(ctx context.Context, entities []dao.Menu, source domain.MenuList) error {
@@ -173,7 +178,7 @@ func (r *ResourceRepository) FindAPIByPath(ctx context.Context, service, method,
 
 	a, err := r.dao.FindAPIByPath(ctx, service, method, path)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, errs.ErrRecordNotFound) {
 			_ = r.cache.SetEmptyAPI(ctx, service, method, path)
 			return domain.API{}, nil
 		}
@@ -248,7 +253,11 @@ func (r *ResourceRepository) UpsertMenu(ctx context.Context, m *domain.Menu) err
 	row, err := r.dao.FindMenuByName(ctx, m.Name)
 	if err == nil {
 		m.ID = row.Id
-		return r.dao.UpdateMenu(ctx, r.toDAOMenu(*m))
+		if err := r.dao.UpdateMenu(ctx, r.toDAOMenu(*m)); err != nil {
+			return err
+		}
+		_ = r.cache.InvalidateAllMenus(ctx)
+		return nil
 	}
 
 	id, err := r.dao.InsertMenu(ctx, r.toDAOMenu(*m))
@@ -256,28 +265,34 @@ func (r *ResourceRepository) UpsertMenu(ctx context.Context, m *domain.Menu) err
 		return err
 	}
 	m.ID = id
+	_ = r.cache.InvalidateAllMenus(ctx)
 	return nil
 }
 
 func (r *ResourceRepository) ListAllMenus(ctx context.Context) ([]domain.Menu, error) {
+	// 菜单元数据极低频变更，cache-first 避免每请求全表扫描。
+	if cached, err := r.cache.GetAllMenus(ctx); err == nil {
+		return cached, nil
+	}
 	menus, err := r.dao.ListAllMenus(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return lo.Map(menus, func(m dao.Menu, _ int) domain.Menu { return r.toDomainMenu(m) }), nil
+	res := lo.Map(menus, func(m dao.Menu, _ int) domain.Menu { return r.toDomainMenu(m) })
+	_ = r.cache.SetAllMenus(ctx, res)
+	return res, nil
 }
 
 func (r *ResourceRepository) GetMenu(ctx context.Context, id int64) (domain.Menu, error) {
-	all, err := r.dao.ListAllMenus(ctx)
+	// 主键点查替代 ListAllMenus 全表扫描后线性查找，O(n) → O(1)。
+	m, err := r.dao.FindMenuByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, errs.ErrRecordNotFound) {
+			return domain.Menu{}, nil
+		}
 		return domain.Menu{}, err
 	}
-	for _, m := range all {
-		if m.Id == id {
-			return r.toDomainMenu(m), nil
-		}
-	}
-	return domain.Menu{}, nil
+	return r.toDomainMenu(m), nil
 }
 
 func (r *ResourceRepository) ListMenusByParentID(ctx context.Context, parentID int64) ([]domain.Menu, error) {
@@ -289,12 +304,20 @@ func (r *ResourceRepository) ListMenusByParentID(ctx context.Context, parentID i
 }
 
 func (r *ResourceRepository) UpdateMenuSort(ctx context.Context, id int64, parentID int64, sortKey int64) error {
-	return r.dao.UpdateMenuSort(ctx, id, parentID, sortKey)
+	if err := r.dao.UpdateMenuSort(ctx, id, parentID, sortKey); err != nil {
+		return err
+	}
+	_ = r.cache.InvalidateAllMenus(ctx)
+	return nil
 }
 
 func (r *ResourceRepository) BatchUpdateMenuSort(ctx context.Context, menus []domain.Menu) error {
 	daoMenus := lo.Map(menus, func(m domain.Menu, _ int) dao.Menu { return r.toDAOMenu(m) })
-	return r.dao.BatchUpdateMenuSort(ctx, daoMenus)
+	if err := r.dao.BatchUpdateMenuSort(ctx, daoMenus); err != nil {
+		return err
+	}
+	_ = r.cache.InvalidateAllMenus(ctx)
+	return nil
 }
 
 // --- 转换助手 (Mapper) ---

@@ -107,18 +107,7 @@ func (km *keyManager) PublicKeySet() jose.JSONWebKeySet {
 func (km *keyManager) KeyByID(keyID string) (*jose.JSONWebKey, error) {
 	km.mu.RLock()
 	defer km.mu.RUnlock()
-
-	if keyID != "" && keyID != km.keyID {
-		return nil, fmt.Errorf("未找到对应 KeyID 的公钥: %s", keyID)
-	}
-
-	jwk := &jose.JSONWebKey{
-		Key:       km.publicKey,
-		KeyID:     km.keyID,
-		Algorithm: string(jose.RS256),
-		Use:       "sig",
-	}
-	return jwk, nil
+	return km.keyByIDLocked(keyID)
 }
 
 // SignJWT 使用 RS256 算法与本地 RSA 私钥签发 JWT
@@ -131,7 +120,9 @@ func (km *keyManager) SignJWT(claims jwt.Claims) (string, error) {
 	return token.SignedString(km.privateKey)
 }
 
-// VerifyJWT 使用 RSA 公钥解析与校验 JWT
+// VerifyJWT 使用 RSA 公钥解析与校验 JWT。
+// kid 感知：从 token 头部取 kid，经 KeyByID 定位对应公钥校验，
+// 而非固定使用当前签发公钥——为密钥轮换（多把公钥并存、旧 kid 宽限期验签）预留能力。
 func (km *keyManager) VerifyJWT(tokenString string, claims jwt.Claims) (*jwt.Token, error) {
 	km.mu.RLock()
 	defer km.mu.RUnlock()
@@ -140,8 +131,31 @@ func (km *keyManager) VerifyJWT(tokenString string, claims jwt.Claims) (*jwt.Tok
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("非法的签名算法: %v", token.Header["alg"])
 		}
-		return km.publicKey, nil
+		// 按 kid 定位公钥；kid 缺省时回退当前签发公钥（兼容无 kid 的旧 token）
+		kid, _ := token.Header["kid"].(string)
+		jwk, err := km.keyByIDLocked(kid)
+		if err != nil {
+			return nil, fmt.Errorf("校验失败: %w", err)
+		}
+		pub, ok := jwk.Key.(*rsa.PublicKey)
+		if !ok {
+			return nil, fmt.Errorf("kid %s 对应公钥类型非 RSA", kid)
+		}
+		return pub, nil
 	})
+}
+
+// keyByIDLocked 按 KeyID 查找公钥（调用方已持读锁）。
+func (km *keyManager) keyByIDLocked(keyID string) (*jose.JSONWebKey, error) {
+	if keyID != "" && keyID != km.keyID {
+		return nil, fmt.Errorf("未找到对应 KeyID 的公钥: %s", keyID)
+	}
+	return &jose.JSONWebKey{
+		Key:       km.publicKey,
+		KeyID:     km.keyID,
+		Algorithm: string(jose.RS256),
+		Use:       "sig",
+	}, nil
 }
 
 func (km *keyManager) ExportPrivateKeyPEM() (string, error) {

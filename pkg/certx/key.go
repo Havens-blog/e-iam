@@ -67,7 +67,7 @@ func EncodePublicKeyPEM(pub *rsa.PublicKey) (string, error) {
 }
 
 // ParseKeyAs 利用泛型解析私钥，并自动安全转换为指定的目标强类型
-func ParseKeyAs[T PrivateKey, S Source](source S) (T, error) {
+func ParseKeyAs[T PrivateKey, S ISource](source S) (T, error) {
 	var zero T
 	rawBytes, err := ResolveSource(source)
 	if err != nil {
@@ -99,12 +99,12 @@ func ParseKeyAs[T PrivateKey, S Source](source S) (T, error) {
 }
 
 // ParseKey 解析 RSA 私钥的强类型快捷函数
-func ParseKey[S Source](source S) (*rsa.PrivateKey, error) {
+func ParseKey[S ISource](source S) (*rsa.PrivateKey, error) {
 	return ParseKeyAs[*rsa.PrivateKey](source)
 }
 
 // ParsePublicKey 解析标准 PKIX PEM 格式的 RSA 公钥
-func ParsePublicKey[S Source](source S) (*rsa.PublicKey, error) {
+func ParsePublicKey[S ISource](source S) (*rsa.PublicKey, error) {
 	rawBytes, err := ResolveSource(source)
 	if err != nil {
 		return nil, err
