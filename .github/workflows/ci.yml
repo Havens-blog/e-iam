@@ -72,7 +72,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: true
       - name: 安装 protoc
-        uses: extractions/setup-protoc@v3
+        uses: arduino/setup-protoc@v3
         with:
           version: '29.5'
       - name: 安装生成器插件
