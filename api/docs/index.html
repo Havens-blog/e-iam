@@ -918,6 +918,11 @@
                 "$ref": "#/components/schemas/CreateApplicationReq"
               },
               "example": {
+                "allowed_tenants": [
+                  1,
+                  2,
+                  3
+                ],
                 "auto_consent": true,
                 "client_id": "string",
                 "grant_types": [
@@ -1072,6 +1077,11 @@
                 "$ref": "#/components/schemas/UpdateApplicationReq"
               },
               "example": {
+                "allowed_tenants": [
+                  1,
+                  2,
+                  3
+                ],
                 "auto_consent": true,
                 "grant_types": [
                   "item1",
@@ -2441,7 +2451,15 @@
                 "$ref": "#/components/schemas/CreateTenantReq"
               },
               "example": {
+                "allowed_vendors": [
+                  "item1",
+                  "item2"
+                ],
                 "code": "admin",
+                "feature_switch": "string",
+                "max_accounts": 0,
+                "max_user_groups": 0,
+                "max_users": 0,
                 "name": "示例名称"
               }
             }
@@ -2708,9 +2726,17 @@
                 "$ref": "#/components/schemas/UpdateTenantReq"
               },
               "example": {
+                "allowed_vendors": [
+                  "item1",
+                  "item2"
+                ],
                 "code": "admin",
                 "domain": "string",
+                "feature_switch": "string",
                 "id": 1,
+                "max_accounts": 0,
+                "max_user_groups": 0,
+                "max_users": 0,
                 "name": "示例名称",
                 "status": 1
               }
@@ -2785,6 +2811,33 @@
               "example": {
                 "confirm_password": "Password123!",
                 "password": "Password123!"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
+    "/api/user/default_tenant": {
+      "post": {
+        "tags": [
+          "用户管理"
+        ],
+        "summary": "设置默认登录租户",
+        "description": "权限标识: set_default_tenant",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDefaultTenantReq"
+              },
+              "example": {
+                "tenant_id": 1
               }
             }
           }
@@ -3358,6 +3411,19 @@
         }
       }
     },
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "health",
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
     "/oauth/token": {
       "post": {
         "tags": [
@@ -3561,6 +3627,9 @@
   "tags": [
     {
       "name": "discovery"
+    },
+    {
+      "name": "health"
     },
     {
       "name": "安全审计"
@@ -4071,6 +4140,18 @@
       "CreateApplicationReq": {
         "type": "object",
         "properties": {
+          "allowed_tenants": {
+            "type": "array",
+            "description": "S2S 允许代表访问的租户 ID 列表",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              1,
+              2,
+              3
+            ]
+          },
           "auto_consent": {
             "type": "boolean",
             "description": "是否跳过用户授权确认 (第一方应用建议设为 true)",
@@ -4145,6 +4226,11 @@
           "redirect_uris"
         ],
         "example": {
+          "allowed_tenants": [
+            1,
+            2,
+            3
+          ],
           "auto_consent": true,
           "client_id": "string",
           "grant_types": [
@@ -4346,9 +4432,36 @@
       "CreateTenantReq": {
         "type": "object",
         "properties": {
+          "allowed_vendors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "item1",
+              "item2"
+            ]
+          },
           "code": {
             "type": "string",
             "example": "admin"
+          },
+          "feature_switch": {
+            "type": "string",
+            "example": "string"
+          },
+          "max_accounts": {
+            "type": "integer",
+            "description": "三类治理配置均为可选入参：零值即\"无约束\"语义（配额 0=无限制、",
+            "example": 0
+          },
+          "max_user_groups": {
+            "type": "integer",
+            "example": 0
+          },
+          "max_users": {
+            "type": "integer",
+            "example": 0
           },
           "name": {
             "type": "string",
@@ -4360,7 +4473,15 @@
           "code"
         ],
         "example": {
+          "allowed_vendors": [
+            "item1",
+            "item2"
+          ],
           "code": "admin",
+          "feature_switch": "string",
+          "max_accounts": 0,
+          "max_user_groups": 0,
+          "max_users": 0,
           "name": "示例名称"
         }
       },
@@ -5230,6 +5351,18 @@
           "sub_type": "string"
         }
       },
+      "SetDefaultTenantReq": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "example": {
+          "tenant_id": 1
+        }
+      },
       "SignupRequest": {
         "type": "object",
         "properties": {
@@ -5329,6 +5462,17 @@
       "UpdateApplicationReq": {
         "type": "object",
         "properties": {
+          "allowed_tenants": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              1,
+              2,
+              3
+            ]
+          },
           "auto_consent": {
             "type": "boolean",
             "example": true
@@ -5400,6 +5544,11 @@
           "redirect_uris"
         ],
         "example": {
+          "allowed_tenants": [
+            1,
+            2,
+            3
+          ],
           "auto_consent": true,
           "grant_types": [
             "item1",
@@ -5569,6 +5718,16 @@
       "UpdateTenantReq": {
         "type": "object",
         "properties": {
+          "allowed_vendors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "item1",
+              "item2"
+            ]
+          },
           "code": {
             "type": "string",
             "example": "admin"
@@ -5577,9 +5736,26 @@
             "type": "string",
             "example": "string"
           },
+          "feature_switch": {
+            "type": "string",
+            "example": "string"
+          },
           "id": {
             "type": "integer",
             "example": 1
+          },
+          "max_accounts": {
+            "type": "integer",
+            "description": "三类治理配置可选更新；nil 字段经整体覆盖式更新落库后等价于\"清空配置\"",
+            "example": 0
+          },
+          "max_user_groups": {
+            "type": "integer",
+            "example": 0
+          },
+          "max_users": {
+            "type": "integer",
+            "example": 0
           },
           "name": {
             "type": "string",
@@ -5596,9 +5772,17 @@
           "code"
         ],
         "example": {
+          "allowed_vendors": [
+            "item1",
+            "item2"
+          ],
           "code": "admin",
           "domain": "string",
+          "feature_switch": "string",
           "id": 1,
+          "max_accounts": 0,
+          "max_user_groups": 0,
+          "max_users": 0,
           "name": "示例名称",
           "status": 1
         }

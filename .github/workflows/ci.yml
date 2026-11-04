@@ -74,7 +74,7 @@ jobs:
       - name: 安装 protoc
         uses: arduino/setup-protoc@v3
         with:
-          version: '29.5'
+          version: '36.2'
       - name: 安装生成器插件
         run: |
           go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
