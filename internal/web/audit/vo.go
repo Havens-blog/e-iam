@@ -117,23 +117,23 @@ type ListAuditEventsResp struct {
 
 func toAuditEventVO(e domain.UnifiedAuditEvent) AuditEventVO {
 	return AuditEventVO{
-		ID:        e.ID,
-		ActorType: e.ActorType,
-		ActorID:   e.ActorID,
-		ActorName: e.ActorName,
-		At:        e.At,
-		TenantID:  e.TenantID,
-		ClientIP:  e.ClientIP,
-		Service:   e.Service,
-		Domain:    e.Domain,
-		Action:    e.Action,
+		ID:           e.ID,
+		ActorType:    e.ActorType,
+		ActorID:      e.ActorID,
+		ActorName:    e.ActorName,
+		At:           e.At,
+		TenantID:     e.TenantID,
+		ClientIP:     e.ClientIP,
+		Service:      e.Service,
+		Domain:       e.Domain,
+		Action:       e.Action,
 		ResourceType: e.ResourceType,
 		ResourceID:   e.ResourceID,
 		ResourceURN:  e.ResourceURN,
-		Result:    e.Result,
-		StatusCode: e.StatusCode,
-		DurationMs:  e.DurationMs,
-		Detail:    e.Detail,
+		Result:       e.Result,
+		StatusCode:   e.StatusCode,
+		DurationMs:   e.DurationMs,
+		Detail:       e.Detail,
 	}
 }
 
