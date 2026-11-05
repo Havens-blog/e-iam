@@ -157,20 +157,20 @@
 
 | 操作名称 | 完整权限码 | 作用域 | 归属类型 | 暴露状态 | 联动包含权限 | 宿主源码位置 |
 |:---|:---|:---|:---|:---|:---|:---|
-| 创建角色 | `iam:role:add` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 41 |
-| 添加父角色 | `iam:role:add_parent` | 租户级 | 本级 | 正常 | 角色列表 · `iam:role:view` | `internal/web/role/handler.go` 行 79 |
-| 分析内联策略 | `iam:role:analysis` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 76 |
-| 批量分配角色 | `iam:role:batch_assign` | 租户级 | 本级 | 正常 | 角色列表 · `iam:role:view`<br>用户列表 · `iam:user:view` | `internal/web/role/handler.go` 行 65 |
-| 批量删除角色 | `iam:role:batch_delete` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 60 |
-| 批量移除角色 | `iam:role:batch_unassign` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 69 |
-| 删除角色 | `iam:role:delete` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 57 |
-| 修改角色 | `iam:role:edit` | 租户级 | 本级 | 正常 | 角色详情 · `iam:role:get` | `internal/web/role/handler.go` 行 44 |
-| 角色详情 | `iam:role:get` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 53 |
-| 移除父角色 | `iam:role:remove_parent` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 83 |
-| 移除角色分配 | `iam:role:unassign` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 72 |
-| 角色列表 | `iam:role:view` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 50 |
-| 查看个人角色 | `iam:role:view_mine` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 91 |
-| 获取父角色 | `iam:role:view_parents` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 86 |
+| 创建角色 | `iam:role:add` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 42 |
+| 添加父角色 | `iam:role:add_parent` | 租户级 | 本级 | 正常 | 角色列表 · `iam:role:view` | `internal/web/role/handler.go` 行 80 |
+| 分析内联策略 | `iam:role:analysis` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 77 |
+| 批量分配角色 | `iam:role:batch_assign` | 租户级 | 本级 | 正常 | 角色列表 · `iam:role:view`<br>用户列表 · `iam:user:view` | `internal/web/role/handler.go` 行 66 |
+| 批量删除角色 | `iam:role:batch_delete` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 61 |
+| 批量移除角色 | `iam:role:batch_unassign` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 70 |
+| 删除角色 | `iam:role:delete` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 58 |
+| 修改角色 | `iam:role:edit` | 租户级 | 本级 | 正常 | 角色详情 · `iam:role:get` | `internal/web/role/handler.go` 行 45 |
+| 角色详情 | `iam:role:get` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 54 |
+| 移除父角色 | `iam:role:remove_parent` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 84 |
+| 移除角色分配 | `iam:role:unassign` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 73 |
+| 角色列表 | `iam:role:view` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 51 |
+| 查看个人角色 | `iam:role:view_mine` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 92 |
+| 获取父角色 | `iam:role:view_parents` | 租户级 | 本级 | 正常 | - | `internal/web/role/handler.go` 行 87 |
 | 查询角色关联分组 | `iam:role:view_role_groups` | 租户级 | 跨域 (group) | 正常 | - | `internal/web/group/handler.go` 行 61 |
 | 角色关联用户列表 | `iam:role:view_role_members` | 租户级 | 跨域 (user) | 正常 | - | `internal/web/user/handler.go` 行 148 |
 | 查询角色策略 | `iam:role:view_role_policies` | 租户级 | 跨域 (policy) | 正常 | - | `internal/web/policy/handler.go` 行 87 |
@@ -226,7 +226,7 @@
 | 用户列表 | `iam:user:view` | 租户级 | 本级 | 正常 | - | `internal/web/user/handler.go` 行 120 |
 | 查询用户所属分组 | `iam:user:view_user_groups` | 租户级 | 跨域 (group) | 正常 | - | `internal/web/group/handler.go` 行 58 |
 | 查询用户策略 | `iam:user:view_user_policies` | 租户级 | 跨域 (policy) | 正常 | - | `internal/web/policy/handler.go` 行 82 |
-| 查询用户角色 | `iam:user:view_user_roles` | 租户级 | 跨域 (role) | 正常 | - | `internal/web/role/handler.go` 行 96 |
+| 查询用户角色 | `iam:user:view_user_roles` | 租户级 | 跨域 (role) | 正常 | - | `internal/web/role/handler.go` 行 97 |
 | 查询用户所属租户 | `iam:user:view_user_tenants` | 租户级 | 跨域 (tenant) | 正常 | - | `internal/web/tenant/handler.go` 行 106 |
 
 ---
