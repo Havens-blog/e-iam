@@ -24,7 +24,7 @@ func NewParser() *Parser {
 func (p *Parser) ParseDir(dir string) (*Graph, error) {
 	graph := NewGraph()
 	if cwd, err := os.Getwd(); err == nil && cwd != "" {
-		graph.ProjectName = strings.ToUpper(filepath.Base(cwd))
+		graph.ProjectName = projectNameFrom(cwd)
 	}
 
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -213,4 +213,38 @@ func (p *Parser) extractActions(file *ast.File, filePath string, meta fileMetada
 		graph.AddAction(act)
 		return true
 	})
+}
+
+// projectNameFrom 从 go.mod 的 module 路径末段推导工程名（大写）。
+//
+// 为什么不用检出目录名：worktree 检出目录名任意（如 .tmp-eiam-audit），
+// 烧进生成产物会与 CI 检出目录（e-iam）产生一行标题漂移，触发生成链
+// 一致性误报（2026-11-06 实测）。go.mod 向上逐级查找，找不到时回退
+// 目录名（保持旧行为兜底）。
+func projectNameFrom(dir string) string {
+	fallback := strings.ToUpper(filepath.Base(dir))
+	d := dir
+	for {
+		if data, err := os.ReadFile(filepath.Join(d, "go.mod")); err == nil {
+			for _, line := range strings.Split(string(data), "\n") {
+				line = strings.TrimSpace(line)
+				if !strings.HasPrefix(line, "module ") {
+					continue
+				}
+				mod := strings.TrimSpace(strings.TrimPrefix(line, "module "))
+				if i := strings.LastIndex(mod, "/"); i >= 0 {
+					mod = mod[i+1:]
+				}
+				if mod != "" {
+					return strings.ToUpper(mod)
+				}
+			}
+		}
+		parent := filepath.Dir(d)
+		if parent == d {
+			break
+		}
+		d = parent
+	}
+	return fallback
 }
