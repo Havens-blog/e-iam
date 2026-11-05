@@ -42,6 +42,20 @@ func (m *MockIAuditDAO) EXPECT() *MockIAuditDAOMockRecorder {
 	return m.recorder
 }
 
+// BatchInsertAuditEvents mocks base method.
+func (m *MockIAuditDAO) BatchInsertAuditEvents(ctx context.Context, rows []dao.AuditEventRow) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BatchInsertAuditEvents", ctx, rows)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BatchInsertAuditEvents indicates an expected call of BatchInsertAuditEvents.
+func (mr *MockIAuditDAOMockRecorder) BatchInsertAuditEvents(ctx, rows any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BatchInsertAuditEvents", reflect.TypeOf((*MockIAuditDAO)(nil).BatchInsertAuditEvents), ctx, rows)
+}
+
 // BatchInsertAuthLogs mocks base method.
 func (m *MockIAuditDAO) BatchInsertAuthLogs(ctx context.Context, logs []dao.AuditAuthLog) error {
 	m.ctrl.T.Helper()
