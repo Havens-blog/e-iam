@@ -13,6 +13,8 @@ type IAuditService interface {
 	ListAuthLogs(ctx context.Context, filter domain.AuthLogFilter, offset, limit int) ([]domain.AuthLog, int64, error)
 	// ListOperationLogs 分页查询业务管理操作审计日志
 	ListOperationLogs(ctx context.Context, filter domain.OperationLogFilter, offset, limit int) ([]domain.OperationLog, int64, error)
+	// ListAuditEvents 分页查询统一审计事件（envelope，at 降序）
+	ListAuditEvents(ctx context.Context, filter domain.UnifiedAuditEventFilter, offset, limit int) ([]domain.UnifiedAuditEvent, int64, error)
 }
 
 type auditService struct {
@@ -34,4 +36,9 @@ func (s *auditService) ListAuthLogs(ctx context.Context, filter domain.AuthLogFi
 // ListOperationLogs 分页查询操作日志
 func (s *auditService) ListOperationLogs(ctx context.Context, filter domain.OperationLogFilter, offset, limit int) ([]domain.OperationLog, int64, error) {
 	return s.repo.ListOperationLogs(ctx, filter, offset, limit)
+}
+
+// ListAuditEvents 分页查询统一审计事件
+func (s *auditService) ListAuditEvents(ctx context.Context, filter domain.UnifiedAuditEventFilter, offset, limit int) ([]domain.UnifiedAuditEvent, int64, error) {
+	return s.repo.ListAuditEvents(ctx, filter, offset, limit)
 }

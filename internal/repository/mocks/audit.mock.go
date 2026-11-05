@@ -69,6 +69,22 @@ func (mr *MockIAuditRepositoryMockRecorder) BatchSaveOperationLogs(ctx, logs any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BatchSaveOperationLogs", reflect.TypeOf((*MockIAuditRepository)(nil).BatchSaveOperationLogs), ctx, logs)
 }
 
+// ListAuditEvents mocks base method.
+func (m *MockIAuditRepository) ListAuditEvents(ctx context.Context, filter domain.UnifiedAuditEventFilter, offset, limit int) ([]domain.UnifiedAuditEvent, int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAuditEvents", ctx, filter, offset, limit)
+	ret0, _ := ret[0].([]domain.UnifiedAuditEvent)
+	ret1, _ := ret[1].(int64)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListAuditEvents indicates an expected call of ListAuditEvents.
+func (mr *MockIAuditRepositoryMockRecorder) ListAuditEvents(ctx, filter, offset, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAuditEvents", reflect.TypeOf((*MockIAuditRepository)(nil).ListAuditEvents), ctx, filter, offset, limit)
+}
+
 // ListAuthLogs mocks base method.
 func (m *MockIAuditRepository) ListAuthLogs(ctx context.Context, filter domain.AuthLogFilter, offset, limit int) ([]domain.AuthLog, int64, error) {
 	m.ctrl.T.Helper()

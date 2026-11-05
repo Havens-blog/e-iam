@@ -141,3 +141,59 @@ func TestAuditService_ListOperationLogs(t *testing.T) {
 		})
 	}
 }
+
+func TestAuditService_ListAuditEvents(t *testing.T) {
+	wantEvents := []domain.UnifiedAuditEvent{
+		{ID: 1, ActorType: "human", ActorID: "7", Service: "eiam", Domain: "operation", Action: "create", Result: "success", At: 1700000000000},
+	}
+	testCases := []struct {
+		name      string
+		mock      func(ctrl *gomock.Controller) repository.IAuditRepository
+		filter    domain.UnifiedAuditEventFilter
+		wantTotal int64
+		wantErr   error
+	}{
+		{
+			name: "成功分页查询统一审计事件",
+			mock: func(ctrl *gomock.Controller) repository.IAuditRepository {
+				repo := repomocks.NewMockIAuditRepository(ctrl)
+				repo.EXPECT().ListAuditEvents(gomock.Any(), domain.UnifiedAuditEventFilter{Domain: "operation"}, 0, 20).
+					Return(wantEvents, int64(1), nil)
+				return repo
+			},
+			filter:    domain.UnifiedAuditEventFilter{Domain: "operation"},
+			wantTotal: 1,
+			wantErr:   nil,
+		},
+		{
+			name: "底层仓储错误透传",
+			mock: func(ctrl *gomock.Controller) repository.IAuditRepository {
+				repo := repomocks.NewMockIAuditRepository(ctrl)
+				repo.EXPECT().ListAuditEvents(gomock.Any(), domain.UnifiedAuditEventFilter{Domain: "operation"}, 0, 20).
+					Return(nil, int64(0), errors.New("db down"))
+				return repo
+			},
+			filter:    domain.UnifiedAuditEventFilter{Domain: "operation"},
+			wantTotal: 0,
+			wantErr:   errors.New("db down"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			svc := NewService(tc.mock(ctrl))
+			events, total, err := svc.ListAuditEvents(context.Background(), tc.filter, 0, 20)
+
+			if tc.wantErr != nil {
+				assert.EqualError(t, err, tc.wantErr.Error())
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantTotal, total)
+			assert.Equal(t, wantEvents, events)
+		})
+	}
+}

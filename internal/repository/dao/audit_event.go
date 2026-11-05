@@ -2,6 +2,9 @@ package dao
 
 import (
 	"context"
+
+	"github.com/Havens-blog/e-iam/internal/domain"
+	"gorm.io/gorm"
 )
 
 // AuditEventRow 统一审计事件 GORM 实体。
@@ -30,7 +33,9 @@ type AuditEventRow struct {
 	StatusCode   int    `gorm:"column:status_code;comment:'状态码'"`
 	DurationMs   int64  `gorm:"column:duration_ms;comment:'耗时(毫秒)'"`
 	Detail       string `gorm:"column:detail;type:text;comment:'域扩展载荷(JSON,已脱敏)'"`
-	DedupKey     string `gorm:"column:dedup_key;type:varchar(128);uniqueIndex:uk_dedup_key;comment:'幂等去重键(空=不去重)'"`
+	// DedupKey 用指针的原因：MySQL/SQLite 唯一索引把空串当值（多条空串互相冲突），
+	// 只有 NULL 才允许多条共存。绝大多数事件无去重键，指针化让空键落 NULL。
+	DedupKey *string `gorm:"column:dedup_key;type:varchar(128);uniqueIndex:uk_dedup_key;comment:'幂等去重键(NULL=不去重)'"`
 }
 
 func (AuditEventRow) TableName() string { return "audit_events" }
@@ -51,4 +56,49 @@ func (d *auditDAO) BatchInsertAuditEvents(ctx context.Context, rows []AuditEvent
 		_ = d.db.WithContext(ctx).Create(&row).Error
 	}
 	return nil
+}
+
+// buildAuditEventQuery 组装统一事件检索条件（租户维度由 gormx 上下文注入，
+// 这里只处理业务过滤维度；排序固定 at 降序，命中 idx_tenant_at 索引）。
+func buildAuditEventQuery(db *gorm.DB, filter domain.UnifiedAuditEventFilter) *gorm.DB {
+	q := db.Model(&AuditEventRow{})
+	if filter.Service != "" {
+		q = q.Where("service = ?", filter.Service)
+	}
+	if filter.Domain != "" {
+		q = q.Where("domain = ?", filter.Domain)
+	}
+	if filter.Action != "" {
+		q = q.Where("action = ?", filter.Action)
+	}
+	if filter.Result != "" {
+		q = q.Where("result = ?", filter.Result)
+	}
+	if filter.ActorID != "" {
+		q = q.Where("actor_id = ?", filter.ActorID)
+	}
+	if filter.ResourceType != "" {
+		q = q.Where("resource_type = ?", filter.ResourceType)
+	}
+	if filter.StartTime > 0 {
+		q = q.Where("at >= ?", filter.StartTime)
+	}
+	if filter.EndTime > 0 {
+		q = q.Where("at <= ?", filter.EndTime)
+	}
+	return q
+}
+
+// ListAuditEvents 分页检索统一审计事件（at 降序，最新在前）。
+func (d *auditDAO) ListAuditEvents(ctx context.Context, filter domain.UnifiedAuditEventFilter, offset, limit int) ([]AuditEventRow, int64, error) {
+	q := buildAuditEventQuery(d.db.WithContext(ctx), filter)
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var rows []AuditEventRow
+	if err := q.Order("at DESC").Offset(offset).Limit(limit).Find(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+	return rows, total, nil
 }

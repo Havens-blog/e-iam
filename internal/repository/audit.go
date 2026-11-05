@@ -21,6 +21,8 @@ type IAuditRepository interface {
 	BatchSaveAuthLogs(ctx context.Context, logs []domain.AuthLog) error
 	// BatchSaveOperationLogs 批量持久化业务操作审计领域实体
 	BatchSaveOperationLogs(ctx context.Context, logs []domain.OperationLog) error
+	// ListAuditEvents 分页检索统一审计事件（envelope 领域对象）
+	ListAuditEvents(ctx context.Context, filter domain.UnifiedAuditEventFilter, offset, limit int) ([]domain.UnifiedAuditEvent, int64, error)
 	// ListAuthLogs 分页检索认证审计记录并转化为领域对象
 	ListAuthLogs(ctx context.Context, filter domain.AuthLogFilter, offset, limit int) ([]domain.AuthLog, int64, error)
 	// ListOperationLogs 分页检索业务管理操作审计记录并转化为领域对象
@@ -63,6 +65,44 @@ func (r *auditRepository) BatchSaveOperationLogs(ctx context.Context, logs []dom
 	return r.emitUnifiedEvents(ctx, logs)
 }
 
+// ListAuditEvents 分页检索统一审计事件（envelope 领域对象，at 降序）。
+// 租户隔离由 DAO 层 gormx 上下文自动注入（fail-closed），仓储层不做二次过滤。
+func (r *auditRepository) ListAuditEvents(ctx context.Context, filter domain.UnifiedAuditEventFilter, offset, limit int) ([]domain.UnifiedAuditEvent, int64, error) {
+	rows, total, err := r.dao.ListAuditEvents(ctx, filter, offset, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	events := lo.Map(rows, func(row dao.AuditEventRow, _ int) domain.UnifiedAuditEvent {
+		return toUnifiedEventDomain(row)
+	})
+	return events, total, nil
+}
+
+// toUnifiedEventDomain GORM 行 → 统一事件领域对象（纯转换，便于表驱动测试）。
+func toUnifiedEventDomain(row dao.AuditEventRow) domain.UnifiedAuditEvent {
+	return domain.UnifiedAuditEvent{
+		ID:        row.Id,
+		ActorType: row.ActorType,
+		ActorID:   row.ActorId,
+		ActorName: row.ActorName,
+		At:        row.At,
+		TenantID:  row.TenantId,
+		ClientIP:  row.ClientIP,
+		UserAgent: row.UserAgent,
+		Service:   row.Service,
+		Domain:    row.Domain,
+		Action:    row.Action,
+		ResourceType: row.ResourceType,
+		ResourceID:   row.ResourceId,
+		ResourceURN:  row.ResourceUrn,
+		Result:    row.Result,
+		StatusCode: row.StatusCode,
+		DurationMs:  row.DurationMs,
+		Detail:    row.Detail,
+		DedupKey:  derefOrEmpty(row.DedupKey),
+	}
+}
+
 // emitUnifiedEvents 把操作审计批量翻译为统一审计事件并写入。
 // 映射口径：ActorType=human（中间件只拦截登录会话写操作）；Service=e-iam；
 // Domain=operation；Action/Module 沿用既有语义；Before/After 状态与 FailReason
@@ -101,10 +141,26 @@ func (r *auditRepository) emitUnifiedEvents(ctx context.Context, logs []domain.O
 			StatusCode:   ev.StatusCode,
 			DurationMs:   ev.DurationMs,
 			Detail:       string(detail),
-			DedupKey:     ev.DedupKey,
+			DedupKey:     nilIfEmpty(ev.DedupKey),
 		}
 	})
 	return r.dao.BatchInsertAuditEvents(ctx, rows)
+}
+
+// nilIfEmpty 空串转 nil：MySQL 唯一索引把空串当值，只有 NULL 才允许多条无键事件共存。
+func nilIfEmpty(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+// derefOrEmpty nil 转空串（领域层用值语义，存储层用指针语义表达 NULL）。
+func derefOrEmpty(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 // toUnifiedEvent 把 IAM 管理操作审计翻译为统一审计事件（纯函数，便于表驱动测试）。
