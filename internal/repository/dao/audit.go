@@ -60,6 +60,8 @@ type IAuditDAO interface {
 	BatchInsertAuthLogs(ctx context.Context, logs []AuditAuthLog) error
 	// BatchInsertOperationLogs 批量写入操作审计日志
 	BatchInsertOperationLogs(ctx context.Context, logs []AuditOperationLog) error
+	// BatchInsertAuditEvents 批量写入统一审计事件（append-only，DedupKey 幂等）
+	BatchInsertAuditEvents(ctx context.Context, rows []AuditEventRow) error
 	// ListAuthLogs 条件分页检索认证审计日志
 	ListAuthLogs(ctx context.Context, filter domain.AuthLogFilter, offset, limit int) ([]AuditAuthLog, int64, error)
 	// ListOperationLogs 条件分页检索管理操作审计日志
