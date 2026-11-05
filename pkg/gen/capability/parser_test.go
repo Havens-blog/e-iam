@@ -10,6 +10,68 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestProjectNameFrom 表驱动：工程名必须从 go.mod module 路径推导，
+// 与检出目录名解耦（worktree 路径泄漏曾致生成链一致性误报，2026-11-06）。
+func TestProjectNameFrom(t *testing.T) {
+	writeGoMod := func(t *testing.T, dir, module string) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(dir, 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module "+module+"\n\ngo 1.25\n"), 0o644))
+	}
+
+	testCases := []struct {
+		name  string
+		setup func(t *testing.T) string
+		want  string
+	}{
+		{
+			name: "根目录 go.mod → module 末段大写",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				writeGoMod(t, dir, "github.com/Havens-blog/e-iam")
+				return dir
+			},
+			want: "E-IAM",
+		},
+		{
+			name: "worktree 任意目录名不影响结果",
+			setup: func(t *testing.T) string {
+				dir := filepath.Join(t.TempDir(), ".tmp-any-weird-name")
+				writeGoMod(t, dir, "github.com/Havens-blog/e-iam")
+				return dir
+			},
+			want: "E-IAM",
+		},
+		{
+			name: "子目录向上查找 go.mod",
+			setup: func(t *testing.T) string {
+				root := t.TempDir()
+				writeGoMod(t, root, "github.com/Havens-blog/e-iam")
+				sub := filepath.Join(root, "cmd", "permgen")
+				require.NoError(t, os.MkdirAll(sub, 0o755))
+				return sub
+			},
+			want: "E-IAM",
+		},
+		{
+			name: "无 go.mod → 回退目录名大写（旧行为兜底）",
+			setup: func(t *testing.T) string {
+				dir := filepath.Join(t.TempDir(), "SomeProj")
+				require.NoError(t, os.MkdirAll(dir, 0o755))
+				return dir
+			},
+			want: "SOMEPROJ",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := tc.setup(t)
+			assert.Equal(t, tc.want, projectNameFrom(dir))
+		})
+	}
+}
+
 func TestPermGenFullPipeline(t *testing.T) {
 	tempDir := t.TempDir()
 	sourceFile := filepath.Join(tempDir, "handler.go")
