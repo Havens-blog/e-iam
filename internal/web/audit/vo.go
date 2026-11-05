@@ -73,6 +73,70 @@ type ListOperationLogResp struct {
 	List  []OperationLogVO `json:"list"`
 }
 
+// ListAuditEventsReq 统一审计事件查询入参。
+// 服务端强制租户上下文（gormx fail-closed），入参不含 tenant_id。
+type ListAuditEventsReq struct {
+	Offset       int64  `json:"offset"`
+	Limit        int64  `json:"limit"`
+	Service      string `json:"service"`
+	Domain       string `json:"domain"`
+	Action       string `json:"action"`
+	Result       string `json:"result"`
+	ActorID      string `json:"actor_id"`
+	ResourceType string `json:"resource_type"`
+	StartTime    int64  `json:"start_time"`
+	EndTime      int64  `json:"end_time"`
+}
+
+// AuditEventVO 统一审计事件前端展示对象
+type AuditEventVO struct {
+	ID           int64  `json:"id"`
+	ActorType    string `json:"actor_type"`
+	ActorID      string `json:"actor_id"`
+	ActorName    string `json:"actor_name"`
+	At           int64  `json:"at"`
+	TenantID     int64  `json:"tenant_id"`
+	ClientIP     string `json:"client_ip"`
+	Service      string `json:"service"`
+	Domain       string `json:"domain"`
+	Action       string `json:"action"`
+	ResourceType string `json:"resource_type"`
+	ResourceID   string `json:"resource_id"`
+	ResourceURN  string `json:"resource_urn"`
+	Result       string `json:"result"`
+	StatusCode   int    `json:"status_code"`
+	DurationMs   int64  `json:"duration_ms"`
+	Detail       string `json:"detail"`
+}
+
+// ListAuditEventsResp 统一审计事件查询结果
+type ListAuditEventsResp struct {
+	Total int64          `json:"total"`
+	List  []AuditEventVO `json:"list"`
+}
+
+func toAuditEventVO(e domain.UnifiedAuditEvent) AuditEventVO {
+	return AuditEventVO{
+		ID:           e.ID,
+		ActorType:    e.ActorType,
+		ActorID:      e.ActorID,
+		ActorName:    e.ActorName,
+		At:           e.At,
+		TenantID:     e.TenantID,
+		ClientIP:     e.ClientIP,
+		Service:      e.Service,
+		Domain:       e.Domain,
+		Action:       e.Action,
+		ResourceType: e.ResourceType,
+		ResourceID:   e.ResourceID,
+		ResourceURN:  e.ResourceURN,
+		Result:       e.Result,
+		StatusCode:   e.StatusCode,
+		DurationMs:   e.DurationMs,
+		Detail:       e.Detail,
+	}
+}
+
 func toAuthLogVO(l domain.AuthLog) AuthLogVO {
 	return AuthLogVO{
 		ID:         l.ID,

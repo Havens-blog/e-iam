@@ -62,6 +62,8 @@ type IAuditDAO interface {
 	BatchInsertOperationLogs(ctx context.Context, logs []AuditOperationLog) error
 	// BatchInsertAuditEvents 批量写入统一审计事件（append-only，DedupKey 幂等）
 	BatchInsertAuditEvents(ctx context.Context, rows []AuditEventRow) error
+	// ListAuditEvents 分页检索统一审计事件（at 降序；租户由 gormx 上下文注入）
+	ListAuditEvents(ctx context.Context, filter domain.UnifiedAuditEventFilter, offset, limit int) ([]AuditEventRow, int64, error)
 	// ListAuthLogs 条件分页检索认证审计日志
 	ListAuthLogs(ctx context.Context, filter domain.AuthLogFilter, offset, limit int) ([]AuditAuthLog, int64, error)
 	// ListOperationLogs 条件分页检索管理操作审计日志

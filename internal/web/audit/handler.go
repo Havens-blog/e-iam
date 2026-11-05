@@ -107,6 +107,43 @@ func (h *Handler) PrivateRoutes(server *gin.Engine) {
 	g.POST("/operation/list", h.Define("查看操作审计", "view_operation").
 		Bind(ginx.B[ListOperationLogReq](h.ListOperationLogs)),
 	)
+	// 统一审计事件（e-common-go auditlog envelope）：操作/变更等统一事件都落
+	// audit_events 表，查询入口与旧 /auth/list、/operation/list 并列。
+	g.POST("/events/list", h.Define("查看统一审计事件", "view_events").
+		Bind(ginx.B[ListAuditEventsReq](h.ListAuditEvents)),
+	)
+}
+
+// ListAuditEvents 分页查询统一审计事件
+func (h *Handler) ListAuditEvents(ctx *ginx.Context, req ListAuditEventsReq) (ginx.Result, error) {
+	reqCtx := ctx.Request.Context()
+
+	filter := domain.UnifiedAuditEventFilter{
+		Service:      req.Service,
+		Domain:       req.Domain,
+		Action:       req.Action,
+		Result:       req.Result,
+		ActorID:      req.ActorID,
+		ResourceType: req.ResourceType,
+		StartTime:    req.StartTime,
+		EndTime:      req.EndTime,
+	}
+
+	events, total, err := h.svc.ListAuditEvents(reqCtx, filter, int(req.Offset), int(req.Limit))
+	if err != nil {
+		return ErrListAuditEventsFailed, err
+	}
+
+	items := lo.Map(events, func(item domain.UnifiedAuditEvent, _ int) AuditEventVO {
+		return toAuditEventVO(item)
+	})
+
+	return ginx.Result{
+		Data: ListAuditEventsResp{
+			Total: total,
+			List:  items,
+		},
+	}, nil
 }
 
 // ListAuthLogs 分页查询认证审计日志

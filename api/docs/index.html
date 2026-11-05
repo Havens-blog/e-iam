@@ -94,6 +94,42 @@
         }
       }
     },
+    "/api/audit/events/list": {
+      "post": {
+        "tags": [
+          "安全审计"
+        ],
+        "summary": "查看统一审计事件",
+        "description": "权限标识: view_events",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListAuditEventsReq"
+              },
+              "example": {
+                "action": "string",
+                "actor_id": "string",
+                "domain": "string",
+                "end_time": 0,
+                "limit": 10,
+                "offset": 0,
+                "resource_type": "string",
+                "result": "string",
+                "service": "string",
+                "start_time": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功"
+          }
+        }
+      }
+    },
     "/api/audit/operation/list": {
       "post": {
         "tags": [
@@ -4597,6 +4633,63 @@
           "offset": 0,
           "user_id": 1,
           "username": "示例名称"
+        }
+      },
+      "ListAuditEventsReq": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "example": "string"
+          },
+          "actor_id": {
+            "type": "string",
+            "example": "string"
+          },
+          "domain": {
+            "type": "string",
+            "example": "string"
+          },
+          "end_time": {
+            "type": "integer",
+            "example": 0
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "offset": {
+            "type": "integer",
+            "example": 0
+          },
+          "resource_type": {
+            "type": "string",
+            "example": "string"
+          },
+          "result": {
+            "type": "string",
+            "example": "string"
+          },
+          "service": {
+            "type": "string",
+            "example": "string"
+          },
+          "start_time": {
+            "type": "integer",
+            "example": 0
+          }
+        },
+        "example": {
+          "action": "string",
+          "actor_id": "string",
+          "domain": "string",
+          "end_time": 0,
+          "limit": 10,
+          "offset": 0,
+          "resource_type": "string",
+          "result": "string",
+          "service": "string",
+          "start_time": 0
         }
       },
       "ListAuthLogReq": {

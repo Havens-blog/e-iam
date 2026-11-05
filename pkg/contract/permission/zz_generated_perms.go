@@ -6,10 +6,12 @@ package permission
 var Audit = struct {
 	Module        string
 	ViewAuth      string // 查看认证审计 [租户级]
+	ViewEvents    string // 查看统一审计事件 [租户级]
 	ViewOperation string // 查看操作审计 [租户级]
 }{
 	Module:        "iam:audit",
 	ViewAuth:      "iam:audit:view_auth",
+	ViewEvents:    "iam:audit:view_events",
 	ViewOperation: "iam:audit:view_operation",
 }
 
