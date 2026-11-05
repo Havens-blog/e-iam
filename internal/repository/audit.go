@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Havens-blog/e-common-go/auditlog"
 	"github.com/Havens-blog/e-iam/internal/domain"
 	"github.com/Havens-blog/e-iam/internal/repository/dao"
-	"github.com/Havens-blog/e-common-go/auditlog"
 	"github.com/samber/lo"
 )
 
@@ -84,24 +84,24 @@ func (r *auditRepository) emitUnifiedEvents(ctx context.Context, logs []domain.O
 	rows := lo.Map(events, func(ev auditlog.AuditEvent, _ int) dao.AuditEventRow {
 		detail, _ := json.Marshal(ev.Detail)
 		return dao.AuditEventRow{
-			ActorType: string(ev.ActorType),
-			ActorId:   ev.ActorID,
-			ActorName: ev.ActorName,
-			At:        ev.At,
-			TenantId:  ev.TenantID,
-			ClientIP:  ev.ClientIP,
-			UserAgent: ev.UserAgent,
-			Service:   ev.Service,
-			Domain:    ev.Domain,
-			Action:    ev.Action,
+			ActorType:    string(ev.ActorType),
+			ActorId:      ev.ActorID,
+			ActorName:    ev.ActorName,
+			At:           ev.At,
+			TenantId:     ev.TenantID,
+			ClientIP:     ev.ClientIP,
+			UserAgent:    ev.UserAgent,
+			Service:      ev.Service,
+			Domain:       ev.Domain,
+			Action:       ev.Action,
 			ResourceType: ev.ResourceType,
 			ResourceId:   ev.ResourceID,
 			ResourceUrn:  ev.ResourceURN,
-			Result:    string(ev.Result),
-			StatusCode: ev.StatusCode,
-			DurationMs:  ev.DurationMs,
-			Detail:      string(detail),
-			DedupKey:    ev.DedupKey,
+			Result:       string(ev.Result),
+			StatusCode:   ev.StatusCode,
+			DurationMs:   ev.DurationMs,
+			Detail:       string(detail),
+			DedupKey:     ev.DedupKey,
 		}
 	})
 	return r.dao.BatchInsertAuditEvents(ctx, rows)

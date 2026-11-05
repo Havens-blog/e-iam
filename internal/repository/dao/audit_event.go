@@ -12,25 +12,25 @@ import (
 //
 // Append-only：审计记录不允许篡改/抹除，DAO 只提供写入与检索。
 type AuditEventRow struct {
-	Id        int64  `gorm:"primaryKey;autoIncrement"`
-	ActorType string `gorm:"column:actor_type;type:varchar(16);not null;index:idx_actor_at,priority:1;comment:'操作者类型: human/system/executor/scheduler'"`
-	ActorId   string `gorm:"column:actor_id;type:varchar(64);not null;index:idx_actor_at,priority:2;comment:'操作者ID(统一字符串,兼容 int64 与外部ID)'"`
-	ActorName string `gorm:"column:actor_name;type:varchar(128);comment:'操作者名称'"`
-	At        int64  `gorm:"column:at;not null;index:idx_tenant_at,priority:2;comment:'事件时间(Unix毫秒)'"`
-	TenantId  int64  `gorm:"column:tenant_id;not null;index:idx_tenant_at,priority:1;comment:'租户ID'"`
-	ClientIP  string `gorm:"column:client_ip;type:varchar(64);comment:'客户端IP'"`
-	UserAgent string `gorm:"column:user_agent;type:varchar(255);comment:'UserAgent'"`
-	Service   string `gorm:"column:service;type:varchar(32);not null;index:idx_service_domain_at,priority:1;comment:'所属服务'"`
-	Domain    string `gorm:"column:domain;type:varchar(32);not null;index:idx_service_domain_at,priority:2;comment:'业务域'"`
-	Action    string `gorm:"column:action;type:varchar(64);not null;comment:'动作'"`
+	Id           int64  `gorm:"primaryKey;autoIncrement"`
+	ActorType    string `gorm:"column:actor_type;type:varchar(16);not null;index:idx_actor_at,priority:1;comment:'操作者类型: human/system/executor/scheduler'"`
+	ActorId      string `gorm:"column:actor_id;type:varchar(64);not null;index:idx_actor_at,priority:2;comment:'操作者ID(统一字符串,兼容 int64 与外部ID)'"`
+	ActorName    string `gorm:"column:actor_name;type:varchar(128);comment:'操作者名称'"`
+	At           int64  `gorm:"column:at;not null;index:idx_tenant_at,priority:2;comment:'事件时间(Unix毫秒)'"`
+	TenantId     int64  `gorm:"column:tenant_id;not null;index:idx_tenant_at,priority:1;comment:'租户ID'"`
+	ClientIP     string `gorm:"column:client_ip;type:varchar(64);comment:'客户端IP'"`
+	UserAgent    string `gorm:"column:user_agent;type:varchar(255);comment:'UserAgent'"`
+	Service      string `gorm:"column:service;type:varchar(32);not null;index:idx_service_domain_at,priority:1;comment:'所属服务'"`
+	Domain       string `gorm:"column:domain;type:varchar(32);not null;index:idx_service_domain_at,priority:2;comment:'业务域'"`
+	Action       string `gorm:"column:action;type:varchar(64);not null;comment:'动作'"`
 	ResourceType string `gorm:"column:resource_type;type:varchar(64);not null;comment:'资源类型'"`
 	ResourceId   string `gorm:"column:resource_id;type:varchar(128);comment:'资源ID'"`
 	ResourceUrn  string `gorm:"column:resource_urn;type:varchar(255);comment:'统一资源URN'"`
-	Result   string `gorm:"column:result;type:varchar(16);not null;comment:'结果: success/failed/partial'"`
-	StatusCode  int    `gorm:"column:status_code;comment:'状态码'"`
-	DurationMs  int64  `gorm:"column:duration_ms;comment:'耗时(毫秒)'"`
-	Detail      string `gorm:"column:detail;type:text;comment:'域扩展载荷(JSON,已脱敏)'"`
-	DedupKey    string `gorm:"column:dedup_key;type:varchar(128);uniqueIndex:uk_dedup_key;comment:'幂等去重键(空=不去重)'"`
+	Result       string `gorm:"column:result;type:varchar(16);not null;comment:'结果: success/failed/partial'"`
+	StatusCode   int    `gorm:"column:status_code;comment:'状态码'"`
+	DurationMs   int64  `gorm:"column:duration_ms;comment:'耗时(毫秒)'"`
+	Detail       string `gorm:"column:detail;type:text;comment:'域扩展载荷(JSON,已脱敏)'"`
+	DedupKey     string `gorm:"column:dedup_key;type:varchar(128);uniqueIndex:uk_dedup_key;comment:'幂等去重键(空=不去重)'"`
 }
 
 func (AuditEventRow) TableName() string { return "audit_events" }
