@@ -70,6 +70,9 @@ func InitGinWebServer(sp session.Provider, listener net.Listener, mdls []gin.Han
 	// 1.5 服务间调用路由 (独立 S2S 令牌验签，不经用户会话/OPA 鉴权链)
 	s2sGroup := server.Engine.Group("/api/s2s", middleware.S2STokenAuth(km))
 	s2sGroup.GET("/tenant/detail/:id", ginx.W(tenantHdl.Detail))
+	// 统一审计联邦读侧（F1）：fail-closed 双闸门（配置开关 + 租户白名单），
+	// 未配置时整体拒答——开放哪些租户由运维显式决策（见联邦设计文档）。
+	s2sGroup.GET("/audit/events", ginx.W(auditHdl.FederationEvents))
 
 	// 2. 登录层：验证是否登录
 	server.Use(session.CheckLoginMiddleware())
