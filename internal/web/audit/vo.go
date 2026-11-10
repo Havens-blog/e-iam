@@ -108,8 +108,8 @@ type AuditEventVO struct {
 	ResourceID   string `json:"resource_id"`
 	ResourceURN  string `json:"resource_urn"`
 	Result       string `json:"result"`
-	StatusCode   int            `json:"status_code"`
-	DurationMs   int64          `json:"duration_ms"`
+	StatusCode   int    `json:"status_code"`
+	DurationMs   int64  `json:"duration_ms"`
 	// Detail 以原始 JSON 对象透传（SDK auditlog.AuditEvent.Detail 契约为对象）。
 	// 此前为 string：MySQL JSON 文本被再包一层引号，消费方（e-cam 联邦客户端 F2）
 	// 反序列化 map 失败。空/非法文本输出 null，绝不输出被引号包裹的字符串。
