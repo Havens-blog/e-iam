@@ -1,6 +1,10 @@
 package audit
 
-import "github.com/Havens-blog/e-iam/internal/domain"
+import (
+	"encoding/json"
+
+	"github.com/Havens-blog/e-iam/internal/domain"
+)
 
 // ListAuthLogReq 认证审计日志查询入参
 type ListAuthLogReq struct {
@@ -104,9 +108,12 @@ type AuditEventVO struct {
 	ResourceID   string `json:"resource_id"`
 	ResourceURN  string `json:"resource_urn"`
 	Result       string `json:"result"`
-	StatusCode   int    `json:"status_code"`
-	DurationMs   int64  `json:"duration_ms"`
-	Detail       string `json:"detail"`
+	StatusCode   int            `json:"status_code"`
+	DurationMs   int64          `json:"duration_ms"`
+	// Detail 以原始 JSON 对象透传（SDK auditlog.AuditEvent.Detail 契约为对象）。
+	// 此前为 string：MySQL JSON 文本被再包一层引号，消费方（e-cam 联邦客户端 F2）
+	// 反序列化 map 失败。空/非法文本输出 null，绝不输出被引号包裹的字符串。
+	Detail json.RawMessage `json:"detail"`
 }
 
 // ListAuditEventsResp 统一审计事件查询结果
@@ -133,8 +140,18 @@ func toAuditEventVO(e domain.UnifiedAuditEvent) AuditEventVO {
 		Result:       e.Result,
 		StatusCode:   e.StatusCode,
 		DurationMs:   e.DurationMs,
-		Detail:       e.Detail,
+		Detail:       detailRawJSON(e.Detail),
 	}
+}
+
+// detailRawJSON 把 DAO 层的 JSON 文本安全透传为原始 JSON 值：
+// 合法 JSON 原样输出（对象/数组均保持结构）；空串与非法文本输出 null
+// （null 可被消费方 map 字段安全解出零值，被引号包裹的字符串则不可）。
+func detailRawJSON(s string) json.RawMessage {
+	if s == "" || !json.Valid([]byte(s)) {
+		return json.RawMessage("null")
+	}
+	return json.RawMessage(s)
 }
 
 func toAuthLogVO(l domain.AuthLog) AuthLogVO {
